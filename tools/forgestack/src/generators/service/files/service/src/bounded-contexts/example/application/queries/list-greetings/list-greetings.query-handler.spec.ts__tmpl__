@@ -1,0 +1,39 @@
+import { Greeting } from '@bc/example/domain/aggregates/greeting/greeting.aggregate';
+import { Greeting_InMemoryRepository } from '@bc/example/infrastructure/repositories/in-memory/greeting.in-memory-repository';
+import { ListGreetings_Query } from './list-greetings.query';
+import { ListGreetings_QueryHandler } from './list-greetings.query-handler';
+
+describe('ListGreetings_QueryHandler', () => {
+  const setup = () => {
+    const repository = new Greeting_InMemoryRepository();
+    const handler = new ListGreetings_QueryHandler(repository);
+
+    return { repository, handler };
+  };
+
+  it('should return an empty list when nothing is stored', async () => {
+    // Arrange
+    const { handler } = setup();
+
+    // Act
+    const response = await handler.execute(new ListGreetings_Query());
+
+    // Assert
+    expect(response.greetings).toEqual([]);
+  });
+
+  it('should return stored greetings up to the limit', async () => {
+    // Arrange
+    const { handler, repository } = setup();
+    await repository.save(Greeting.random());
+    await repository.save(Greeting.random());
+    await repository.save(Greeting.random());
+
+    // Act
+    const response = await handler.execute(new ListGreetings_Query(2));
+
+    // Assert
+    expect(response.greetings).toHaveLength(2);
+    expect(response.greetings[0].message).toBeTruthy();
+  });
+});

@@ -1,0 +1,76 @@
+# Adding a Service
+
+Adding a NestJS service is one command. Name it whatever you want. `billing`
+is used as an example on this guide:
+
+```bash
+npx nx g @forgestack/tools:service billing   # generate new service called "billing"
+npm i                                        # link the new package into the workspace
+```
+
+The generator takes two flags:
+
+- `--dry-run` — print everything the generator would create or edit without
+  writing any of it.
+- `--expose=false` —  to generate an internal service that shouldn't be reachable from the
+  browser.
+
+The generated service contains a starter bounded context called `example` with
+one of every building block a bounded context is made of:
+
+- **An [aggregate](/docs/backend/ddd#aggregates)** — `Greeting`, which raises
+  a **[domain event](/docs/backend/ddd#domain-events)**
+  (`GreetingCreated_DomainEvent`) when created.
+- **A [value object](/docs/backend/ddd#value-objects)** — `GreetingMessage`,
+  with validation.
+- **A [command](/docs/backend/cqrs#commands)** — `CreateGreeting_Command` and
+  its `CreateGreeting_CommandHandler`.
+- **A [query](/docs/backend/cqrs#queries)** — `ListGreetings_Query` and its
+  `ListGreetings_QueryHandler`.
+- **[Controllers](/docs/backend/cqrs#controllers)** that dispatch them through
+  the buses — `CreateGreeting_Controller` (`POST /api/v1/greetings`) and
+  `ListGreetings_Controller` (`GET /api/v1/greetings`).
+- **A [domain-event handler](/docs/backend/events#domain-event-handlers)** —
+  `GreetingCreated_PublishIntegrationEvent_DomainEventHandler`, which turns
+  the internal event into a public `GreetingCreated_IntegrationEvent` and
+  publishes it through the outbox for other services to consume.
+- **An [integration-event handler](/docs/backend/events#integration-event-handlers)**
+  — `UserCreated_IntegrationEventHandler`, consuming another service's
+  [`user.created` integration event](/docs/backend/events#integration-events--the-contract-between-contexts)
+  from Kafka — the new service greets every registered user out of the box.
+- **[Repositories](/docs/backend/hexagonal#repositories)** — `Greeting_MongodbRepository`
+  and `Greeting_InMemoryRepository`, behind the same `Greeting_Repository` port interface.
+- **[Tests](/docs/backend/testing) for every handler type**, all passing from
+  the first run.
+
+Rename or get rid of the `example` context once you start building real ones.
+
+Beyond the code, the generator wires the service into the dev and prod compose
+files, adds the Caddy host and creates the env files.
+
+## What the generator sets up (and where to edit it)
+
+| Piece | Where | Notes |
+| --- | --- | --- |
+| Service code | `backend/services/<name>/` | Configs, jest, and the `example` starter bounded context |
+| Local config | `backend/services/<name>/.env` (+ `.env.example`) | `SERVICE_NAME`, `KAFKA_SERVICE_ID` and the Mongo database are unique per service |
+| Dev container | `infra/compose/docker-compose.dev.yml` | One small block to deploy the service locally |
+| Prod container | `infra/compose/docker-compose.prod.yml` | One small service block to deploy in prod; image tag `forgestack-<name>:v1` |
+| Prod config | `infra/env/<name>.env.prod` (+ `.example`) | Secrets are placeholders — fill them in before deploying |
+| Public hostname | `infra/caddy/Caddyfile` | `<name>.<domain>` → `<name>:3000` to expose it through Caddy |
+
+That table is the complete list — everything else (builds, deploys,
+type-checks, lint, metrics, logs, traces) discovers the new service
+automatically.
+
+## After generating
+
+- **Dev**: start the stack (`npm run dev`), or `npm run dev:restart <name>
+  caddy` if it's already running — Caddy re-reads its config only on restart.
+  `GET /api/v1/greetings` on the new hostname confirms the wiring.
+- **Prod**: fill in `infra/env/<name>.env.prod`, point `<name>.<your-domain>`
+  DNS at the server, and use. `npm run prod:update` to deploy it (make sure to 
+  include Caddy in the deployment).
+
+To call the new service from the website, see
+[Calling backend services](/docs/frontend#calling-backend-services).

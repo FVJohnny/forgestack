@@ -1,0 +1,113 @@
+# Monitoring
+
+ForgeStack is observable on day one. The three pillars — **metrics**, **logs**
+and **traces** — are collected automatically and correlated in **Grafana**.
+Instrumentation comes from the base handler classes and OpenTelemetry
+auto-instrumentation, so you don't wire it per feature.
+
+```
+service-1 ──metrics──▶ Prometheus ──┐
+          ──traces───▶ Tempo ───────┼──▶ Grafana (dashboards + explore)
+          ──logs─────▶ Loki ◀─Promtail┘
+```
+
+## Traces — OpenTelemetry → Tempo
+
+OpenTelemetry is initialised before the app bootstraps. Auto-instrumentation
+covers HTTP, Express, NestJS, MongoDB, PostgreSQL and Kafka, and the CQRS bases
+add a span around every command, query and event handler (named after the class).
+Spans are exported via OTLP to **Tempo**.
+
+```env
+OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
+OTEL_TRACES_ENABLED=true
+OTEL_METRICS_ENABLED=true
+SERVICE_NAME=service-1
+```
+
+Because integration events carry trace metadata in their envelope (see
+[Events](/docs/backend/events)), a trace **follows an event across Kafka** — a
+consumer's spans link back to the producer's request.
+
+## Metrics — Prometheus
+
+Every service exposes metrics at `/api/v1/metrics` (behind an internal API
+key). Prometheus discovers the services from Docker — any container labeled
+`prometheus.scrape=true` (part of the compose service template) is scraped
+every 5s under its compose service name, plus container metrics from cAdvisor:
+
+```yaml
+# infra/monitoring/prometheus/prometheus.yml
+global:
+  scrape_interval: 5s
+scrape_configs:
+  - job_name: 'nestjs-services'
+    metrics_path: /api/v1/metrics
+    authorization:
+      type: 'ApiKey'
+      credentials_file: /etc/prometheus/internal-api-key
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+    relabel_configs:
+      - source_labels: [__meta_docker_container_label_prometheus_scrape]
+        regex: 'true'
+        action: keep
+      # job = the compose service name (service-1, service-2, …)
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: job
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+```
+
+New services are picked up automatically — the scrape config never changes.
+
+The CQRS bases emit per-command/query/event **duration histograms** and
+**success/error counters**, so throughput and latency are available without
+custom code. Tempo's metrics-generator also writes span-derived metrics back to
+Prometheus for service-map and RED metrics.
+
+## Logs — Loki + Promtail
+
+The app logs **structured JSON** including the active `traceId`. **Promtail**
+discovers containers via the Docker socket, parses the JSON, and ships logs to
+**Loki**, extracting `level`, `service` and `environment` as labels:
+
+```yaml
+# infra/monitoring/promtail/promtail-config.yaml (essence)
+pipeline_stages:
+  - json:
+      expressions: { level: level, message: message, traceId: traceId, service: service }
+  - labels: { level:, service:, environment: }
+```
+
+Because both logs and traces carry the trace id, Grafana links a log line
+straight to its trace and vice-versa.
+
+## Grafana
+
+Grafana is provisioned automatically — datasources and dashboards are committed
+to the repo, not clicked in by hand.
+
+**Datasources** (`infra/monitoring/grafana/provisioning/datasources`): Prometheus
+(default), Loki, and Tempo — wired together so traces link to logs
+(`tracesToLogs`), traces link to metrics (`tracesToMetrics`), and a service map
+is generated.
+
+**Pre-built dashboards:**
+
+- `nestjs-metrics` — HTTP requests/sec by route, p95 latency, status codes.
+- `cqrs-metrics` — command/query/handler performance.
+- `inbox-outbox-metrics` — outbox publish and inbox processing counts & latency.
+- `docker-containers` — per-container CPU, memory, network (from cAdvisor).
+
+In dev, Grafana is at `https://grafana.localhost` (admin/admin by default).
+
+<Callout type="tip" title="One pane of glass">
+  Start from a slow request in the NestJS dashboard, jump to its trace in Tempo,
+  and from a span jump straight to the matching logs in Loki — all without
+  leaving Grafana. That correlation is the payoff of instrumenting once, at the
+  base classes.
+</Callout>
+
+Next: **[Deployment](/docs/deployment)**.

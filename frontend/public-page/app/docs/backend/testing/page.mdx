@@ -1,0 +1,91 @@
+# Testing
+
+Tests live next to the code they cover — every `*.spec.ts` file sits in the
+same folder as its subject, and each service and lib runs its own Jest suite
+as an Nx target, so results are cached and only affected projects re-run.
+
+```bash
+npm test                          # all projects (Nx-cached)
+npm run test:nocache              # same, ignoring the cache
+npx nx run billing:test           # one service
+cd backend/services/billing && npx jest src/path/to/file.spec.ts   # one file
+```
+
+The pre-commit hook runs the full suite (plus typecheck and lint), so a
+failing test blocks the commit.
+
+## Unit tests: no Nest, no mocks of your own code
+
+Handlers are plain classes, so tests construct them directly — no `Test.createTestingModule`, no DI container, no framework boot. What varies is
+what you hand the constructor:
+
+- **In-memory repositories** — every aggregate ships two repository
+  implementations behind the same port. Tests use the in-memory one, which
+  also takes a `shouldFail` flag so failure paths are one line to set up.
+- **Mock buses** — `MockCommandBus`, `MockQueryBus` and `MockEventBus` from
+  `@libs/nestjs-common` record what was dispatched (and can be told to fail),
+  so a test asserts *which command* an event handler produced without
+  executing it.
+
+```ts
+const repository = new Greeting_InMemoryRepository();
+const eventBus = new MockEventBus();
+const handler = new CreateGreeting_CommandHandler(repository, eventBus);
+
+await handler.execute(new CreateGreeting_Command('Hello there', 'api'));
+
+expect(await repository.findAll()).toHaveLength(1);
+expect(eventBus.events[0]).toBeInstanceOf(GreetingCreated_DomainEvent);
+```
+
+The same style covers every handler type: command and query handlers get
+repositories and buses, domain-event handlers are usually self-contained, and
+integration-event handlers get a `MockCommandBus` to capture the command they
+translate the event into. A freshly generated service includes a working test
+of each kind.
+
+## Repository tests: one contract, every implementation
+
+A repository's two implementations must behave identically — that's the whole
+point of the port. So the repositories aren't tested twice: a **shared
+contract suite** (exported from `@libs/nestjs-common/test-exports`) defines
+the behavior once, and each implementation runs it with its own setup:
+
+```ts
+describe('Outbox_MongodbRepository', () => {
+  const mongoTestService = new MongodbTestService<OutboxEventDTO>(
+    Outbox_MongodbRepository.CollectionName,
+  );
+
+  testOutboxRepositoryContract(
+    'MongoDB Implementation',
+    async () => new Outbox_MongodbRepository(mongoTestService.mongoClient),
+    {
+      beforeAll: () => mongoTestService.setupDatabase(),
+      beforeEach: () => mongoTestService.clearCollection(),
+      afterAll: () => mongoTestService.cleanup(),
+    },
+  );
+});
+```
+
+The Mongo variants run against the **real MongoDB from the dev stack** — no
+in-process fake. `jest.env.js` sets `NODE_ENV=test` and clears `MONGODB_URI`,
+which routes connections to `localhost:27017` (the dev compose exposes the
+port) and into a separate `<service>-tests` database, so tests never touch
+dev data. The practical consequence: **repository tests need the dev stack
+running** (`npm run dev`); pure unit tests don't.
+
+## Where the pieces come from
+
+| Piece | Import |
+| --- | --- |
+| `MockCommandBus`, `MockQueryBus`, `MockEventBus` | `@libs/nestjs-common` |
+| Repository contract suites | `@libs/nestjs-common/test-exports` |
+| `MongodbTestService` | `@libs/nestjs-mongodb` (`src/testing/`) |
+| In-memory repositories | each context's `infrastructure/repositories/in-memory/` |
+| `Base_InMemoryRepository` (with `shouldFail`) | `@libs/nestjs-common` |
+
+Aggregates and value objects also carry `random()` factories
+(`Greeting.random()`, `Id.random()`, …) so tests build valid domain objects
+in one call instead of hand-assembling props.

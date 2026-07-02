@@ -1,0 +1,279 @@
+{
+  "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Sign in to access your dashboard",
+      "email": "Email",
+      "emailPlaceholder": "john.doe@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "submit": "Sign In",
+      "submitting": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create Account",
+      "successMessage": "Account created successfully! Please check your email ({email}) for a verification link before signing in.",
+      "errorDefault": "Login failed. Please check your credentials.",
+      "orContinueWith": "or continue with",
+      "googleButton": "Continue with Google",
+      "googleError": "Google sign-in failed. Please try again.",
+      "forgotPassword": "Forgot your password?"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "description": "Enter your email address and we'll send you a link to reset your password.",
+      "email": "Email",
+      "emailPlaceholder": "john.doe@example.com",
+      "submit": "Send Reset Link",
+      "submitting": "Sending link...",
+      "success": "Check your email! We've sent a password reset link to {email}.",
+      "backToSignIn": "Back to Sign In",
+      "error": "Failed to request password reset. Please try again."
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "description": "Enter your new password below.",
+      "password": "New Password",
+      "passwordPlaceholder": "Enter your new password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your new password",
+      "submit": "Reset Password",
+      "submitting": "Resetting...",
+      "success": "Your password has been successfully reset. Redirecting to login...",
+      "errors": {
+        "mismatch": "Passwords do not match",
+        "invalid": "Invalid or expired reset link",
+        "failed": "Failed to reset password. Please try again."
+      }
+    },
+    "register": {
+      "title": "Create Account",
+      "email": "Email",
+      "emailPlaceholder": "john.doe@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "submit": "Create Account",
+      "submitting": "Creating account...",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign In",
+      "errors": {
+        "passwordMismatch": "Passwords do not match",
+        "passwordLength": "Password must be at least 6 characters long",
+        "default": "Registration failed. Please try again."
+      }
+    },
+    "verifyEmail": {
+      "loading": {
+        "title": "Verifying Email",
+        "description": "Please wait while we verify your email address..."
+      },
+      "success": {
+        "title": "Email Verified!",
+        "description": "Your email address has been successfully verified. Redirecting to dashboard..."
+      },
+      "error": {
+        "title": "Verification Failed",
+        "tryAgain": "Please try again or contact support if the problem persists.",
+        "goToSignIn": "Go to Sign In"
+      },
+      "errors": {
+        "noId": "Invalid verification link. No verification ID provided.",
+        "default": "Email verification failed. The link may be invalid or expired."
+      },
+      "backToHome": "← Back to home"
+    }
+  },
+  "fmf": {
+    "landing": {
+      "headline": "A solid foundation for <molten>forging</molten> applications",
+      "sub": "Idk what to write here yet",
+      "github": "View on GitHub",
+      "openDemo": "Open Demo",
+      "docs": "Docs",
+      "features": {
+        "ddd": {
+          "title": "Business logic with one home",
+          "desc": "Every rule is written once, inside aggregates and value objects in the domain layer. Custom lint rules fail the build when a boundary is crossed."
+        },
+        "events": {
+          "title": "Reliable events between services",
+          "desc": "Services talk through Kafka with a transactional outbox and an idempotent inbox: no lost events, no double processing."
+        },
+        "observability": {
+          "title": "See everything from day one",
+          "desc": "Metrics, logs and traces flow into Grafana automatically. Every command, query and event is measured without extra code."
+        },
+        "deployable": {
+          "title": "Laptop to production in one command",
+          "desc": "One compose stack for dev, versioned images for prod, TLS handled by Caddy, and scripts that provision and deploy a fresh server."
+        },
+        "agents": {
+          "title": "A codebase AI agents can navigate",
+          "desc": "Every feature has the same shape and the same place. Humans and coding agents always know where things go."
+        },
+        "scaffold": {
+          "title": "New services in one command",
+          "desc": "The generator scaffolds a service with a working starter context and wires it into compose, Caddy and monitoring. Rename it and start building."
+        }
+      }
+    },
+    "auth": {
+      "panelKicker": "the developer console",
+      "panelTitle": "Operate your services from one forge-lit cockpit",
+      "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
+      "panelFootnote": "Secure session · token refresh · role-based access",
+      "backToHome": "Back to home"
+    },
+    "nav": {
+      "overview": "Overview",
+      "account": "Account",
+      "admin": "Admin",
+      "sectionMain": "Console",
+      "sectionSystem": "System",
+      "logout": "Log out",
+      "env": "env",
+      "impersonating": "Impersonating",
+      "exitImpersonation": "Exit"
+    },
+    "dashboard": {
+      "title": "System Overview",
+      "subtitle": "Live health and event flow across the service.",
+      "live": "live",
+      "paused": "paused",
+      "refreshedAt": "synced {time}",
+      "health": {
+        "title": "System Health",
+        "ready": "Ready",
+        "notReady": "Not ready",
+        "service": "service",
+        "environment": "env",
+        "noChecks": "No health checks reported.",
+        "loadError": "Could not load health status."
+      },
+      "events": {
+        "title": "Event Throughput",
+        "totalProcessed": "Total events processed",
+        "byType": "By event type",
+        "topic": "topic",
+        "success": "ok",
+        "failure": "err",
+        "lastProcessed": "last",
+        "none": "No events processed yet.",
+        "loadError": "Could not load event data.",
+        "never": "never"
+      },
+      "analytics": {
+        "title": "User Activity",
+        "total": "total activities",
+        "byType": "by event type",
+        "lastActivity": "last activity",
+        "never": "never",
+        "none": "No activity yet — register a user and watch the events flow.",
+        "loadError": "Couldn't reach service-2.",
+        "source": "fed by Kafka events"
+      },
+      "account": {
+        "title": "Your Account",
+        "email": "Email",
+        "role": "Role",
+        "memberSince": "Member since",
+        "view": "Manage account"
+      },
+      "motd": {
+        "label": "Notice"
+      }
+    },
+    "account": {
+      "title": "Account",
+      "subtitle": "Your profile and credentials.",
+      "profile": {
+        "title": "Profile",
+        "email": "Email",
+        "role": "Role",
+        "userId": "User ID",
+        "completed": "Completed",
+        "pending": "Pending"
+      },
+      "password": {
+        "title": "Change Password",
+        "current": "Current password",
+        "currentPlaceholder": "Enter current password",
+        "new": "New password",
+        "newPlaceholder": "At least 8 characters",
+        "confirm": "Confirm new password",
+        "confirmPlaceholder": "Re-enter new password",
+        "submit": "Update password",
+        "submitting": "Updating...",
+        "success": "Password updated. You'll be signed out shortly.",
+        "errors": {
+          "mismatch": "New passwords do not match",
+          "tooShort": "Password must be at least 8 characters",
+          "failed": "Failed to change password. Check your current password."
+        }
+      }
+    },
+    "admin": {
+      "title": "Administration",
+      "subtitle": "Manage users and the public notice.",
+      "onlyTitle": "Admin only",
+      "onlyDesc": "You need the admin role to view this area.",
+      "users": {
+        "title": "Users",
+        "filterEmail": "email",
+        "filterIp": "ip",
+        "filterPlaceholder": "Filter by {field}…",
+        "search": "Search",
+        "clear": "Clear",
+        "columns": {
+          "email": "Email",
+          "role": "Role",
+          "status": "Status",
+          "created": "Created",
+          "ips": "IPs",
+          "actions": "Actions"
+        },
+        "empty": "No users found.",
+        "loadError": "Failed to load users.",
+        "suspend": "Suspend",
+        "unsuspend": "Unsuspend",
+        "delete": "Delete",
+        "impersonate": "Impersonate",
+        "page": "Page {current} / {total}",
+        "total": "{count} users",
+        "prev": "Prev",
+        "next": "Next",
+        "confirmDelete": {
+          "title": "Delete user",
+          "body": "Permanently delete {email}? This cannot be undone.",
+          "confirm": "Delete user"
+        },
+        "toast": {
+          "suspended": "User suspended",
+          "unsuspended": "User unsuspended",
+          "deleted": "User deleted",
+          "actionFailed": "Action failed"
+        }
+      },
+      "motd": {
+        "title": "Message of the Day",
+        "label": "Notice content",
+        "placeholder": "Shown to every user on the console…",
+        "help": "Leave a heads-up for everyone (maintenance windows, releases…).",
+        "save": "Save notice",
+        "saving": "Saving…",
+        "clear": "Clear",
+        "clearing": "Clearing…",
+        "empty": "No notice is currently set.",
+        "updated": "Updated {time}",
+        "toast": {
+          "saved": "Notice saved",
+          "cleared": "Notice cleared",
+          "empty": "Content cannot be empty",
+          "saveFailed": "Failed to save notice",
+          "clearFailed": "Failed to clear notice"
+        }
+      }
+    }
+  }
+}

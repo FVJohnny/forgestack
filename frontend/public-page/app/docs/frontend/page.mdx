@@ -1,0 +1,133 @@
+# Frontend
+
+The frontend is a **Next.js 16 / React 19** app (`frontend/public-page`) using
+the App Router, Tailwind CSS v4, next-intl for localisation, and a small
+design-system of shared primitives. It serves the public landing page, the
+authentication flows, the authenticated console, and these docs.
+
+## App Router structure
+
+```
+app/
+├── layout.tsx          root layout — fonts, i18n provider, auth providers
+├── page.tsx            landing
+├── login/  register/  forgot-password/  reset-password/  verify-email/
+├── dashboard/          authenticated console (own layout: sidebar + topbar)
+│   ├── layout.tsx
+│   ├── page.tsx        overview
+│   ├── account/  admin/
+├── docs/               this documentation (MDX)
+└── shared/
+    ├── ui/             design-system primitives
+    ├── components/     larger pieces (e.g. architecture diagram)
+    └── auth/           ProtectedRoute, providers
+```
+
+The **root layout** wires the global providers once — next-intl, tooltip, Google
+OAuth, auth and user contexts, and toast notifications — so every route inherits
+them. The **dashboard layout** adds the authenticated chrome (sidebar + topbar).
+
+## Design tokens & theming
+
+Styling is driven entirely by **CSS custom properties** defined in
+`app/globals.css` and exposed to Tailwind v4 via `@theme`. The palette is the
+"Molten Forge" identity — dark forged-steel surfaces with a molten-orange accent:
+
+```css
+--base: #0c0a09;          /* forged-steel background */
+--ink: #f0e9e2;           /* primary text */
+--ink-dim: #a3978c;       /* secondary text */
+--line: rgba(255,180,120,0.09);   /* hairline borders */
+--phosphor: #ff5a1f;      /* primary accent (molten orange) */
+--amber: #ffb429;         /* spark / warning */
+```
+
+Because everything reads from these tokens, **re-theming is a token change** —
+adjust `--phosphor` and the accent cascades across buttons, links, charts,
+diagram connectors and the docs. Components reference Tailwind classes mapped to
+the tokens (`text-ink`, `border-line`, `text-primary`, …), never hard-coded
+colours.
+
+Fonts are loaded with `next/font`: **Geist** for body (`--font-sans`) and
+**JetBrains Mono** for code and labels (`--font-mono`).
+
+## UI primitives
+
+The `app/shared/ui/` folder is the component vocabulary. A selection:
+
+| Primitive | Purpose |
+| --- | --- |
+| `Button` | CVA variants (`primary`, `outline`, `ghost`, `destructive`, …) and sizes |
+| `Card` | `Card` + `CardHeader/Title/Description/Content/Footer` |
+| `Badge` | status pills (`live`, `warn`, `down`, `accent`) |
+| `Input` / `Label` / `PasswordInput` | form controls |
+| `Dialog` / `DropdownMenu` / `Tooltip` | Radix-based overlays |
+| `Table`, `StatTile`, `StatusDot`, `Skeleton` | data display |
+| `Wordmark` | the brand mark (with rising embers) |
+| `EmberField` | the animated forge-ember background |
+
+Compose with the `cn()` helper (`clsx` + `tailwind-merge`) so class overrides
+merge predictably:
+
+```ts
+import { cn } from '@/lib/utils';
+<div className={cn('rounded-lg border border-line', active && 'border-primary')} />
+```
+
+## Internationalisation
+
+Localisation uses **next-intl**. Locale is **cookie-based** (`NEXT_LOCALE`) —
+there's no `[locale]` segment in the URL — with the browser's `Accept-Language`
+as a fallback and `en` as the default. Eight locales ship: `en`, `es`, `pt`,
+`de`, `fr`, `nl`, `pl`, `th`.
+
+Translations live in `messages/<locale>.json`, organised by namespace, and
+components consume them through `useTranslations`:
+
+```tsx
+const t = useTranslations('fmf.landing');
+return <h1>{t('headline')}</h1>;
+```
+
+Keep all locale files in sync when you add a key. (These docs are an exception —
+they're authored in English MDX rather than the translation catalogues.)
+
+## The console
+
+`app/dashboard` is the authenticated area, guarded client-side by
+`ProtectedRoute` and server-validated by the backend's `JwtAuthGuard`. It reads
+live system data — health and event throughput — from the backend's
+JWT-protected `/dashboard` endpoints and renders it with the shared primitives
+(stat tiles, status dots, tables). Admins additionally get user management and a
+message-of-the-day editor.
+
+## Calling backend services
+
+The frontend reaches every backend service through its own hostname, with one
+API-client instance per service:
+
+1. **CORS** — the frontend origin must be in the service's `CORS_ORIGINS`.
+2. **Base URL** — a `NEXT_PUBLIC_<NAME>_API_URL` env var in `.env.local`
+   (+ `.example`) and `infra/env/public-page.env.prod` (+ `.example`).
+   `NEXT_PUBLIC_*` values are baked in at build time: restart the dev
+   container / rebuild the prod image to pick them up.
+3. **API client** — add the base URL to `lib/api/config.ts` and export a
+   client instance for it in `lib/api/client.ts`, then wrap the endpoints in
+   a `lib/api/services/<name>.service.ts` with types in `lib/api/types.ts`.
+4. **UI** — fetch through the service module. Any user-facing text needs keys
+   in **all locale catalogues** under `messages/`.
+
+The dashboard's activity panel (fed by the second example service) is the
+worked example of all four steps: `service2ApiClient` in `lib/api/client.ts`,
+`analytics.service.ts`, and `app/dashboard/components/analytics-panel.tsx`.
+
+## The docs (this section)
+
+These pages are **MDX**. `next.config.mjs` enables MDX via `@next/mdx`
+(`pageExtensions` includes `mdx`), and `mdx-components.tsx` maps MDX output onto
+the design tokens so prose, code blocks, tables and callouts all match the rest
+of the app. The sidebar/prev-next come from a single nav config
+(`app/docs/nav.ts`), so adding a page is: create the `.mdx` file and add one
+entry to the nav.
+
+Next: **[Databases](/docs/databases)**.

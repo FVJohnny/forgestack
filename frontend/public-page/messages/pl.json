@@ -1,0 +1,263 @@
+{
+  "auth": {
+    "login": {
+      "title": "Witaj Ponownie",
+      "subtitle": "Zaloguj się, aby uzyskać dostęp do panelu",
+      "email": "Email",
+      "emailPlaceholder": "jan.kowalski@przyklad.pl",
+      "password": "Hasło",
+      "passwordPlaceholder": "Wprowadź hasło",
+      "submit": "Zaloguj się",
+      "submitting": "Logowanie...",
+      "noAccount": "Nie masz konta?",
+      "createAccount": "Utwórz Konto",
+      "successMessage": "Konto utworzone pomyślnie! Sprawdź swój email ({email}), aby potwierdzić konto przed zalogowaniem.",
+      "errorDefault": "Logowanie nie powiodło się. Sprawdź dane logowania.",
+      "orContinueWith": "lub kontynuuj przez",
+      "googleButton": "Kontynuuj przez Google",
+      "googleError": "Logowanie przez Google nie powiodło się. Spróbuj ponownie.",
+      "forgotPassword": "Zapomniałeś hasła?"
+    },
+    "forgotPassword": {
+      "title": "Zapomniałem Hasła",
+      "description": "Wprowadź swój adres e-mail, a wyślemy Ci link do zresetowania hasła.",
+      "email": "E-mail",
+      "emailPlaceholder": "jan.kowalski@przyklad.pl",
+      "submit": "Wyślij Link Resetujący",
+      "submitting": "Wysyłanie linku...",
+      "success": "Sprawdź swoją pocztę! Wysłaliśmy link do resetowania hasła na adres {email}.",
+      "backToSignIn": "Powrót do Logowania",
+      "error": "Nie udało się zażądać resetowania hasła. Spróbuj ponownie."
+    },
+    "register": {
+      "title": "Utwórz Konto",
+      "email": "Email",
+      "emailPlaceholder": "jan.kowalski@przyklad.pl",
+      "password": "Hasło",
+      "passwordPlaceholder": "Wprowadź hasło",
+      "confirmPassword": "Potwierdź Hasło",
+      "confirmPasswordPlaceholder": "Potwierdź hasło",
+      "submit": "Utwórz Konto",
+      "submitting": "Tworzenie konta...",
+      "hasAccount": "Masz już konto?",
+      "signIn": "Zaloguj się",
+      "errors": {
+        "passwordMismatch": "Hasła nie są zgodne",
+        "passwordLength": "Hasło musi mieć co najmniej 6 znaków",
+        "default": "Rejestracja nie powiodła się. Spróbuj ponownie."
+      }
+    },
+    "verifyEmail": {
+      "loading": {
+        "title": "Weryfikacja Email",
+        "description": "Proszę czekać, weryfikujemy Twój adres email..."
+      },
+      "success": {
+        "title": "Email Zweryfikowany!",
+        "description": "Twój adres email został pomyślnie zweryfikowany. Przekierowanie do panelu..."
+      },
+      "error": {
+        "title": "Weryfikacja Nie Powiodła Się",
+        "tryAgain": "Spróbuj ponownie lub skontaktuj się z supportem, jeśli problem się powtarza.",
+        "goToSignIn": "Przejdź do Logowania"
+      },
+      "errors": {
+        "noId": "Nieprawidłowy link weryfikacyjny. Brak ID weryfikacji.",
+        "default": "Weryfikacja email nie powiodła się. Link może być nieprawidłowy lub wygasły."
+      },
+      "backToHome": "← Powrót do strony głównej"
+    }
+  },
+  "fmf": {
+    "landing": {
+      "headline": "Solidny fundament do <molten>kucia</molten> aplikacji",
+      "sub": "Gotowy do produkcji starter mikroserwisów NestJS — DDD, CQRS, komunikacja sterowana zdarzeniami, pełna obserwowalność i wdrożenia jedną komendą, wszystko gotowe, byś mógł budować zamiast konfigurować od zera.",
+      "github": "Zobacz na GitHub",
+      "openDemo": "Otwórz demo",
+      "docs": "Dokumentacja",
+      "features": {
+        "ddd": {
+          "title": "Logika biznesowa z jednym domem",
+          "desc": "Każda reguła jest zapisana raz, w agregatach i value objects w warstwie domeny. Własne reguły lint przerywają build, gdy granica zostaje przekroczona."
+        },
+        "events": {
+          "title": "Niezawodne zdarzenia między serwisami",
+          "desc": "Serwisy komunikują się przez Kafkę z transakcyjnym outboxem i idempotentnym inboxem: bez zgubionych zdarzeń i podwójnego przetwarzania."
+        },
+        "observability": {
+          "title": "Pełna widoczność od pierwszego dnia",
+          "desc": "Metryki, logi i trace'y trafiają do Grafany automatycznie. Każda komenda, zapytanie i zdarzenie jest mierzone bez dodatkowego kodu."
+        },
+        "deployable": {
+          "title": "Z laptopa na produkcję jednym poleceniem",
+          "desc": "Jeden stack compose dla dev, wersjonowane obrazy dla prod, TLS przez Caddy i skrypty, które przygotują i wdrożą świeży serwer."
+        },
+        "agents": {
+          "title": "Kod, po którym agenci AI umieją się poruszać",
+          "desc": "Każda funkcja ma ten sam kształt i to samo miejsce. Ludzie i agenci zawsze wiedzą, gdzie co trafia."
+        },
+        "scaffold": {
+          "title": "Nowe serwisy jednym poleceniem",
+          "desc": "Generator tworzy serwis z działającym kontekstem startowym i podłącza go do compose, Caddy i monitoringu. Zmień nazwę i buduj dalej."
+        }
+      }
+    },
+    "auth": {
+      "panelKicker": "konsola dewelopera",
+      "panelTitle": "Zarządzaj swoimi usługami z jednego kokpitu rozświetlonego ogniem kuźni",
+      "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
+      "panelFootnote": "Bezpieczna sesja · odświeżanie tokenów · dostęp oparty na rolach",
+      "backToHome": "Powrót do strony głównej"
+    },
+    "nav": {
+      "overview": "Przegląd",
+      "account": "Konto",
+      "admin": "Administracja",
+      "sectionMain": "Konsola",
+      "sectionSystem": "System",
+      "logout": "Wyloguj się",
+      "env": "środ.",
+      "impersonating": "Personifikacja",
+      "exitImpersonation": "Zakończ"
+    },
+    "dashboard": {
+      "title": "Przegląd systemu",
+      "subtitle": "Stan na żywo i przepływ zdarzeń w usłudze.",
+      "live": "na żywo",
+      "paused": "wstrzymane",
+      "refreshedAt": "zsynchronizowano {time}",
+      "health": {
+        "title": "Stan systemu",
+        "ready": "Gotowy",
+        "notReady": "Niegotowy",
+        "service": "usługa",
+        "environment": "środ.",
+        "noChecks": "Brak zgłoszonych kontroli stanu.",
+        "loadError": "Nie udało się załadować stanu systemu."
+      },
+      "events": {
+        "title": "Przepustowość zdarzeń",
+        "totalProcessed": "Łącznie przetworzonych zdarzeń",
+        "byType": "Według typu zdarzenia",
+        "topic": "topic",
+        "success": "ok",
+        "failure": "błąd",
+        "lastProcessed": "ostatnie",
+        "none": "Nie przetworzono jeszcze żadnych zdarzeń.",
+        "loadError": "Nie udało się załadować danych zdarzeń.",
+        "never": "nigdy"
+      },
+      "analytics": {
+        "title": "Aktywność użytkowników",
+        "total": "łączna liczba aktywności",
+        "byType": "według typu zdarzenia",
+        "lastActivity": "ostatnia aktywność",
+        "never": "nigdy",
+        "none": "Brak aktywności — zarejestruj użytkownika i obserwuj przepływ zdarzeń.",
+        "loadError": "Nie można połączyć się z service-2.",
+        "source": "zasilane zdarzeniami Kafki"
+      },
+      "account": {
+        "title": "Twoje konto",
+        "email": "Email",
+        "role": "Rola",
+        "memberSince": "Członek od",
+        "view": "Zarządzaj kontem"
+      },
+      "motd": {
+        "label": "Ogłoszenie"
+      }
+    },
+    "account": {
+      "title": "Konto",
+      "subtitle": "Twój profil i dane logowania.",
+      "profile": {
+        "title": "Profil",
+        "email": "Email",
+        "role": "Rola",
+        "userId": "ID użytkownika",
+        "completed": "Ukończone",
+        "pending": "Oczekujące"
+      },
+      "password": {
+        "title": "Zmień hasło",
+        "current": "Obecne hasło",
+        "currentPlaceholder": "Wprowadź obecne hasło",
+        "new": "Nowe hasło",
+        "newPlaceholder": "Co najmniej 8 znaków",
+        "confirm": "Potwierdź nowe hasło",
+        "confirmPlaceholder": "Wprowadź ponownie nowe hasło",
+        "submit": "Zaktualizuj hasło",
+        "submitting": "Aktualizowanie...",
+        "success": "Hasło zaktualizowane. Wkrótce zostaniesz wylogowany.",
+        "errors": {
+          "mismatch": "Nowe hasła nie są zgodne",
+          "tooShort": "Hasło musi mieć co najmniej 8 znaków",
+          "failed": "Nie udało się zmienić hasła. Sprawdź obecne hasło."
+        }
+      }
+    },
+    "admin": {
+      "title": "Administracja",
+      "subtitle": "Zarządzaj użytkownikami i publicznym ogłoszeniem.",
+      "onlyTitle": "Tylko dla administratorów",
+      "onlyDesc": "Aby zobaczyć ten obszar, potrzebujesz roli administratora.",
+      "users": {
+        "title": "Użytkownicy",
+        "filterEmail": "email",
+        "filterIp": "ip",
+        "filterPlaceholder": "Filtruj według {field}…",
+        "search": "Szukaj",
+        "clear": "Wyczyść",
+        "columns": {
+          "email": "Email",
+          "role": "Rola",
+          "status": "Status",
+          "created": "Utworzono",
+          "ips": "IP",
+          "actions": "Akcje"
+        },
+        "empty": "Nie znaleziono użytkowników.",
+        "loadError": "Nie udało się załadować użytkowników.",
+        "suspend": "Zawieś",
+        "unsuspend": "Przywróć",
+        "delete": "Usuń",
+        "impersonate": "Personifikuj",
+        "page": "Strona {current} / {total}",
+        "total": "{count} użytkowników",
+        "prev": "Poprzednia",
+        "next": "Następna",
+        "confirmDelete": {
+          "title": "Usuń użytkownika",
+          "body": "Trwale usunąć {email}? Tej operacji nie można cofnąć.",
+          "confirm": "Usuń użytkownika"
+        },
+        "toast": {
+          "suspended": "Użytkownik zawieszony",
+          "unsuspended": "Użytkownik przywrócony",
+          "deleted": "Użytkownik usunięty",
+          "actionFailed": "Akcja nie powiodła się"
+        }
+      },
+      "motd": {
+        "title": "Wiadomość dnia",
+        "label": "Treść ogłoszenia",
+        "placeholder": "Wyświetlana każdemu użytkownikowi w konsoli…",
+        "help": "Zostaw informację dla wszystkich (okna serwisowe, wydania…).",
+        "save": "Zapisz ogłoszenie",
+        "saving": "Zapisywanie…",
+        "clear": "Wyczyść",
+        "clearing": "Czyszczenie…",
+        "empty": "Obecnie nie ustawiono żadnego ogłoszenia.",
+        "updated": "Zaktualizowano {time}",
+        "toast": {
+          "saved": "Ogłoszenie zapisane",
+          "cleared": "Ogłoszenie wyczyszczone",
+          "empty": "Treść nie może być pusta",
+          "saveFailed": "Nie udało się zapisać ogłoszenia",
+          "clearFailed": "Nie udało się wyczyścić ogłoszenia"
+        }
+      }
+    }
+  }
+}

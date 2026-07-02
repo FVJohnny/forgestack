@@ -1,0 +1,34 @@
+import { ArchitectureDiagram } from '@/app/shared/components/architecture-diagram';
+
+# Architecture
+
+ForgeStack is a full-stack starter that gives you a complete, production-shaped
+system out of the box. Every request enters through a single door, **Caddy**, 
+which routes trafficnto whatever needs it: the **frontend**, the **backend**, your monitoring
+dashboards, or the database viewers. 
+
+
+The diagram below is the whole system at a glance. Every box can be clicked to jump to the section
+that explains it in depth.
+
+<div className="my-8">
+  <ArchitectureDiagram />
+</div>
+
+## The pieces
+
+- **Caddy** — the reverse proxy and only public entry point. It routes each hostname to the service behind it. Covered in
+  [Deployment](/docs/deployment).
+- **Frontend** — a Next.js application with the landing page, documentation,
+  auth flows and a small dashboard. See [Frontend](/docs/frontend).
+- **Backend** — one or more NestJS services containing the business logic. See
+  [Backend](/docs/backend).
+- **Kafka** — the event bus. Services communicate by publishing and consuming
+  events rather than calling each other directly. See
+  [Events](/docs/backend/events).
+- **Databases** — **MongoDB** for persistence and **Redis** for caching, with
+  **PostgreSQL** support planned. Mongo Express is included for inspecting the
+  data; PGAdmin will arrive with PostgreSQL. See [Databases](/docs/databases).
+- **Observability** — Prometheus, Loki and Tempo collect metrics, logs and
+  traces from every deployed component; **Grafana** is preconfigured to display
+  them. See [Monitoring](/docs/monitoring).

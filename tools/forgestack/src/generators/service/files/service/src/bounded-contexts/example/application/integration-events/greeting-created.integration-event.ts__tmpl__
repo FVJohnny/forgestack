@@ -1,0 +1,81 @@
+import {
+  ApplicationException,
+  Base_IntegrationEvent,
+  type Base_IntegrationEventProps,
+  Id,
+} from '@libs/nestjs-common';
+
+interface GreetingCreated_IntegrationEventProps extends Base_IntegrationEventProps {
+  greetingId: string;
+  message: string;
+  source: string;
+}
+
+/**
+ * The public "a greeting was created" contract, published over Kafka. Plain,
+ * serializable fields only — never domain objects.
+ *
+ * Event contracts normally live in @libs/nestjs-common
+ * (integration-events/events/) so the publisher and every consumer share one
+ * class; move this there as soon as another service needs to consume it.
+ */
+export class GreetingCreated_IntegrationEvent extends Base_IntegrationEvent {
+  static readonly TOPIC = 'greetings';
+  static readonly NAME = 'greeting.created';
+
+  public readonly greetingId: string;
+  public readonly message: string;
+  public readonly source: string;
+
+  constructor(props: GreetingCreated_IntegrationEventProps) {
+    super(
+      props,
+      GreetingCreated_IntegrationEvent.TOPIC,
+      GreetingCreated_IntegrationEvent.NAME,
+      '1.0',
+    );
+
+    this.greetingId = props.greetingId;
+    this.message = props.message;
+    this.source = props.source;
+
+    this.validate();
+  }
+
+  static random(): GreetingCreated_IntegrationEvent {
+    return new GreetingCreated_IntegrationEvent({
+      id: Id.random().toValue(),
+      occurredOn: new Date(),
+      greetingId: Id.random().toValue(),
+      message: 'Hello from a random greeting',
+      source: 'api',
+    });
+  }
+
+  protected toEventJSON(): Record<string, unknown> {
+    return {
+      greetingId: this.greetingId,
+      message: this.message,
+      source: this.source,
+    };
+  }
+
+  static fromJSON(json: Record<string, unknown>): GreetingCreated_IntegrationEvent {
+    Base_IntegrationEvent.validateJson(json);
+
+    return new GreetingCreated_IntegrationEvent({
+      id: json.id as string,
+      occurredOn: new Date(json.occurredOn as string),
+      greetingId: json.greetingId as string,
+      message: json.message as string,
+      source: json.source as string,
+    });
+  }
+
+  protected validate(): void {
+    super.validate();
+    if (!this.greetingId) throw new ApplicationException('greetingId is required');
+    if (!this.message) throw new ApplicationException('message is required');
+    if (!this.source) throw new ApplicationException('source is required');
+  }
+}

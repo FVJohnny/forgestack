@@ -1,0 +1,89 @@
+# Databases
+
+ForgeStack runs **MongoDB** as the primary datastore and **Redis** for caching
+and pub/sub, with **Kafka** as the event transport. The persistence layer is
+abstracted behind repository ports (see [Hexagonal Architecture](/docs/backend/hexagonal#repositories)),
+so the datastore is an implementation detail the domain never sees.
+
+## MongoDB
+
+The primary store. Configured by `MongoDbConfigService`; the app uses the
+**native MongoDB driver** (not Mongoose) through `Base_MongoRepository`.
+
+- **Connection** — `MONGODB_URI`, defaulting (dev) to
+  `mongodb://mongodb:27017/<service>?replicaSet=rs0&directConnection=true`.
+- **Replica set** — Mongo runs as a single-member replica set `rs0`. This isn't
+  for redundancy in dev; it's because **multi-document transactions require a
+  replica set**, and the outbox pattern relies on them (state + outbox row commit
+  atomically).
+- **Connection pool** — max 20 by default (`MONGO_MAX_POOL_SIZE`), with 5s
+  server-selection / socket / connect timeouts.
+- **Auth** — enabled in production via a keyfile and admin user, created on first
+  boot by `infra/mongo/mongo-startup.sh`.
+
+```env
+MONGODB_URI=mongodb://mongodb:27017/app?replicaSet=rs0
+MONGO_MAX_POOL_SIZE=20
+```
+
+### Indexes & criteria
+
+Each repository declares its indexes in `defineIndexes()`, created idempotently
+on startup. Queries are expressed with the database-agnostic **Criteria** object
+and translated by `MongoCriteriaConverter` — so query logic doesn't hard-code
+Mongo syntax.
+
+### Mongo Express
+
+A web UI for browsing collections is included (the "DB Viewer" in the
+architecture diagram), served through Caddy at `https://mongo.localhost` in dev,
+behind basic auth.
+
+## Redis
+
+Used for caching and publish/subscribe. `RedisService` manages **three clients**
+— a database client, a publisher, and a subscriber (pub/sub needs dedicated
+connections).
+
+```env
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=          # optional
+REDIS_DB=0
+REDIS_TLS=false
+REDIS_KEY_PREFIX=        # optional namespacing
+```
+
+Redis runs with append-only persistence (`--appendonly yes`) and a
+`redis-cli ping` health check.
+
+## Kafka
+
+The event bus. A single broker (with Zookeeper) in the default stack, with auto
+topic creation enabled. Producers and consumers are managed by
+`@libs/nestjs-kafka`; see [Event-Driven Architecture](/docs/backend/events) for
+how messages flow through it via the outbox and inbox.
+
+```env
+KAFKA_BROKERS=kafka:9092
+KAFKA_SERVICE_ID=service-1
+KAFKA_CONSUMER_SESSION_TIMEOUT=120000
+KAFKA_CONSUMER_HEARTBEAT_INTERVAL=10000
+```
+
+## Swapping or adding datastores
+
+Because the domain depends on a repository **interface**, adding PostgreSQL,
+MySQL, or anything else is a matter of writing a new adapter that implements that
+interface — no handler or domain code changes. The auth context already ships an
+**in-memory** repository implementation used in tests, which is the simplest
+demonstration of the same port backed by a different store.
+
+<Callout type="note" title="The diagram's “Databases” cluster">
+  The landing-page architecture diagram shows Redis, Mongo and PostgreSQL under
+  "Databases" to signal that the datastore is swappable. Mongo and Redis are
+  wired by default; the ports-and-adapters design is what makes the others
+  drop-in.
+</Callout>
+
+Next: **[Monitoring](/docs/monitoring)**.

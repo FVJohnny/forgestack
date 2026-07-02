@@ -1,0 +1,50 @@
+import { Outbox_InMemoryRepository } from '@libs/nestjs-common';
+import { Greeting } from '@bc/example/domain/aggregates/greeting/greeting.aggregate';
+import { GreetingCreated_DomainEvent } from '@bc/example/domain/aggregates/greeting/events/greeting-created.domain-event';
+import { GreetingCreated_PublishIntegrationEvent_DomainEventHandler } from './greeting-created_publish-integration-event.domain-event-handler';
+
+describe('GreetingCreated_PublishIntegrationEvent_DomainEventHandler', () => {
+  const setup = (params: { shouldFailOutbox?: boolean } = {}) => {
+    const outboxRepository = new Outbox_InMemoryRepository(params.shouldFailOutbox);
+    const handler = new GreetingCreated_PublishIntegrationEvent_DomainEventHandler(
+      outboxRepository,
+    );
+
+    return { outboxRepository, handler };
+  };
+
+  const createEvent = () => {
+    const greeting = Greeting.random();
+    return {
+      greeting,
+      event: new GreetingCreated_DomainEvent(greeting.id, greeting.message, greeting.source),
+    };
+  };
+
+  it('should write a greeting.created integration event to the outbox', async () => {
+    // Arrange
+    const { handler, outboxRepository } = setup();
+    const { greeting, event } = createEvent();
+
+    // Act
+    await handler.handle(event);
+
+    // Assert
+    const outboxEvents = await outboxRepository.findAll();
+    expect(outboxEvents).toHaveLength(1);
+
+    const payload = JSON.parse(outboxEvents[0].payload.toValue());
+    expect(payload.greetingId).toBe(greeting.id.toValue());
+    expect(payload.message).toBe(greeting.message.toValue());
+    expect(payload.source).toBe(greeting.source);
+  });
+
+  it('should propagate outbox failures', async () => {
+    // Arrange
+    const { handler } = setup({ shouldFailOutbox: true });
+    const { event } = createEvent();
+
+    // Act & Assert
+    await expect(handler.handleEvent(event)).rejects.toThrow();
+  });
+});

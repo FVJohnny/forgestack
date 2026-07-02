@@ -1,0 +1,52 @@
+# Unified Caddyfile for dev and prod
+# Dev sets TLS_ENV=dev (self-signed certs), prod sets TLS_ENV=prod (Let's Encrypt)
+
+(tls-dev) {
+    tls internal
+}
+
+(tls-prod) {
+}
+
+{$PROTOCOL:http}://www.{$DOMAIN:localhost} {
+    import tls-{$TLS_ENV:dev}
+    redir {$PROTOCOL:http}://{$DOMAIN:localhost}{uri} permanent
+}
+
+{$PROTOCOL:http}://{$DOMAIN:localhost} {
+    import tls-{$TLS_ENV:dev}
+    reverse_proxy public-page:3000 {
+        transport http {
+            dial_timeout 5s
+            response_header_timeout 30s
+            max_conns_per_host 0
+            keepalive 90s
+            keepalive_idle_conns 32
+        }
+    }
+}
+
+{$PROTOCOL:http}://service1.{$DOMAIN:localhost} {
+    import tls-{$TLS_ENV:dev}
+    reverse_proxy service-1:3000
+}
+
+{$PROTOCOL:http}://service2.{$DOMAIN:localhost} {
+    import tls-{$TLS_ENV:dev}
+    reverse_proxy service-2:3000
+}
+
+{$PROTOCOL:http}://grafana.{$DOMAIN:localhost} {
+    import tls-{$TLS_ENV:dev}
+    reverse_proxy grafana:3000
+}
+
+{$PROTOCOL:http}://mongo.{$DOMAIN:localhost} {
+    import tls-{$TLS_ENV:dev}
+    reverse_proxy mongo-express:8081
+}
+
+{$PROTOCOL:http}://portainer.{$DOMAIN:localhost} {
+    import tls-{$TLS_ENV:dev}
+    reverse_proxy portainer:9000
+}

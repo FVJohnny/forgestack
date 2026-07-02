@@ -1,0 +1,263 @@
+{
+  "auth": {
+    "login": {
+      "title": "Willkommen Zurück",
+      "subtitle": "Melde dich an, um auf dein Dashboard zuzugreifen",
+      "email": "E-Mail",
+      "emailPlaceholder": "max.mustermann@beispiel.de",
+      "password": "Passwort",
+      "passwordPlaceholder": "Gib dein Passwort ein",
+      "submit": "Anmelden",
+      "submitting": "Anmelden...",
+      "noAccount": "Noch kein Konto?",
+      "createAccount": "Konto Erstellen",
+      "successMessage": "Konto erfolgreich erstellt! Bitte überprüfe deine E-Mail ({email}) für einen Bestätigungslink vor der Anmeldung.",
+      "errorDefault": "Anmeldung fehlgeschlagen. Bitte überprüfe deine Anmeldedaten.",
+      "orContinueWith": "oder fortfahren mit",
+      "googleButton": "Weiter mit Google",
+      "googleError": "Google-Anmeldung fehlgeschlagen. Bitte versuche es erneut.",
+      "forgotPassword": "Passwort vergessen?"
+    },
+    "forgotPassword": {
+      "title": "Passwort Vergessen",
+      "description": "Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.",
+      "email": "E-Mail",
+      "emailPlaceholder": "max.mustermann@beispiel.de",
+      "submit": "Zurücksetzungslink Senden",
+      "submitting": "Link wird gesendet...",
+      "success": "Überprüfen Sie Ihre E-Mail! Wir haben einen Link zum Zurücksetzen des Passworts an {email} gesendet.",
+      "backToSignIn": "Zurück zur Anmeldung",
+      "error": "Fehler beim Anfordern der Passwortzurücksetzung. Bitte versuchen Sie es erneut."
+    },
+    "register": {
+      "title": "Konto Erstellen",
+      "email": "E-Mail",
+      "emailPlaceholder": "max.mustermann@beispiel.de",
+      "password": "Passwort",
+      "passwordPlaceholder": "Gib dein Passwort ein",
+      "confirmPassword": "Passwort Bestätigen",
+      "confirmPasswordPlaceholder": "Bestätige dein Passwort",
+      "submit": "Konto Erstellen",
+      "submitting": "Konto wird erstellt...",
+      "hasAccount": "Bereits ein Konto?",
+      "signIn": "Anmelden",
+      "errors": {
+        "passwordMismatch": "Passwörter stimmen nicht überein",
+        "passwordLength": "Passwort muss mindestens 6 Zeichen lang sein",
+        "default": "Registrierung fehlgeschlagen. Bitte versuche es erneut."
+      }
+    },
+    "verifyEmail": {
+      "loading": {
+        "title": "E-Mail Wird Verifiziert",
+        "description": "Bitte warte, während wir deine E-Mail-Adresse verifizieren..."
+      },
+      "success": {
+        "title": "E-Mail Verifiziert!",
+        "description": "Deine E-Mail-Adresse wurde erfolgreich verifiziert. Weiterleitung zum Dashboard..."
+      },
+      "error": {
+        "title": "Verifizierung Fehlgeschlagen",
+        "tryAgain": "Bitte versuche es erneut oder kontaktiere den Support, wenn das Problem weiterhin besteht.",
+        "goToSignIn": "Zur Anmeldung"
+      },
+      "errors": {
+        "noId": "Ungültiger Bestätigungslink. Keine Bestätigungs-ID angegeben.",
+        "default": "E-Mail-Verifizierung fehlgeschlagen. Der Link ist möglicherweise ungültig oder abgelaufen."
+      },
+      "backToHome": "← Zurück zur Startseite"
+    }
+  },
+  "fmf": {
+    "landing": {
+      "headline": "Ein solides Fundament zum <molten>Schmieden</molten> von Anwendungen",
+      "sub": "Ein produktionsreifer NestJS-Microservices-Starter – DDD, CQRS, ereignisgesteuerte Kommunikation, vollständige Observability und Deployments mit einem Befehl, alles fertig verdrahtet, damit du bauen kannst, statt aufzusetzen.",
+      "github": "Auf GitHub ansehen",
+      "openDemo": "Demo öffnen",
+      "docs": "Doku",
+      "features": {
+        "ddd": {
+          "title": "Geschäftslogik mit einem Zuhause",
+          "desc": "Jede Regel wird genau einmal geschrieben, in Aggregaten und Value Objects der Domänenschicht. Eigene Lint-Regeln lassen den Build fehlschlagen, wenn eine Grenze verletzt wird."
+        },
+        "events": {
+          "title": "Zuverlässige Events zwischen Services",
+          "desc": "Services kommunizieren über Kafka mit transaktionaler Outbox und idempotenter Inbox: keine verlorenen Events, keine doppelte Verarbeitung."
+        },
+        "observability": {
+          "title": "Alles sehen, vom ersten Tag an",
+          "desc": "Metriken, Logs und Traces fließen automatisch nach Grafana. Jeder Command, jede Query und jedes Event wird ohne Zusatzcode gemessen."
+        },
+        "deployable": {
+          "title": "Vom Laptop zur Produktion mit einem Befehl",
+          "desc": "Ein Compose-Stack für Dev, versionierte Images für Prod, TLS über Caddy und Skripte, die einen frischen Server provisionieren und deployen."
+        },
+        "agents": {
+          "title": "Eine Codebasis, in der sich KI-Agenten zurechtfinden",
+          "desc": "Jedes Feature hat dieselbe Form und denselben Platz. Menschen und Agenten wissen immer, wo etwas hingehört."
+        },
+        "scaffold": {
+          "title": "Neue Services mit einem Befehl",
+          "desc": "Der Generator erzeugt einen Service mit funktionierendem Starter-Kontext und verdrahtet ihn mit Compose, Caddy und dem Monitoring. Umbenennen und losbauen."
+        }
+      }
+    },
+    "auth": {
+      "panelKicker": "die Entwicklerkonsole",
+      "panelTitle": "Steuere deine Services aus einem schmiedeglühenden Cockpit",
+      "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
+      "panelFootnote": "Sichere Sitzung · Token-Refresh · rollenbasierter Zugriff",
+      "backToHome": "Zurück zur Startseite"
+    },
+    "nav": {
+      "overview": "Übersicht",
+      "account": "Konto",
+      "admin": "Admin",
+      "sectionMain": "Konsole",
+      "sectionSystem": "System",
+      "logout": "Abmelden",
+      "env": "Umg.",
+      "impersonating": "Identität von",
+      "exitImpersonation": "Beenden"
+    },
+    "dashboard": {
+      "title": "Systemübersicht",
+      "subtitle": "Live-Zustand und Ereignisfluss über den Dienst hinweg.",
+      "live": "live",
+      "paused": "pausiert",
+      "refreshedAt": "synchronisiert {time}",
+      "health": {
+        "title": "Systemzustand",
+        "ready": "Bereit",
+        "notReady": "Nicht bereit",
+        "service": "Dienst",
+        "environment": "Umg.",
+        "noChecks": "Keine Health-Checks gemeldet.",
+        "loadError": "Zustandsstatus konnte nicht geladen werden."
+      },
+      "events": {
+        "title": "Ereignisdurchsatz",
+        "totalProcessed": "Verarbeitete Ereignisse insgesamt",
+        "byType": "Nach Ereignistyp",
+        "topic": "Topic",
+        "success": "ok",
+        "failure": "Fehler",
+        "lastProcessed": "zuletzt",
+        "none": "Noch keine Ereignisse verarbeitet.",
+        "loadError": "Ereignisdaten konnten nicht geladen werden.",
+        "never": "nie"
+      },
+      "analytics": {
+        "title": "Nutzeraktivität",
+        "total": "Aktivitäten gesamt",
+        "byType": "nach Ereignistyp",
+        "lastActivity": "letzte Aktivität",
+        "never": "nie",
+        "none": "Noch keine Aktivität – registriere einen Nutzer und beobachte den Ereignisfluss.",
+        "loadError": "service-2 nicht erreichbar.",
+        "source": "gespeist aus Kafka-Events"
+      },
+      "account": {
+        "title": "Dein Konto",
+        "email": "E-Mail",
+        "role": "Rolle",
+        "memberSince": "Mitglied seit",
+        "view": "Konto verwalten"
+      },
+      "motd": {
+        "label": "Hinweis"
+      }
+    },
+    "account": {
+      "title": "Konto",
+      "subtitle": "Dein Profil und deine Anmeldedaten.",
+      "profile": {
+        "title": "Profil",
+        "email": "E-Mail",
+        "role": "Rolle",
+        "userId": "Benutzer-ID",
+        "completed": "Abgeschlossen",
+        "pending": "Ausstehend"
+      },
+      "password": {
+        "title": "Passwort ändern",
+        "current": "Aktuelles Passwort",
+        "currentPlaceholder": "Aktuelles Passwort eingeben",
+        "new": "Neues Passwort",
+        "newPlaceholder": "Mindestens 8 Zeichen",
+        "confirm": "Neues Passwort bestätigen",
+        "confirmPlaceholder": "Neues Passwort erneut eingeben",
+        "submit": "Passwort aktualisieren",
+        "submitting": "Wird aktualisiert...",
+        "success": "Passwort aktualisiert. Du wirst in Kürze abgemeldet.",
+        "errors": {
+          "mismatch": "Neue Passwörter stimmen nicht überein",
+          "tooShort": "Passwort muss mindestens 8 Zeichen lang sein",
+          "failed": "Passwort konnte nicht geändert werden. Überprüfe dein aktuelles Passwort."
+        }
+      }
+    },
+    "admin": {
+      "title": "Administration",
+      "subtitle": "Benutzer und den öffentlichen Hinweis verwalten.",
+      "onlyTitle": "Nur für Admins",
+      "onlyDesc": "Du benötigst die Admin-Rolle, um diesen Bereich zu sehen.",
+      "users": {
+        "title": "Benutzer",
+        "filterEmail": "E-Mail",
+        "filterIp": "IP",
+        "filterPlaceholder": "Nach {field} filtern…",
+        "search": "Suchen",
+        "clear": "Löschen",
+        "columns": {
+          "email": "E-Mail",
+          "role": "Rolle",
+          "status": "Status",
+          "created": "Erstellt",
+          "ips": "IPs",
+          "actions": "Aktionen"
+        },
+        "empty": "Keine Benutzer gefunden.",
+        "loadError": "Benutzer konnten nicht geladen werden.",
+        "suspend": "Sperren",
+        "unsuspend": "Entsperren",
+        "delete": "Löschen",
+        "impersonate": "Identität annehmen",
+        "page": "Seite {current} / {total}",
+        "total": "{count} Benutzer",
+        "prev": "Zurück",
+        "next": "Weiter",
+        "confirmDelete": {
+          "title": "Benutzer löschen",
+          "body": "{email} dauerhaft löschen? Dies kann nicht rückgängig gemacht werden.",
+          "confirm": "Benutzer löschen"
+        },
+        "toast": {
+          "suspended": "Benutzer gesperrt",
+          "unsuspended": "Benutzer entsperrt",
+          "deleted": "Benutzer gelöscht",
+          "actionFailed": "Aktion fehlgeschlagen"
+        }
+      },
+      "motd": {
+        "title": "Nachricht des Tages",
+        "label": "Hinweisinhalt",
+        "placeholder": "Wird jedem Benutzer in der Konsole angezeigt…",
+        "help": "Hinterlasse einen Hinweis für alle (Wartungsfenster, Releases…).",
+        "save": "Hinweis speichern",
+        "saving": "Wird gespeichert…",
+        "clear": "Löschen",
+        "clearing": "Wird gelöscht…",
+        "empty": "Derzeit ist kein Hinweis gesetzt.",
+        "updated": "Aktualisiert {time}",
+        "toast": {
+          "saved": "Hinweis gespeichert",
+          "cleared": "Hinweis gelöscht",
+          "empty": "Inhalt darf nicht leer sein",
+          "saveFailed": "Hinweis konnte nicht gespeichert werden",
+          "clearFailed": "Hinweis konnte nicht gelöscht werden"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,263 @@
+{
+  "auth": {
+    "login": {
+      "title": "Bem-vindo de Volta",
+      "subtitle": "Entre para acessar seu painel de controle",
+      "email": "Email",
+      "emailPlaceholder": "joao.silva@exemplo.com",
+      "password": "Senha",
+      "passwordPlaceholder": "Digite sua senha",
+      "submit": "Entrar",
+      "submitting": "Entrando...",
+      "noAccount": "Não tem uma conta?",
+      "createAccount": "Criar Conta",
+      "successMessage": "Conta criada com sucesso! Por favor verifique seu email ({email}) para um link de verificação antes de entrar.",
+      "errorDefault": "Falha no login. Por favor verifique suas credenciais.",
+      "orContinueWith": "ou continuar com",
+      "googleButton": "Continuar com Google",
+      "googleError": "Falha no login com Google. Por favor tente novamente.",
+      "forgotPassword": "Esqueceu sua senha?"
+    },
+    "forgotPassword": {
+      "title": "Esqueci a Senha",
+      "description": "Digite seu endereço de e-mail e enviaremos um link para redefinir sua senha.",
+      "email": "E-mail",
+      "emailPlaceholder": "joao.silva@exemplo.com",
+      "submit": "Enviar Link de Redefinição",
+      "submitting": "Enviando link...",
+      "success": "Verifique seu e-mail! Enviamos um link de redefinição de senha para {email}.",
+      "backToSignIn": "Voltar para Login",
+      "error": "Falha ao solicitar redefinição de senha. Tente novamente."
+    },
+    "register": {
+      "title": "Criar Conta",
+      "email": "Email",
+      "emailPlaceholder": "joao.silva@exemplo.com",
+      "password": "Senha",
+      "passwordPlaceholder": "Digite sua senha",
+      "confirmPassword": "Confirmar Senha",
+      "confirmPasswordPlaceholder": "Confirme sua senha",
+      "submit": "Criar Conta",
+      "submitting": "Criando conta...",
+      "hasAccount": "Já tem uma conta?",
+      "signIn": "Entrar",
+      "errors": {
+        "passwordMismatch": "As senhas não coincidem",
+        "passwordLength": "A senha deve ter pelo menos 6 caracteres",
+        "default": "Falha no cadastro. Por favor tente novamente."
+      }
+    },
+    "verifyEmail": {
+      "loading": {
+        "title": "Verificando Email",
+        "description": "Por favor aguarde enquanto verificamos seu endereço de email..."
+      },
+      "success": {
+        "title": "Email Verificado!",
+        "description": "Seu endereço de email foi verificado com sucesso. Redirecionando para o painel..."
+      },
+      "error": {
+        "title": "Verificação Falhou",
+        "tryAgain": "Por favor tente novamente ou contate o suporte se o problema persistir.",
+        "goToSignIn": "Ir para Entrar"
+      },
+      "errors": {
+        "noId": "Link de verificação inválido. Nenhum ID de verificação fornecido.",
+        "default": "Verificação de email falhou. O link pode ser inválido ou ter expirado."
+      },
+      "backToHome": "← Voltar ao início"
+    }
+  },
+  "fmf": {
+    "landing": {
+      "headline": "Uma base sólida para <molten>forjar</molten> aplicações",
+      "sub": "Um starter de microsserviços NestJS pronto para produção — DDD, CQRS, mensageria orientada a eventos, observabilidade completa e deploys com um único comando, tudo já integrado para você construir em vez de configurar.",
+      "github": "Ver no GitHub",
+      "openDemo": "Abrir Demo",
+      "docs": "Documentação",
+      "features": {
+        "ddd": {
+          "title": "Lógica de negócio com um único lar",
+          "desc": "Cada regra é escrita uma única vez, em agregados e value objects na camada de domínio. Regras de lint próprias quebram o build quando uma fronteira é cruzada."
+        },
+        "events": {
+          "title": "Eventos confiáveis entre serviços",
+          "desc": "Os serviços conversam pelo Kafka com outbox transacional e inbox idempotente: sem eventos perdidos nem processamento duplicado."
+        },
+        "observability": {
+          "title": "Visibilidade desde o primeiro dia",
+          "desc": "Métricas, logs e traces fluem para o Grafana automaticamente. Cada comando, query e evento é medido sem código extra."
+        },
+        "deployable": {
+          "title": "Do notebook à produção em um comando",
+          "desc": "Um stack compose para dev, imagens versionadas para prod, TLS pelo Caddy e scripts que provisionam e fazem deploy de um servidor novo."
+        },
+        "agents": {
+          "title": "Um código que agentes de IA sabem navegar",
+          "desc": "Cada funcionalidade tem a mesma forma e o mesmo lugar. Humanos e agentes sempre sabem onde as coisas ficam."
+        },
+        "scaffold": {
+          "title": "Serviços novos em um comando",
+          "desc": "O gerador cria um serviço com um contexto inicial funcional e o conecta ao compose, ao Caddy e ao monitoramento. Renomeie e comece a construir."
+        }
+      }
+    },
+    "auth": {
+      "panelKicker": "o console do desenvolvedor",
+      "panelTitle": "Opere seus serviços a partir de um cockpit iluminado pela forja",
+      "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
+      "panelFootnote": "Sessão segura · renovação de token · acesso baseado em papéis",
+      "backToHome": "Voltar ao início"
+    },
+    "nav": {
+      "overview": "Visão Geral",
+      "account": "Conta",
+      "admin": "Admin",
+      "sectionMain": "Console",
+      "sectionSystem": "Sistema",
+      "logout": "Sair",
+      "env": "amb",
+      "impersonating": "Personificando",
+      "exitImpersonation": "Sair"
+    },
+    "dashboard": {
+      "title": "Visão Geral do Sistema",
+      "subtitle": "Saúde ao vivo e fluxo de eventos em todo o serviço.",
+      "live": "ao vivo",
+      "paused": "pausado",
+      "refreshedAt": "sincronizado {time}",
+      "health": {
+        "title": "Saúde do Sistema",
+        "ready": "Pronto",
+        "notReady": "Não pronto",
+        "service": "serviço",
+        "environment": "amb",
+        "noChecks": "Nenhuma verificação de saúde reportada.",
+        "loadError": "Não foi possível carregar o status de saúde."
+      },
+      "events": {
+        "title": "Vazão de Eventos",
+        "totalProcessed": "Total de eventos processados",
+        "byType": "Por tipo de evento",
+        "topic": "tópico",
+        "success": "ok",
+        "failure": "erro",
+        "lastProcessed": "último",
+        "none": "Nenhum evento processado ainda.",
+        "loadError": "Não foi possível carregar os dados de eventos.",
+        "never": "nunca"
+      },
+      "analytics": {
+        "title": "Atividade de usuários",
+        "total": "atividades totais",
+        "byType": "por tipo de evento",
+        "lastActivity": "última atividade",
+        "never": "nunca",
+        "none": "Ainda sem atividade — registre um usuário e veja os eventos fluírem.",
+        "loadError": "Não foi possível conectar ao service-2.",
+        "source": "alimentado por eventos Kafka"
+      },
+      "account": {
+        "title": "Sua Conta",
+        "email": "Email",
+        "role": "Papel",
+        "memberSince": "Membro desde",
+        "view": "Gerenciar conta"
+      },
+      "motd": {
+        "label": "Aviso"
+      }
+    },
+    "account": {
+      "title": "Conta",
+      "subtitle": "Seu perfil e credenciais.",
+      "profile": {
+        "title": "Perfil",
+        "email": "Email",
+        "role": "Papel",
+        "userId": "ID do Usuário",
+        "completed": "Concluído",
+        "pending": "Pendente"
+      },
+      "password": {
+        "title": "Alterar Senha",
+        "current": "Senha atual",
+        "currentPlaceholder": "Digite a senha atual",
+        "new": "Nova senha",
+        "newPlaceholder": "Pelo menos 8 caracteres",
+        "confirm": "Confirmar nova senha",
+        "confirmPlaceholder": "Digite novamente a nova senha",
+        "submit": "Atualizar senha",
+        "submitting": "Atualizando...",
+        "success": "Senha atualizada. Você será desconectado em breve.",
+        "errors": {
+          "mismatch": "As novas senhas não coincidem",
+          "tooShort": "A senha deve ter pelo menos 8 caracteres",
+          "failed": "Falha ao alterar a senha. Verifique sua senha atual."
+        }
+      }
+    },
+    "admin": {
+      "title": "Administração",
+      "subtitle": "Gerencie usuários e o aviso público.",
+      "onlyTitle": "Somente admin",
+      "onlyDesc": "Você precisa do papel de admin para ver esta área.",
+      "users": {
+        "title": "Usuários",
+        "filterEmail": "email",
+        "filterIp": "ip",
+        "filterPlaceholder": "Filtrar por {field}…",
+        "search": "Buscar",
+        "clear": "Limpar",
+        "columns": {
+          "email": "Email",
+          "role": "Papel",
+          "status": "Status",
+          "created": "Criado",
+          "ips": "IPs",
+          "actions": "Ações"
+        },
+        "empty": "Nenhum usuário encontrado.",
+        "loadError": "Falha ao carregar usuários.",
+        "suspend": "Suspender",
+        "unsuspend": "Reativar",
+        "delete": "Excluir",
+        "impersonate": "Personificar",
+        "page": "Página {current} / {total}",
+        "total": "{count} usuários",
+        "prev": "Anterior",
+        "next": "Próximo",
+        "confirmDelete": {
+          "title": "Excluir usuário",
+          "body": "Excluir permanentemente {email}? Isso não pode ser desfeito.",
+          "confirm": "Excluir usuário"
+        },
+        "toast": {
+          "suspended": "Usuário suspenso",
+          "unsuspended": "Usuário reativado",
+          "deleted": "Usuário excluído",
+          "actionFailed": "Falha na ação"
+        }
+      },
+      "motd": {
+        "title": "Mensagem do Dia",
+        "label": "Conteúdo do aviso",
+        "placeholder": "Exibido a todos os usuários no console…",
+        "help": "Deixe um alerta para todos (janelas de manutenção, lançamentos…).",
+        "save": "Salvar aviso",
+        "saving": "Salvando…",
+        "clear": "Limpar",
+        "clearing": "Limpando…",
+        "empty": "Nenhum aviso definido atualmente.",
+        "updated": "Atualizado {time}",
+        "toast": {
+          "saved": "Aviso salvo",
+          "cleared": "Aviso removido",
+          "empty": "O conteúdo não pode estar vazio",
+          "saveFailed": "Falha ao salvar o aviso",
+          "clearFailed": "Falha ao remover o aviso"
+        }
+      }
+    }
+  }
+}

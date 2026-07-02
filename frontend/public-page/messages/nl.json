@@ -1,0 +1,263 @@
+{
+  "auth": {
+    "login": {
+      "title": "Welkom Terug",
+      "subtitle": "Log in om toegang te krijgen tot je dashboard",
+      "email": "E-mail",
+      "emailPlaceholder": "jan.jansen@voorbeeld.nl",
+      "password": "Wachtwoord",
+      "passwordPlaceholder": "Voer je wachtwoord in",
+      "submit": "Inloggen",
+      "submitting": "Inloggen...",
+      "noAccount": "Nog geen account?",
+      "createAccount": "Account Aanmaken",
+      "successMessage": "Account succesvol aangemaakt! Controleer je e-mail ({email}) voor een verificatielink voordat je inlogt.",
+      "errorDefault": "Inloggen mislukt. Controleer je inloggegevens.",
+      "orContinueWith": "of doorgaan met",
+      "googleButton": "Doorgaan met Google",
+      "googleError": "Google-inloggen mislukt. Probeer het opnieuw.",
+      "forgotPassword": "Wachtwoord vergeten?"
+    },
+    "forgotPassword": {
+      "title": "Wachtwoord Vergeten",
+      "description": "Voer uw e-mailadres in en we sturen u een link om uw wachtwoord opnieuw in te stellen.",
+      "email": "E-mail",
+      "emailPlaceholder": "jan.jansen@voorbeeld.nl",
+      "submit": "Herstellink Verzenden",
+      "submitting": "Link wordt verzonden...",
+      "success": "Controleer uw e-mail! We hebben een link voor het opnieuw instellen van het wachtwoord naar {email} gestuurd.",
+      "backToSignIn": "Terug naar Inloggen",
+      "error": "Aanvraag voor wachtwoordherstel mislukt. Probeer het opnieuw."
+    },
+    "register": {
+      "title": "Account Aanmaken",
+      "email": "E-mail",
+      "emailPlaceholder": "jan.jansen@voorbeeld.nl",
+      "password": "Wachtwoord",
+      "passwordPlaceholder": "Voer je wachtwoord in",
+      "confirmPassword": "Wachtwoord Bevestigen",
+      "confirmPasswordPlaceholder": "Bevestig je wachtwoord",
+      "submit": "Account Aanmaken",
+      "submitting": "Account aanmaken...",
+      "hasAccount": "Heb je al een account?",
+      "signIn": "Inloggen",
+      "errors": {
+        "passwordMismatch": "Wachtwoorden komen niet overeen",
+        "passwordLength": "Wachtwoord moet minimaal 6 tekens zijn",
+        "default": "Registratie mislukt. Probeer het opnieuw."
+      }
+    },
+    "verifyEmail": {
+      "loading": {
+        "title": "E-mail Verifiëren",
+        "description": "Even geduld terwijl we je e-mailadres verifiëren..."
+      },
+      "success": {
+        "title": "E-mail Geverifieerd!",
+        "description": "Je e-mailadres is succesvol geverifieerd. Doorsturen naar dashboard..."
+      },
+      "error": {
+        "title": "Verificatie Mislukt",
+        "tryAgain": "Probeer het opnieuw of neem contact op met support als het probleem aanhoudt.",
+        "goToSignIn": "Naar Inloggen"
+      },
+      "errors": {
+        "noId": "Ongeldige verificatielink. Geen verificatie-ID opgegeven.",
+        "default": "E-mailverificatie mislukt. De link is mogelijk ongeldig of verlopen."
+      },
+      "backToHome": "← Terug naar home"
+    }
+  },
+  "fmf": {
+    "landing": {
+      "headline": "Een solide basis voor het <molten>smeden</molten> van applicaties",
+      "sub": "Een productieklare NestJS microservices-starter — DDD, CQRS, event-driven messaging, volledige observability en deploys met één commando, allemaal kant-en-klaar zodat je kunt bouwen in plaats van opzetten.",
+      "github": "Bekijk op GitHub",
+      "openDemo": "Demo openen",
+      "docs": "Documentatie",
+      "features": {
+        "ddd": {
+          "title": "Businesslogica met één thuis",
+          "desc": "Elke regel wordt één keer geschreven, in aggregates en value objects in de domeinlaag. Eigen lintregels breken de build zodra een grens wordt overschreden."
+        },
+        "events": {
+          "title": "Betrouwbare events tussen services",
+          "desc": "Services praten via Kafka met een transactionele outbox en idempotente inbox: geen verloren events, geen dubbele verwerking."
+        },
+        "observability": {
+          "title": "Alles zichtbaar vanaf dag één",
+          "desc": "Metrics, logs en traces stromen automatisch naar Grafana. Elk command, elke query en elk event wordt gemeten zonder extra code."
+        },
+        "deployable": {
+          "title": "Van laptop naar productie in één commando",
+          "desc": "Eén compose-stack voor dev, geversioneerde images voor prod, TLS via Caddy en scripts die een verse server inrichten en deployen."
+        },
+        "agents": {
+          "title": "Een codebase waar AI-agents de weg kennen",
+          "desc": "Elke feature heeft dezelfde vorm en dezelfde plek. Mensen en agents weten altijd waar iets hoort."
+        },
+        "scaffold": {
+          "title": "Nieuwe services met één commando",
+          "desc": "De generator bouwt een service met een werkende startercontext en sluit hem aan op compose, Caddy en de monitoring. Hernoem hem en ga bouwen."
+        }
+      }
+    },
+    "auth": {
+      "panelKicker": "de developer-console",
+      "panelTitle": "Bedien je services vanuit één smeedverlichte cockpit",
+      "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
+      "panelFootnote": "Beveiligde sessie · token-vernieuwing · rolgebaseerde toegang",
+      "backToHome": "Terug naar home"
+    },
+    "nav": {
+      "overview": "Overzicht",
+      "account": "Account",
+      "admin": "Admin",
+      "sectionMain": "Console",
+      "sectionSystem": "Systeem",
+      "logout": "Uitloggen",
+      "env": "omg",
+      "impersonating": "Imiteren",
+      "exitImpersonation": "Stoppen"
+    },
+    "dashboard": {
+      "title": "Systeemoverzicht",
+      "subtitle": "Live gezondheid en eventstroom door de service heen.",
+      "live": "live",
+      "paused": "gepauzeerd",
+      "refreshedAt": "gesynchroniseerd {time}",
+      "health": {
+        "title": "Systeemgezondheid",
+        "ready": "Gereed",
+        "notReady": "Niet gereed",
+        "service": "service",
+        "environment": "omg",
+        "noChecks": "Geen health checks gerapporteerd.",
+        "loadError": "Kon gezondheidsstatus niet laden."
+      },
+      "events": {
+        "title": "Event-doorvoer",
+        "totalProcessed": "Totaal verwerkte events",
+        "byType": "Per eventtype",
+        "topic": "topic",
+        "success": "ok",
+        "failure": "fout",
+        "lastProcessed": "laatste",
+        "none": "Nog geen events verwerkt.",
+        "loadError": "Kon eventgegevens niet laden.",
+        "never": "nooit"
+      },
+      "analytics": {
+        "title": "Gebruikersactiviteit",
+        "total": "totale activiteiten",
+        "byType": "per gebeurtenistype",
+        "lastActivity": "laatste activiteit",
+        "never": "nooit",
+        "none": "Nog geen activiteit — registreer een gebruiker en zie de events stromen.",
+        "loadError": "Kan service-2 niet bereiken.",
+        "source": "gevoed door Kafka-events"
+      },
+      "account": {
+        "title": "Je account",
+        "email": "E-mail",
+        "role": "Rol",
+        "memberSince": "Lid sinds",
+        "view": "Account beheren"
+      },
+      "motd": {
+        "label": "Mededeling"
+      }
+    },
+    "account": {
+      "title": "Account",
+      "subtitle": "Je profiel en inloggegevens.",
+      "profile": {
+        "title": "Profiel",
+        "email": "E-mail",
+        "role": "Rol",
+        "userId": "Gebruikers-ID",
+        "completed": "Voltooid",
+        "pending": "In behandeling"
+      },
+      "password": {
+        "title": "Wachtwoord wijzigen",
+        "current": "Huidig wachtwoord",
+        "currentPlaceholder": "Voer huidig wachtwoord in",
+        "new": "Nieuw wachtwoord",
+        "newPlaceholder": "Minimaal 8 tekens",
+        "confirm": "Bevestig nieuw wachtwoord",
+        "confirmPlaceholder": "Voer nieuw wachtwoord opnieuw in",
+        "submit": "Wachtwoord bijwerken",
+        "submitting": "Bijwerken...",
+        "success": "Wachtwoord bijgewerkt. Je wordt zo uitgelogd.",
+        "errors": {
+          "mismatch": "Nieuwe wachtwoorden komen niet overeen",
+          "tooShort": "Wachtwoord moet minimaal 8 tekens zijn",
+          "failed": "Wachtwoord wijzigen mislukt. Controleer je huidige wachtwoord."
+        }
+      }
+    },
+    "admin": {
+      "title": "Beheer",
+      "subtitle": "Beheer gebruikers en de openbare mededeling.",
+      "onlyTitle": "Alleen voor admins",
+      "onlyDesc": "Je hebt de adminrol nodig om dit gedeelte te bekijken.",
+      "users": {
+        "title": "Gebruikers",
+        "filterEmail": "e-mail",
+        "filterIp": "ip",
+        "filterPlaceholder": "Filter op {field}…",
+        "search": "Zoeken",
+        "clear": "Wissen",
+        "columns": {
+          "email": "E-mail",
+          "role": "Rol",
+          "status": "Status",
+          "created": "Aangemaakt",
+          "ips": "IP's",
+          "actions": "Acties"
+        },
+        "empty": "Geen gebruikers gevonden.",
+        "loadError": "Gebruikers laden mislukt.",
+        "suspend": "Schorsen",
+        "unsuspend": "Schorsing opheffen",
+        "delete": "Verwijderen",
+        "impersonate": "Imiteren",
+        "page": "Pagina {current} / {total}",
+        "total": "{count} gebruikers",
+        "prev": "Vorige",
+        "next": "Volgende",
+        "confirmDelete": {
+          "title": "Gebruiker verwijderen",
+          "body": "{email} permanent verwijderen? Dit kan niet ongedaan worden gemaakt.",
+          "confirm": "Gebruiker verwijderen"
+        },
+        "toast": {
+          "suspended": "Gebruiker geschorst",
+          "unsuspended": "Schorsing opgeheven",
+          "deleted": "Gebruiker verwijderd",
+          "actionFailed": "Actie mislukt"
+        }
+      },
+      "motd": {
+        "title": "Bericht van de dag",
+        "label": "Inhoud van mededeling",
+        "placeholder": "Getoond aan elke gebruiker op de console…",
+        "help": "Laat een melding achter voor iedereen (onderhoudsvensters, releases…).",
+        "save": "Mededeling opslaan",
+        "saving": "Opslaan…",
+        "clear": "Wissen",
+        "clearing": "Wissen…",
+        "empty": "Er is momenteel geen mededeling ingesteld.",
+        "updated": "Bijgewerkt {time}",
+        "toast": {
+          "saved": "Mededeling opgeslagen",
+          "cleared": "Mededeling gewist",
+          "empty": "Inhoud mag niet leeg zijn",
+          "saveFailed": "Mededeling opslaan mislukt",
+          "clearFailed": "Mededeling wissen mislukt"
+        }
+      }
+    }
+  }
+}

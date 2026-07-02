@@ -1,0 +1,70 @@
+import type { SharedAggregateProps } from '@libs/nestjs-common';
+import { DateVO, Id, SharedAggregate, Timestamps } from '@libs/nestjs-common';
+import { GreetingMessage } from '@bc/example/domain/value-objects';
+import { GreetingCreated_DomainEvent } from './events/greeting-created.domain-event';
+import type { GreetingDTO } from './greeting.dto';
+
+export interface CreateGreetingProps {
+  message: GreetingMessage;
+  source: string;
+}
+
+export interface GreetingProps extends SharedAggregateProps {
+  message: GreetingMessage;
+  source: string;
+}
+
+/**
+ * Starter aggregate. `create()` raises a domain event, which the handler in
+ * application/domain-event-handlers reacts to — the same in-process loop every
+ * real aggregate in the system uses.
+ */
+export class Greeting extends SharedAggregate {
+  message: GreetingMessage;
+  source: string;
+
+  constructor(props: GreetingProps) {
+    super(props.id, props.timestamps);
+    this.message = props.message;
+    this.source = props.source;
+  }
+
+  static create(props: CreateGreetingProps): Greeting {
+    const greeting = new Greeting({
+      id: Id.random(),
+      message: props.message,
+      source: props.source,
+      timestamps: Timestamps.create(),
+    });
+
+    greeting.apply(new GreetingCreated_DomainEvent(greeting.id, greeting.message, greeting.source));
+
+    return greeting;
+  }
+
+  static random(props?: Partial<GreetingProps>): Greeting {
+    return new Greeting({
+      id: props?.id ?? Id.random(),
+      message: props?.message ?? new GreetingMessage(`Hello ${Id.random().toValue().slice(0, 8)}`),
+      source: props?.source ?? 'api',
+      timestamps: props?.timestamps ?? Timestamps.random(),
+    });
+  }
+
+  static fromValue(value: GreetingDTO): Greeting {
+    return new Greeting({
+      id: new Id(value.id),
+      message: new GreetingMessage(value.message),
+      source: value.source,
+      timestamps: new Timestamps(new DateVO(value.createdAt), new DateVO(value.updatedAt)),
+    });
+  }
+
+  toValue(): GreetingDTO {
+    return {
+      ...super.toValue(),
+      message: this.message.toValue(),
+      source: this.source,
+    };
+  }
+}

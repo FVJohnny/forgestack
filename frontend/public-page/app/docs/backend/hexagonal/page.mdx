@@ -1,0 +1,181 @@
+# Hexagonal Architecture
+
+Hexagonal architecture (also called ports and adapters) is the layering used
+inside every bounded context. The idea: business logic sits at the center, and
+everything that touches the outside world (HTTP, Kafka, MongoDB, SMTP) stays at
+the edges, connected to the center through interfaces.
+
+## The layers
+
+Every bounded context has the same four folders:
+
+```
+bounded-contexts/<context>/
+├── domain/           aggregates, value objects, domain events, ports
+├── application/      commands, queries, domain-event handlers
+├── infrastructure/   adapters: repositories, external services
+└── interfaces/       entry points: HTTP controllers, Kafka subscribers
+```
+
+Dependencies point inward. `interfaces` and `infrastructure` may import from
+`application` and `domain`; `application` may import from `domain`; `domain`
+imports from nothing above it. The domain layer never sees NestJS, Mongo or
+Kafka, which is why it can be tested without booting anything. The
+`hexagonal-architecture` lint rule fails the build when an import goes the
+wrong way.
+
+## Ports and adapters
+
+A **port** is an interface the inner layers own: it declares what the business
+needs, in business terms. An **adapter** is an outer-layer class that
+implements the port with a real technology. The two are bound together with a
+NestJS injection token in the context module, so the inner code never names a
+concrete implementation.
+
+The notifications context shows the pattern beyond persistence. The domain
+declares an email port, and infrastructure ships two adapters for it:
+
+```ts
+// …/notifications/domain/services/email.service.ts (the port)
+export interface EmailService {
+  sendEmail(options: EmailOptions): Promise<void>;
+}
+
+// …/notifications/notifications.module.ts (the binding)
+{
+  provide: EMAIL_SERVICE,
+  // Real SMTP when configured, console logging otherwise
+  useClass: process.env.SMTP_HOST ? Email_SmtpService : Email_InMemoryService,
+}
+```
+
+Handlers inject `EMAIL_SERVICE` and never know which one they got.
+
+## Repositories
+
+Persistence is the flagship port. The domain defines a repository *interface*
+in terms of aggregates and value objects; infrastructure provides a *MongoDB
+adapter* that implements it. The domain never imports MongoDB, and swapping
+the datastore means writing a new adapter, with nothing in the domain
+changing.
+
+A generic `Repository<T, ID>` contract lives in the common lib:
+
+```ts
+// libs/common/src/general/domain/base.repository.ts
+export interface Repository<T, ID = Id> {
+  findById(id: ID): Promise<T | null>;
+  findByCriteria(criteria: Criteria): Promise<PaginatedRepoResult<T>>;
+  countByCriteria(criteria: Criteria): Promise<number>;
+  exists(id: ID): Promise<boolean>;
+  remove(id: ID, context?: RepositoryContext): Promise<void>;
+  save(entity: T, context?: RepositoryContext): Promise<void>;
+  clear(context?: RepositoryContext): Promise<void>;
+}
+```
+
+A context extends it with aggregate-specific finders, and exposes an injection
+token:
+
+```ts
+// …/auth/domain/aggregates/user/user.repository.ts
+export const USER_REPOSITORY = Symbol('UserRepository');
+
+export interface User_Repository extends Repository<User, Id> {
+  findByEmail(email: Email): Promise<User | null>;
+  findByGoogleId(googleId: string): Promise<User | null>;
+  existsByEmail(email: Email): Promise<boolean>;
+  searchByEmail(emailPattern: string, limit: number): Promise<User[]>;
+}
+```
+
+Handlers depend on the **interface**, injected by token. They have no idea
+there's a Mongo behind it:
+
+```ts
+constructor(
+  @Inject(USER_REPOSITORY) private readonly userRepository: User_Repository,
+) {}
+```
+
+### The adapter: Base_MongoRepository
+
+Concrete repositories extend `Base_MongoRepository`, which implements the generic
+CRUD, criteria queries, index management, transaction participation, and Mongo
+error translation. Subclasses provide just the mapping and any custom finders:
+
+```ts
+// libs/mongodb/src/infrastructure/base.mongo-repository.ts
+export abstract class Base_MongoRepository<
+  TEnt extends SharedAggregate,
+  TDto extends SharedAggregateDTO & { id: string },
+> implements Repository<TEnt, Id> {
+
+  protected abstract toEntity(dto: TDto): TEnt;       // DTO → aggregate
+  protected toValue(entity: TEnt): TDto {              // aggregate → DTO
+    return entity.toValue() as TDto;
+  }
+  protected abstract defineIndexes(): IndexSpec[];
+
+  async save(entity: TEnt, context?: RepositoryContext): Promise<void> {
+    this.registerTransactionParticipant(context);
+    const session = this.getTransactionSession(context);
+    await this.ensureIndexes();
+    await this.collection.updateOne(
+      { id: entity.id.toValue() } as Filter<TDto>,
+      { $set: this.toValue(entity) },
+      { upsert: true, session },
+    );
+  }
+
+  async findById(id: Id): Promise<TEnt | null> {
+    const dto = await this.collection.findOne({ id: id.toValue() } as Filter<TDto>);
+    return dto ? this.toEntity(dto as TDto) : null;
+  }
+}
+```
+
+A concrete repository is small: map the DTO, declare indexes, add finders.
+The `repository-base` lint rule ensures concrete repos extend
+`Base_MongoRepository` (or implement a `Repository` interface).
+
+### Criteria queries
+
+Rather than leaking Mongo query syntax into handlers, the framework uses a
+**Criteria** object (composable `Filters`, operators and pagination) which the
+`MongoCriteriaConverter` translates into a Mongo query. The same Criteria could
+be translated for a different datastore, keeping queries database-agnostic.
+
+### Transactions
+
+Writes that must be atomic run inside `Transaction.run`. The repository
+participates in the ambient transaction by registering a Mongo participant and
+using its session, so the state change and the outbox write commit together:
+
+```ts
+await Transaction.run(async (context) => {
+  await this.userRepository.save(user, context);
+  // any outbox write using `context` commits in the same transaction
+});
+```
+
+Under the hood the base repository registers a `TransactionParticipant_Mongodb`
+on first use and threads its `ClientSession` into every operation. MongoDB
+transactions require a replica set, which is why dev and prod run Mongo as a
+single-member `rs0` (see [Databases](/docs/databases)).
+
+### Error translation
+
+The base repo turns infrastructure errors into domain-meaningful ones — e.g. a
+Mongo duplicate-key error (code `11000`) becomes an `AlreadyExistsException`
+naming the offending field — so handlers and controllers deal in domain
+exceptions, not driver internals.
+
+<Callout type="tip" title="Swapping adapters">
+  Because the port is defined in the domain and the adapter is the only
+  technology-aware code, you can add a Postgres or in-memory adapter (every
+  context ships an `in-memory` repository for tests) without touching a single
+  handler.
+</Callout>
+
+Next: **[Domain-Driven Design](/docs/backend/ddd)**.

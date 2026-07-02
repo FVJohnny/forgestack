@@ -1,0 +1,50 @@
+import { DomainValidationException, MockEventBus } from '@libs/nestjs-common';
+import { Greeting_InMemoryRepository } from '@bc/example/infrastructure/repositories/in-memory/greeting.in-memory-repository';
+import { GreetingCreated_DomainEvent } from '@bc/example/domain/aggregates/greeting/events/greeting-created.domain-event';
+import { CreateGreeting_Command } from './create-greeting.command';
+import { CreateGreeting_CommandHandler } from './create-greeting.command-handler';
+
+describe('CreateGreeting_CommandHandler', () => {
+  const setup = (params: { shouldFailRepository?: boolean } = {}) => {
+    const repository = new Greeting_InMemoryRepository(params.shouldFailRepository);
+    const eventBus = new MockEventBus();
+    const handler = new CreateGreeting_CommandHandler(repository, eventBus);
+
+    return { repository, eventBus, handler };
+  };
+
+  it('should persist the greeting and dispatch its domain event', async () => {
+    // Arrange
+    const { handler, repository, eventBus } = setup();
+
+    // Act
+    await handler.execute(new CreateGreeting_Command('Hello there', 'api'));
+
+    // Assert
+    const greetings = await repository.findAll();
+    expect(greetings).toHaveLength(1);
+    expect(greetings[0].message.toValue()).toBe('Hello there');
+    expect(greetings[0].source).toBe('api');
+
+    expect(eventBus.events).toHaveLength(1);
+    expect(eventBus.events[0]).toBeInstanceOf(GreetingCreated_DomainEvent);
+  });
+
+  it('should reject an empty message (value-object validation)', async () => {
+    // Arrange
+    const { handler } = setup();
+
+    // Act & Assert
+    await expect(handler.execute(new CreateGreeting_Command('   ', 'api'))).rejects.toThrow(
+      DomainValidationException,
+    );
+  });
+
+  it('should propagate repository failures', async () => {
+    // Arrange
+    const { handler } = setup({ shouldFailRepository: true });
+
+    // Act & Assert
+    await expect(handler.execute(new CreateGreeting_Command('Hello', 'api'))).rejects.toThrow();
+  });
+});

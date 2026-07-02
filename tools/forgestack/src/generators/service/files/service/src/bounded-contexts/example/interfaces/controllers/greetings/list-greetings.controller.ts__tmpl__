@@ -1,0 +1,21 @@
+import { Controller, Get, HttpCode, HttpStatus, Inject } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { type IQueryBus } from '@nestjs/cqrs';
+import { QUERY_BUS } from '@libs/nestjs-common';
+import { ListGreetings_Query } from '@bc/example/application/queries/list-greetings/list-greetings.query';
+import type { ListGreetings_QueryResponse } from '@bc/example/application/queries/list-greetings/list-greetings.query-response';
+
+@ApiTags('greetings')
+@Controller('greetings')
+export class ListGreetings_Controller {
+  constructor(@Inject(QUERY_BUS) private readonly queryBus: IQueryBus) {}
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Latest greetings (starter read endpoint)' })
+  @ApiResponse({ status: HttpStatus.OK })
+  async listGreetings(): Promise<ListGreetings_QueryResponse> {
+    const query = new ListGreetings_Query();
+    return this.queryBus.execute(query);
+  }
+}

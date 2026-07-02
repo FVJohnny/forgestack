@@ -1,0 +1,374 @@
+# Shared shape of every NestJS service in production. A service block only
+# adds its name-specific bits: image, env_file and labels. The
+# prometheus.scrape label opts the container into Prometheus discovery.
+x-nestjs-service: &nestjs-service
+  restart: unless-stopped
+  networks:
+    - backend
+  healthcheck:
+    test: [ 'CMD-SHELL', 'node -e "require(\"http\").get(\"http://localhost:3000/api/v1\", r => process.exit(r.statusCode === 200 ? 0 : 1)).on(\"error\", () => process.exit(1))"' ]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 30s
+  depends_on:
+    kafka:
+      condition: service_healthy
+    mongodb:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+
+  # ==========================================================================
+  # APP SERVICES
+  # ==========================================================================
+
+  service-1:
+    <<: *nestjs-service
+    image: ${DOCKER_REGISTRY}/forgestack-service-1:v3
+    env_file:
+      - ../env/service-1.env.prod
+    labels:
+      - 'service=service-1'
+      - 'prometheus.scrape=true'
+
+  service-2:
+    <<: *nestjs-service
+    image: ${DOCKER_REGISTRY}/forgestack-service-2:v2
+    env_file:
+      - ../env/service-2.env.prod
+    labels:
+      - 'service=service-2'
+      - 'prometheus.scrape=true'
+
+  public-page:
+    image: ${DOCKER_REGISTRY}/forgestack-public-page:v5
+    restart: unless-stopped
+    env_file:
+      - ../env/public-page.env.prod
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD-SHELL', 'wget -qO- http://127.0.0.1:3000 || exit 1' ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      - service-1
+
+  # ==========================================================================
+  # REVERSE PROXY
+  # ==========================================================================
+
+  caddy:
+    image: ${DOCKER_REGISTRY}/forgestack-caddy:v2
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    env_file:
+      - ../env/infra.env.prod
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD', 'caddy', 'version' ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - public-page
+      - service-1
+      - service-2
+      - grafana
+
+  # ==========================================================================
+  # DATA STORES
+  # ==========================================================================
+
+  mongodb:
+    image: mongo:7.0
+    restart: unless-stopped
+    command: [ 'bash', '/scripts/mongo-startup.sh' ]
+    environment:
+      - MONGO_ADMIN_USER=${MONGO_ADMIN_USER:-admin}
+      - MONGO_ADMIN_PASS=${MONGO_ADMIN_PASS}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ../mongo/mongo-startup.sh:/scripts/mongo-startup.sh:ro
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD-SHELL', 'mongosh -u $$MONGO_ADMIN_USER -p $$MONGO_ADMIN_PASS --authenticationDatabase admin --eval "rs.status().ok" | grep -q 1' ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    stop_grace_period: 60s
+
+  mongo-express:
+    image: mongo-express:1.0.2
+    restart: unless-stopped
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://admin:${MONGO_ADMIN_PASS}@mongodb:27017/?authSource=admin&replicaSet=rs0
+      - ME_CONFIG_BASICAUTH_USERNAME=${ME_CONFIG_BASICAUTH_USERNAME}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${ME_CONFIG_BASICAUTH_PASSWORD}
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pgrep node || exit 1' ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  redis:
+    image: redis:7.0-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    stop_grace_period: 30s
+
+  # ==========================================================================
+  # MESSAGE BROKER
+  # ==========================================================================
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      # Faster session timeout for quicker cleanup of stale broker nodes
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_MAX_SESSION_TIMEOUT: 10000
+      # Enable 4LW commands for healthcheck
+      KAFKA_OPTS: '-Dzookeeper.4lw.commands.whitelist=ruok,srvr'
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_log:/var/lib/zookeeper/log
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD-SHELL', 'echo ruok | nc localhost 2181 | grep imok' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      # Shorter session timeout - broker node expires faster on restart
+      KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS: 6000
+      KAFKA_ZOOKEEPER_CONNECTION_TIMEOUT_MS: 6000
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD-SHELL', 'kafka-topics --bootstrap-server localhost:9092 --list' ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    stop_grace_period: 60s
+
+  # ==========================================================================
+  # MONITORING
+  # ==========================================================================
+
+  prometheus:
+    image: ${DOCKER_REGISTRY}/forgestack-prometheus:v2
+    restart: unless-stopped
+    # Root so docker_sd_configs can read the Docker socket (the image's
+    # default user, nobody, gets permission denied).
+    user: root
+    volumes:
+      - prometheus_data:/prometheus
+      # Read-only Docker socket for docker_sd_configs: services are discovered
+      # by their prometheus.scrape=true container label.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - cadvisor
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD', 'wget', '-qO-', 'http://localhost:9090/-/healthy' ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  grafana:
+    image: ${DOCKER_REGISTRY}/forgestack-grafana:v2
+    restart: unless-stopped
+    env_file:
+      - ../env/infra.env.prod
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://grafana.${DOMAIN}
+      - GF_SERVER_DOMAIN=grafana.${DOMAIN}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD-SHELL', 'wget -qO- http://localhost:3000/api/health || exit 1' ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.51.0
+    privileged: true
+    restart: unless-stopped
+    command:
+      - '--housekeeping_interval=5s'
+      - '--disable_metrics=percpu,sched,tcp,udp,hugetlb,referenced_memory,cpu_topology,resctrl'
+      - '--containerd=/run/containerd/containerd.sock'
+      - '--containerd-namespace=moby'
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /run/containerd:/run/containerd:ro
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD', 'wget', '-qO-', 'http://localhost:8080/healthz' ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  tempo:
+    image: ${DOCKER_REGISTRY}/forgestack-tempo:v2
+    restart: unless-stopped
+    user: '0:0'
+    volumes:
+      - tempo_data:/tmp/tempo
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD', 'wget', '-qO-', 'http://localhost:3200/ready' ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  loki:
+    image: ${DOCKER_REGISTRY}/forgestack-loki:v2
+    restart: unless-stopped
+    volumes:
+      - loki_data:/loki
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD', 'wget', '-qO-', 'http://localhost:3100/ready' ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  promtail:
+    image: ${DOCKER_REGISTRY}/forgestack-promtail:v2
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - backend
+    healthcheck:
+      test: [ 'CMD', 'wget', '-qO-', 'http://localhost:9080/ready' ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - loki
+
+  # ==========================================================================
+  # DEV TOOLS
+  # ==========================================================================
+
+  portainer:
+    image: portainer/portainer-ce:2.21.4
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - portainer_data:/data
+    networks:
+      - backend
+
+# ============================================================================
+# NETWORKS
+# ============================================================================
+
+networks:
+  backend:
+    driver: bridge
+
+# ============================================================================
+# VOLUMES
+# ============================================================================
+
+volumes:
+  # Data stores
+  mongodb_data:
+  mongodb_config:
+  redis_data:
+  # Message broker
+  zookeeper_data:
+  zookeeper_log:
+  kafka_data:
+  # Monitoring
+  prometheus_data:
+  grafana_data:
+  tempo_data:
+  loki_data:
+  # Reverse proxy
+  caddy_data:
+  caddy_config:
+  # Dev tools
+  portainer_data:

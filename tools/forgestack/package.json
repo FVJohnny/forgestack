@@ -1,0 +1,7 @@
+{
+  "name": "@forgestack/tools",
+  "version": "1.0.0",
+  "description": "Workspace generators for the ForgeStack monorepo",
+  "private": true,
+  "generators": "./generators.json"
+}

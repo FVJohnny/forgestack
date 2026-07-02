@@ -1,0 +1,29 @@
+import { StringValueObject, DomainValidationException } from '@libs/nestjs-common';
+
+export class GreetingMessage extends StringValueObject {
+  private static readonly MAX_LENGTH = 200;
+
+  constructor(value: string) {
+    super(value.trim());
+  }
+
+  validate(): void {
+    super.validate();
+
+    if (this.value.length === 0) {
+      throw new DomainValidationException(
+        'greetingMessage',
+        this.value,
+        'Greeting message cannot be empty',
+      );
+    }
+
+    if (this.value.length > GreetingMessage.MAX_LENGTH) {
+      throw new DomainValidationException(
+        'greetingMessage',
+        this.value,
+        `Greeting message too long (max ${GreetingMessage.MAX_LENGTH} characters)`,
+      );
+    }
+  }
+}

@@ -1,0 +1,6 @@
+export class CreateGreeting_Command {
+  constructor(
+    public readonly message: string,
+    public readonly source: string,
+  ) {}
+}

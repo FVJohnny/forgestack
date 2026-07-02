@@ -1,0 +1,46 @@
+# Backend
+
+The backend is one or more **NestJS** services. Each service is split into
+**bounded contexts**: vertical slices that each own one area of the business
+(auth, notifications, billing, …) and never reach into each other's code.
+How the code inside a bounded context is organized is what this section covers.
+
+## How to read this section
+
+The pages build on each other, so first time through, read them in order:
+
+1. **[Hexagonal Architecture](/docs/backend/hexagonal)** — the layers inside a
+   context, and how ports and adapters keep business logic uncoupled from how
+   it is exposed to users, how data is stored, or how events are shared
+   between services.
+2. **[Domain-Driven Design](/docs/backend/ddd)** — how business logic is
+   modeled. The vocabulary used everywhere else (aggregates, value objects,
+   domain events) is introduced here.
+3. **[CQRS](/docs/backend/cqrs)** — how reads and writes flow through the
+   system.
+4. **[Event-Driven Architecture](/docs/backend/events)** — how bounded contexts
+   coordinate with each other in an uncoupled way.
+5. **[Testing](/docs/backend/testing)** — how all of the above is tested.
+6. **[Enforced Boundaries](/docs/backend/eslint-rules)** — the lint rules that
+   fail the build when the structure is violated.
+
+## Why this much structure?
+
+It pays off in several ways:
+
+- **Legibility.** Predictable layout and naming mean less time spent finding
+  and understanding code, for humans and coding agents. And a codebase that is
+  easier to understand is easier to work on: every change has an obvious place
+  to go.
+- **Uncoupling.** Frameworks, databases and transports sit behind interfaces.
+  Swapping MongoDB for Postgres, or Kafka for Redis, means writing a new
+  adapter, not rewriting business logic.
+- **Testability.** Business logic runs without infrastructure: tests construct
+  handlers directly, with in-memory repositories and mock buses, so they are
+  fast and need nothing running.
+- **Safety.** The layering and the lint rules stop accidental coupling.
+- **Observability.** Every command, query and event flows through the same base
+  classes, so all of them get logging, tracing and metrics without any
+  per-feature code.
+- **Evolvability.** These bounded contexts can be split
+  into separate services later with little ceremony.

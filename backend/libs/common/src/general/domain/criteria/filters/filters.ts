@@ -1,0 +1,21 @@
+import { Filter } from './filter';
+
+export class Filters {
+  readonly filters: Filter[];
+
+  constructor(filters: Filter[]) {
+    this.filters = filters;
+  }
+
+  add(filter: Filter): void {
+    this.filters.push(filter);
+  }
+
+  static fromValues(filters: Array<Map<string, string>>): Filters {
+    return new Filters(filters.map(Filter.fromValues));
+  }
+
+  static none(): Filters {
+    return new Filters([]);
+  }
+}

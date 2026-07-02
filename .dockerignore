@@ -1,0 +1,31 @@
+# Ignore everything
+**
+
+# Allow frontend/public-page source files
+!frontend/public-page/**
+
+# Ignore build artifacts and dependencies in frontend/public-page
+frontend/public-page/node_modules/**
+frontend/public-page/.next/**
+frontend/public-page/.env*
+frontend/public-page/*.tsbuildinfo
+frontend/public-page/.pnpm-store/**
+frontend/public-page/.vercel/**
+
+# Allow backend files for NestJS service builds
+!backend/libs/**
+!backend/services/**
+!package*.json
+!nx.json
+!tsconfig*.json
+
+# Allow infra files for monitoring images
+!infra/caddy/**
+!infra/env/**
+!infra/monitoring/**
+
+# Ignore build artifacts and dependencies in backend
+backend/**/node_modules/**
+backend/**/dist/**
+backend/**/.env*
+backend/**/*.tsbuildinfo

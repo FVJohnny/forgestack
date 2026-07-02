@@ -1,0 +1,341 @@
+# Shared shape of every NestJS service dev container. A service block only
+# adds its name-specific bits: command, env_file and labels. The
+# prometheus.scrape label opts the container into Prometheus discovery.
+x-nestjs-service: &nestjs-service
+  image: node:22
+  working_dir: /app
+  restart: unless-stopped
+  volumes:
+    - ${PWD}:/app
+  networks:
+    - backend
+  logging:
+    driver: json-file
+    options:
+      max-size: '10m'
+      max-file: '3'
+      labels: 'service,environment'
+  depends_on:
+    kafka:
+      condition: service_healthy
+    mongodb:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    loki:
+      condition: service_started
+
+services:
+
+  # ==========================================================================
+  # APP SERVICES
+  # ==========================================================================
+
+  service-1:
+    <<: *nestjs-service
+    command: >
+      sh -c "./scripts/start-nestjs-dev.sh service-1"
+    env_file:
+      - ../../backend/services/service-1/.env
+    labels:
+      - 'service=service-1'
+      - 'environment=development'
+      - 'prometheus.scrape=true'
+
+  service-2:
+    <<: *nestjs-service
+    command: >
+      sh -c "./scripts/start-nestjs-dev.sh service-2"
+    env_file:
+      - ../../backend/services/service-2/.env
+    labels:
+      - 'service=service-2'
+      - 'environment=development'
+      - 'prometheus.scrape=true'
+
+  public-page:
+    image: node:22-alpine
+    working_dir: /app
+    restart: unless-stopped
+    volumes:
+      - ${PWD}/frontend/public-page:/app
+      - public_page_node_modules:/app/node_modules
+    command: >
+      sh -c "rm -rf .next && corepack enable && corepack prepare pnpm@10 --activate && pnpm install --no-frozen-lockfile && pnpm dev"
+    env_file:
+      - ../../frontend/public-page/.env.local
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=1
+    networks:
+      - backend
+    depends_on:
+      - service-1
+
+  # ==========================================================================
+  # REVERSE PROXY
+  # ==========================================================================
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      - DOMAIN=localhost
+      - PROTOCOL=https
+      - TLS_ENV=dev
+    volumes:
+      - ${PWD}/infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      - backend
+    depends_on:
+      - service-1
+      - public-page
+      - grafana
+      - mongo-express
+
+  # ==========================================================================
+  # DATA STORES
+  # ==========================================================================
+
+  mongodb:
+    image: mongo:7.0
+    restart: unless-stopped
+    command: ['bash', '/scripts/mongo-startup.sh']
+    volumes:
+      - mongodb_data_dev:/data/db
+      - ../mongo/mongo-startup.sh:/scripts/mongo-startup.sh:ro
+    networks:
+      - backend
+    ports:
+      - '27017:27017'
+    healthcheck:
+      test: ['CMD-SHELL', "mongosh -u admin -p password --authenticationDatabase admin --eval 'rs.status().ok' | grep -q 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  mongo-express:
+    image: mongo-express:1.0.2
+    restart: unless-stopped
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://admin:password@mongodb:27017/?replicaSet=rs0&authSource=admin
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_SITE_BASEURL=/
+    networks:
+      - backend
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  redis:
+    image: redis:7.0-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - backend
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  # ==========================================================================
+  # MESSAGE BROKER
+  # ==========================================================================
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_4LW_COMMANDS_WHITELIST: srvr,mntr,ruok
+      # Faster session timeout for quicker cleanup of stale broker nodes
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_MAX_SESSION_TIMEOUT: 10000
+    volumes:
+      - zookeeper_data_dev:/var/lib/zookeeper/data
+      - zookeeper_log_dev:/var/lib/zookeeper/log
+    networks:
+      - backend
+    healthcheck:
+      test: ['CMD-SHELL', 'echo srvr | nc localhost 2181 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG4J_LOGGERS: 'kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO'
+      KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
+      # Shorter session timeout - broker node expires faster on restart
+      KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS: 6000
+      KAFKA_ZOOKEEPER_CONNECTION_TIMEOUT_MS: 6000
+    networks:
+      - backend
+    healthcheck:
+      test: ['CMD-SHELL', 'kafka-topics --bootstrap-server localhost:9092 --list']
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  # ==========================================================================
+  # MONITORING
+  # ==========================================================================
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    restart: unless-stopped
+    # Root so docker_sd_configs can read the Docker socket (the image's
+    # default user, nobody, gets permission denied).
+    user: root
+    volumes:
+      - ${PWD}/infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ${PWD}/infra/monitoring/prometheus/internal-api-key:/etc/prometheus/internal-api-key:ro
+      # Read-only Docker socket for docker_sd_configs: services are discovered
+      # by their prometheus.scrape=true container label.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - cadvisor
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://grafana.localhost
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+    volumes:
+      - ${PWD}/infra/monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ${PWD}/infra/monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - backend
+
+  # cAdvisor: container metrics collector for the Docker Containers dashboard.
+  # NOTE: Does not work on macOS Docker Desktop (containerd socket mismatch).
+  # Works correctly on the Linux prod server.
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    privileged: true
+    restart: unless-stopped
+    command:
+      - '--housekeeping_interval=5s'
+      - '--disable_metrics=percpu,sched,tcp,udp,hugetlb,referenced_memory,cpu_topology,resctrl'
+      - '--store_container_labels=true'
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - backend
+
+  tempo:
+    image: grafana/tempo:2.6.1
+    restart: unless-stopped
+    command: ['-config.file=/etc/tempo.yaml']
+    user: '0:0'
+    volumes:
+      - ${PWD}/infra/monitoring/tempo/tempo.yaml:/etc/tempo.yaml
+      - tempo_data:/tmp/tempo
+    networks:
+      - backend
+
+  loki:
+    image: grafana/loki:3.2.1
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki_data:/loki
+    networks:
+      - backend
+
+  promtail:
+    image: grafana/promtail:3.2.1
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${PWD}/infra/monitoring/promtail/promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - backend
+    depends_on:
+      - loki
+
+  # ==========================================================================
+  # DEV TOOLS
+  # ==========================================================================
+
+  portainer:
+    image: portainer/portainer-ce:2.21.4
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data_dev:/data
+    networks:
+      - backend
+
+# ============================================================================
+# NETWORKS
+# ============================================================================
+
+networks:
+  backend:
+    driver: bridge
+
+# ============================================================================
+# VOLUMES
+# ============================================================================
+
+volumes:
+  # Data stores
+  mongodb_data_dev:
+  redis_data_dev:
+  # Message broker
+  zookeeper_data_dev:
+  zookeeper_log_dev:
+  # Monitoring
+  tempo_data:
+  loki_data:
+  # App services
+  public_page_node_modules:
+  # Dev tools
+  portainer_data_dev:

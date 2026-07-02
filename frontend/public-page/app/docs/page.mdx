@@ -1,0 +1,60 @@
+# ForgeStack Documentation
+
+ForgeStack is an opinionated full-stack starter for building production-ready
+systems. Here's what you get out of the box:
+
+- A **Next.js** frontend that's already talking to the backend. Registration and
+  login work, there's a translation system for multiple languages, and a design
+  system you can build on top of.
+- One or more **NestJS** backend services built around solid patterns:
+  Domain-Driven Design, CQRS, Hexagonal Architecture, and an event-driven setup
+  where bounded contexts talk to each other asynchronously over **Kafka**.
+- **MongoDB** for storage and **Redis** for caching, both wired up (with
+  **PostgreSQL** support coming soon). The backend uses ports and adapters, so
+  swapping a datastore later doesn't ripple through your code.
+- An **observability stack** that tracks resource usage, API health,
+  command/query throughput, domain and integration events, and more, with logs
+  and traces to go with it.
+- A **deployment setup** with Docker Compose, Caddy for TLS, one-command deploys,
+  and a script that provisions a fresh server for you.
+
+The point of all this is simple: spend your time building the product, not
+fighting the usual headaches of a scalable distributed system.
+
+These docs walk through every part of the system: how it's put together, the
+patterns it sticks to, and how to grow it into your own product.
+
+
+## What's inside
+
+- **[Architecture](/docs/architecture)** — the request path from start to finish, and how the layers talk to each other.
+- **[Project Structure](/docs/project-structure)** — the monorepo layout, the
+  shared libraries, and the TypeScript path aliases.
+- **Backend** — the code patterns that make the backend predictable:
+  - **[Domain-Driven Design](/docs/backend/ddd)** — aggregates, value objects, domain events.
+  - **[CQRS](/docs/backend/cqrs)** — commands, queries and their handlers.
+  - **[Event-Driven Architecture](/docs/backend/events)** — the outbox/inbox pattern over Kafka.
+  - **[Hexagonal Architecture](/docs/backend/hexagonal)** — layers, ports and adapters; how persistence stays swappable.
+  - **[Enforced Boundaries](/docs/backend/eslint-rules)** — the custom lint rules that actually enforce all of the above.
+- **[Frontend](/docs/frontend)** — Next.js App Router, design tokens, i18n.
+- **[Databases](/docs/databases)** — MongoDB, Redis and the swappable datastores.
+- **[Monitoring](/docs/monitoring)** — metrics, logs and traces with Prometheus, Loki, Tempo and Grafana.
+- **[Deployment](/docs/deployment)** — Docker Compose, Caddy TLS and one-command deploys.
+
+<Callout type="tip" title="The guiding idea">
+  Every convention here exists to keep the codebase **predictable**, both for
+  people and for AI coding agents. When the structure is consistent and the
+  boundaries are enforced, you can open any bounded context and know right away
+  where the business logic, the wiring, and the I/O live.
+</Callout>
+
+## On the roadmap
+
+Some things I'm planning but haven't shipped yet:
+
+- **PostgreSQL support.** A relational adapter next to MongoDB, so you can pick
+  whichever store fits a given bounded context. Thanks to ports and adapters,
+  this swap stays contained.
+- **AI agent skills.** A set of skills that teach coding agents the project's
+  patterns, so they can extend things without breaking the boundaries.
+

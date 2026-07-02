@@ -1,0 +1,263 @@
+{
+  "auth": {
+    "login": {
+      "title": "Bienvenido de Nuevo",
+      "subtitle": "Inicia sesión para acceder a tu panel de control",
+      "email": "Correo Electrónico",
+      "emailPlaceholder": "juan.perez@ejemplo.com",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Ingresa tu contraseña",
+      "submit": "Iniciar Sesión",
+      "submitting": "Iniciando sesión...",
+      "noAccount": "¿No tienes una cuenta?",
+      "createAccount": "Crear Cuenta",
+      "successMessage": "¡Cuenta creada exitosamente! Por favor revisa tu correo ({email}) para un enlace de verificación antes de iniciar sesión.",
+      "errorDefault": "Error de inicio de sesión. Por favor verifica tus credenciales.",
+      "orContinueWith": "o continuar con",
+      "googleButton": "Continuar con Google",
+      "googleError": "Error al iniciar sesión con Google. Por favor inténtalo de nuevo.",
+      "forgotPassword": "¿Olvidaste tu contraseña?"
+    },
+    "forgotPassword": {
+      "title": "Olvidé mi Contraseña",
+      "description": "Ingresa tu dirección de correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
+      "email": "Correo Electrónico",
+      "emailPlaceholder": "juan.perez@ejemplo.com",
+      "submit": "Enviar Enlace de Restablecimiento",
+      "submitting": "Enviando enlace...",
+      "success": "¡Revisa tu correo! Hemos enviado un enlace de restablecimiento de contraseña a {email}.",
+      "backToSignIn": "Volver a Iniciar Sesión",
+      "error": "Error al solicitar el restablecimiento de contraseña. Por favor, inténtalo de nuevo."
+    },
+    "register": {
+      "title": "Crear Cuenta",
+      "email": "Correo Electrónico",
+      "emailPlaceholder": "juan.perez@ejemplo.com",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Ingresa tu contraseña",
+      "confirmPassword": "Confirmar Contraseña",
+      "confirmPasswordPlaceholder": "Confirma tu contraseña",
+      "submit": "Crear Cuenta",
+      "submitting": "Creando cuenta...",
+      "hasAccount": "¿Ya tienes una cuenta?",
+      "signIn": "Iniciar Sesión",
+      "errors": {
+        "passwordMismatch": "Las contraseñas no coinciden",
+        "passwordLength": "La contraseña debe tener al menos 6 caracteres",
+        "default": "Error de registro. Por favor intenta de nuevo."
+      }
+    },
+    "verifyEmail": {
+      "loading": {
+        "title": "Verificando Correo",
+        "description": "Por favor espera mientras verificamos tu dirección de correo..."
+      },
+      "success": {
+        "title": "¡Correo Verificado!",
+        "description": "Tu dirección de correo ha sido verificada exitosamente. Redirigiendo al panel de control..."
+      },
+      "error": {
+        "title": "Verificación Fallida",
+        "tryAgain": "Por favor intenta de nuevo o contacta soporte si el problema persiste.",
+        "goToSignIn": "Ir a Iniciar Sesión"
+      },
+      "errors": {
+        "noId": "Enlace de verificación inválido. No se proporcionó ID de verificación.",
+        "default": "La verificación de correo falló. El enlace puede ser inválido o haber expirado."
+      },
+      "backToHome": "← Volver al inicio"
+    }
+  },
+  "fmf": {
+    "landing": {
+      "headline": "Una base sólida para <molten>forjar</molten> aplicaciones",
+      "sub": "Un starter de microservicios NestJS listo para producción — DDD, CQRS, mensajería basada en eventos, observabilidad completa y despliegues con un solo comando, todo conectado para que construyas en lugar de configurar.",
+      "github": "Ver en GitHub",
+      "openDemo": "Abrir demo",
+      "docs": "Documentación",
+      "features": {
+        "ddd": {
+          "title": "Lógica de negocio con un solo hogar",
+          "desc": "Cada regla se escribe una sola vez, en agregados y value objects dentro de la capa de dominio. Reglas de lint propias rompen la build si se cruza un límite."
+        },
+        "events": {
+          "title": "Eventos fiables entre servicios",
+          "desc": "Los servicios se comunican por Kafka con outbox transaccional e inbox idempotente: sin eventos perdidos ni procesados dos veces."
+        },
+        "observability": {
+          "title": "Visibilidad desde el primer día",
+          "desc": "Métricas, logs y trazas llegan a Grafana automáticamente. Cada comando, query y evento se mide sin código extra."
+        },
+        "deployable": {
+          "title": "Del portátil a producción en un comando",
+          "desc": "Un stack de compose para dev, imágenes versionadas para prod, TLS con Caddy y scripts que aprovisionan y despliegan un servidor nuevo."
+        },
+        "agents": {
+          "title": "Un código que los agentes de IA pueden navegar",
+          "desc": "Cada funcionalidad tiene la misma forma y el mismo lugar. Humanos y agentes siempre saben dónde va cada cosa."
+        },
+        "scaffold": {
+          "title": "Servicios nuevos con un comando",
+          "desc": "El generador crea un servicio con un contexto inicial funcional y lo conecta a compose, Caddy y el monitoreo. Renómbralo y empieza a construir."
+        }
+      }
+    },
+    "auth": {
+      "panelKicker": "la consola del desarrollador",
+      "panelTitle": "Opera tus servicios desde una cabina iluminada por la forja",
+      "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
+      "panelFootnote": "Sesión segura · renovación de tokens · acceso basado en roles",
+      "backToHome": "Volver al inicio"
+    },
+    "nav": {
+      "overview": "Resumen",
+      "account": "Cuenta",
+      "admin": "Administración",
+      "sectionMain": "Consola",
+      "sectionSystem": "Sistema",
+      "logout": "Cerrar sesión",
+      "env": "entorno",
+      "impersonating": "Suplantando",
+      "exitImpersonation": "Salir"
+    },
+    "dashboard": {
+      "title": "Resumen del sistema",
+      "subtitle": "Estado en vivo y flujo de eventos del servicio.",
+      "live": "en vivo",
+      "paused": "en pausa",
+      "refreshedAt": "sincronizado {time}",
+      "health": {
+        "title": "Estado del sistema",
+        "ready": "Listo",
+        "notReady": "No listo",
+        "service": "servicio",
+        "environment": "entorno",
+        "noChecks": "No se reportaron comprobaciones de estado.",
+        "loadError": "No se pudo cargar el estado del sistema."
+      },
+      "events": {
+        "title": "Rendimiento de eventos",
+        "totalProcessed": "Total de eventos procesados",
+        "byType": "Por tipo de evento",
+        "topic": "tópico",
+        "success": "ok",
+        "failure": "err",
+        "lastProcessed": "último",
+        "none": "Aún no se han procesado eventos.",
+        "loadError": "No se pudieron cargar los datos de eventos.",
+        "never": "nunca"
+      },
+      "analytics": {
+        "title": "Actividad de usuarios",
+        "total": "actividades totales",
+        "byType": "por tipo de evento",
+        "lastActivity": "última actividad",
+        "never": "nunca",
+        "none": "Aún no hay actividad: registra un usuario y observa el flujo de eventos.",
+        "loadError": "No se pudo conectar con service-2.",
+        "source": "alimentado por eventos de Kafka"
+      },
+      "account": {
+        "title": "Tu cuenta",
+        "email": "Correo",
+        "role": "Rol",
+        "memberSince": "Miembro desde",
+        "view": "Gestionar cuenta"
+      },
+      "motd": {
+        "label": "Aviso"
+      }
+    },
+    "account": {
+      "title": "Cuenta",
+      "subtitle": "Tu perfil y credenciales.",
+      "profile": {
+        "title": "Perfil",
+        "email": "Correo",
+        "role": "Rol",
+        "userId": "ID de usuario",
+        "completed": "Completado",
+        "pending": "Pendiente"
+      },
+      "password": {
+        "title": "Cambiar contraseña",
+        "current": "Contraseña actual",
+        "currentPlaceholder": "Ingresa la contraseña actual",
+        "new": "Nueva contraseña",
+        "newPlaceholder": "Al menos 8 caracteres",
+        "confirm": "Confirmar nueva contraseña",
+        "confirmPlaceholder": "Vuelve a ingresar la nueva contraseña",
+        "submit": "Actualizar contraseña",
+        "submitting": "Actualizando...",
+        "success": "Contraseña actualizada. Se cerrará tu sesión en breve.",
+        "errors": {
+          "mismatch": "Las nuevas contraseñas no coinciden",
+          "tooShort": "La contraseña debe tener al menos 8 caracteres",
+          "failed": "No se pudo cambiar la contraseña. Verifica tu contraseña actual."
+        }
+      }
+    },
+    "admin": {
+      "title": "Administración",
+      "subtitle": "Gestiona usuarios y el aviso público.",
+      "onlyTitle": "Solo administradores",
+      "onlyDesc": "Necesitas el rol de administrador para ver esta área.",
+      "users": {
+        "title": "Usuarios",
+        "filterEmail": "correo",
+        "filterIp": "ip",
+        "filterPlaceholder": "Filtrar por {field}…",
+        "search": "Buscar",
+        "clear": "Limpiar",
+        "columns": {
+          "email": "Correo",
+          "role": "Rol",
+          "status": "Estado",
+          "created": "Creado",
+          "ips": "IPs",
+          "actions": "Acciones"
+        },
+        "empty": "No se encontraron usuarios.",
+        "loadError": "No se pudieron cargar los usuarios.",
+        "suspend": "Suspender",
+        "unsuspend": "Reactivar",
+        "delete": "Eliminar",
+        "impersonate": "Suplantar",
+        "page": "Página {current} / {total}",
+        "total": "{count} usuarios",
+        "prev": "Anterior",
+        "next": "Siguiente",
+        "confirmDelete": {
+          "title": "Eliminar usuario",
+          "body": "¿Eliminar permanentemente a {email}? Esta acción no se puede deshacer.",
+          "confirm": "Eliminar usuario"
+        },
+        "toast": {
+          "suspended": "Usuario suspendido",
+          "unsuspended": "Usuario reactivado",
+          "deleted": "Usuario eliminado",
+          "actionFailed": "La acción falló"
+        }
+      },
+      "motd": {
+        "title": "Mensaje del día",
+        "label": "Contenido del aviso",
+        "placeholder": "Visible para todos los usuarios en la consola…",
+        "help": "Deja un aviso para todos (ventanas de mantenimiento, lanzamientos…).",
+        "save": "Guardar aviso",
+        "saving": "Guardando…",
+        "clear": "Limpiar",
+        "clearing": "Limpiando…",
+        "empty": "No hay ningún aviso configurado actualmente.",
+        "updated": "Actualizado {time}",
+        "toast": {
+          "saved": "Aviso guardado",
+          "cleared": "Aviso eliminado",
+          "empty": "El contenido no puede estar vacío",
+          "saveFailed": "No se pudo guardar el aviso",
+          "clearFailed": "No se pudo eliminar el aviso"
+        }
+      }
+    }
+  }
+}

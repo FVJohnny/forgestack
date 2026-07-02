@@ -1,0 +1,68 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Env & secrets
+.env
+*.env
+!*.env.example
+.env.*.local
+!.env.local.example
+infra/.env
+infra/env/*.env.prod
+!infra/env/*.env.prod.example
+infra/monitoring/prometheus/internal-api-key
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Node / TypeScript
+node_modules/
+.pnpm-store/
+dist/
+build/
+.cache/
+coverage/
+*.tsbuildinfo
+
+# Frontend frameworks (if/when added)
+.next/
+.nuxt/
+.svelte-kit/
+.vite/
+.next/static/
+.next/cache/
+
+# IDE/editor
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+*.swp
+*.swo
+.claude/
+
+# Docker
+*.pid
+**/.docker-cache/
+
+# Misc
+coverage-final.json
+.nyc_output/
+
+.nx/installation
+.nx/cache
+.nx/workspace-data
+
+
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+# Dev-container build stamps/locks
+.dev-stamp
+.dev-install.lock

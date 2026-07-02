@@ -1,0 +1,24 @@
+import { Base_InMemoryRepository } from '@libs/nestjs-common';
+import { Greeting } from '@bc/example/domain/aggregates/greeting/greeting.aggregate';
+import type { Greeting_Repository } from '@bc/example/domain/aggregates/greeting/greeting.repository';
+import type { GreetingDTO } from '@bc/example/domain/aggregates/greeting/greeting.dto';
+
+export class Greeting_InMemoryRepository
+  extends Base_InMemoryRepository<Greeting, GreetingDTO>
+  implements Greeting_Repository
+{
+  protected toEntity(dto: GreetingDTO): Greeting {
+    return Greeting.fromValue(dto);
+  }
+
+  async findLatest(limit: number): Promise<Greeting[]> {
+    const greetings = await this.findAll();
+
+    return greetings
+      .sort(
+        (a, b) =>
+          b.timestamps.createdAt.toValue().getTime() - a.timestamps.createdAt.toValue().getTime(),
+      )
+      .slice(0, limit);
+  }
+}

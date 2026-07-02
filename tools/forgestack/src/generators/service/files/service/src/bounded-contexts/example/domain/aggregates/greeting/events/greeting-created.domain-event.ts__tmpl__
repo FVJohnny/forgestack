@@ -1,0 +1,13 @@
+import { Base_DomainEvent } from '@libs/nestjs-common';
+import type { Id } from '@libs/nestjs-common';
+import type { GreetingMessage } from '@bc/example/domain/value-objects';
+
+export class GreetingCreated_DomainEvent extends Base_DomainEvent {
+  constructor(
+    public readonly greetingId: Id,
+    public readonly message: GreetingMessage,
+    public readonly source: string,
+  ) {
+    super(greetingId);
+  }
+}

@@ -1,0 +1,23 @@
+import { Controller, Post, Body, HttpCode, HttpStatus, Inject } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { type ICommandBus } from '@nestjs/cqrs';
+import { COMMAND_BUS } from '@libs/nestjs-common';
+import { CreateGreeting_Command } from '@bc/example/application/commands';
+import { CreateGreeting_ControllerParams } from './create-greeting.params';
+
+@ApiTags('greetings')
+@Controller('greetings')
+export class CreateGreeting_Controller {
+  constructor(@Inject(COMMAND_BUS) private readonly commandBus: ICommandBus) {}
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a greeting (starter write endpoint)' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Greeting created' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid message' })
+  async createGreeting(@Body() body: CreateGreeting_ControllerParams) {
+    const command = new CreateGreeting_Command(body.message, 'api');
+
+    await this.commandBus.execute(command);
+  }
+}

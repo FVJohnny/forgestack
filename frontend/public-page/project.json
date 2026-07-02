@@ -1,0 +1,19 @@
+{
+  "name": "public-page",
+  "sourceRoot": "frontend/public-page",
+  "projectType": "application",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx eslint \"frontend/public-page/app/**/*.{ts,tsx}\" \"frontend/public-page/lib/**/*.{ts,tsx}\"",
+          "prettier --config .prettierrc --check \"frontend/public-page/app/**/*.{ts,tsx,json}\" \"frontend/public-page/lib/**/*.{ts,tsx,json}\" \"frontend/public-page/messages/*.json\" \"frontend/public-page/i18n/**/*.{ts,tsx}\""
+        ],
+        "parallel": false,
+        "forwardAllArgs": false
+      }
+    }
+  },
+  "tags": ["type:app", "scope:frontend"]
+}

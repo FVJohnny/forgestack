@@ -1,0 +1,10 @@
+FROM caddy:2.8-alpine
+
+# Copy Caddyfile into the image
+COPY ./infra/caddy/Caddyfile /etc/caddy/Caddyfile
+
+# Validate Caddyfile syntax
+RUN caddy validate --config /etc/caddy/Caddyfile
+
+# Use default Caddy entrypoint
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]

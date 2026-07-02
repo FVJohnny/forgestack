@@ -1,0 +1,128 @@
+# Deployment
+
+ForgeStack is deployable from day one. The whole stack is defined as
+**Docker Compose**, fronted by **Caddy** (automatic TLS), and shipped with
+scripts to provision a fresh server and deploy with one command.
+
+## The stack
+
+A single Compose file brings up everything; in dev it uses official images with
+hot-reload bind mounts, in prod it uses pre-built, versioned images.
+
+| Service | Role |
+| --- | --- |
+| `public-page` | Next.js frontend |
+| `service-1`, `service-2` | NestJS backend services |
+| `caddy` | reverse proxy + TLS termination |
+| `mongodb` + `mongo-express` | primary datastore + web viewer |
+| `redis` | cache / pub-sub |
+| `zookeeper` + `kafka` | event bus |
+| `prometheus` | metrics |
+| `grafana` | dashboards |
+| `tempo` | traces |
+| `loki` + `promtail` | logs |
+| `cadvisor` | container metrics |
+| `portainer` | container management UI (dev convenience) |
+
+All services share one `backend` bridge network and address each other by name
+(`kafka:9092`, `redis:6379`, …).
+
+## Caddy & TLS
+
+A single `Caddyfile` serves both dev and prod, switching TLS behaviour on an env
+var. Dev uses self-signed certs (`tls internal`); prod omits the block and Caddy
+provisions Let's Encrypt certificates automatically.
+
+```caddyfile
+(tls-dev)  { tls internal }
+(tls-prod) { }
+
+{$PROTOCOL:http}://{$DOMAIN:localhost} {
+  import tls-{$TLS_ENV:dev}
+  reverse_proxy public-page:3000
+}
+{$PROTOCOL:http}://service1.{$DOMAIN:localhost} { import tls-{$TLS_ENV:dev}; reverse_proxy service-1:3000 }
+{$PROTOCOL:http}://grafana.{$DOMAIN:localhost}  { import tls-{$TLS_ENV:dev}; reverse_proxy grafana:3000 }
+{$PROTOCOL:http}://mongo.{$DOMAIN:localhost}    { import tls-{$TLS_ENV:dev}; reverse_proxy mongo-express:8081 }
+```
+
+Subdomains route to each browser-facing service: the app on the root domain, the
+API on `service1.`, dashboards on `grafana.`, the DB viewer on `mongo.`.
+
+<Callout type="tip" title="The *.localhost dev domain">
+  Browsers resolve any <code>*.localhost</code> name to 127.0.0.1 with no
+  <code>/etc/hosts</code> edits, so <code>grafana.localhost</code> and
+  <code>service1.localhost</code> work out of the box in dev. Trust Caddy's local
+  CA once and everything is HTTPS locally.
+</Callout>
+
+## Local development
+
+The dev stack runs the frontend and backend with hot reload (source is
+bind-mounted; `next dev` and the Nest watcher pick up changes). A
+`start-dev` script ensures prerequisites, generates `.env` files from the
+examples, and brings the stack up.
+
+<Callout type="warning" title="env_file isn't hot-reloaded">
+  Editing a service's <code>.env</code> requires recreating that container
+  (<code>up -d --force-recreate</code>), not just a restart — Compose only reads
+  <code>env_file</code> at container creation. Source/code changes hot-reload
+  fine; env changes don't.
+</Callout>
+
+## Production deploy
+
+`npm run prod:update` runs `infra/scripts/deploy.sh`, which:
+
+1. Builds the images (frontend, backend, Caddy, and the monitoring images) in
+   parallel.
+2. Pushes them to your container registry with versioned tags
+   (`<registry>/forgestack-<service>:vN`).
+3. Bumps the version tags in `docker-compose.prod.yml`.
+4. Syncs the compose + config files to the server over rsync.
+5. Runs `docker compose up -d` on the server via SSH.
+
+A separate `setup-server.sh` provisions a fresh Ubuntu host idempotently:
+installs Docker + the compose plugin, creates a non-root deploy user with SSH-key
+auth, opens the firewall for SSH/HTTP/HTTPS, ensures swap, and creates the deploy
+directory (`/opt/forgestack`).
+
+## Environment configuration
+
+Env templates live in `infra/env/` (and per-service `.env.example`s). Keep the
+**local, prod, and example** files in sync in shape, even though values differ.
+
+```env
+# infra.env.prod (excerpt)
+DOMAIN=your-domain.com
+PROTOCOL=https
+TLS_ENV=prod
+DOCKER_REGISTRY=docker.io/your-username
+
+# service-1.env.prod (excerpt)
+JWT_SECRET=...                 # required
+JWT_REFRESH_SECRET=...         # required (distinct from JWT_SECRET)
+MONGODB_URI=mongodb://mongodb:27017/app?replicaSet=rs0
+KAFKA_BROKERS=kafka:9092
+OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
+```
+
+<Callout type="warning" title="Secrets stay out of git">
+  Real <code>.env.prod</code> files (JWT secrets, DB and registry credentials)
+  are gitignored. Only the <code>*.example</code> templates are committed — fill
+  them in on the server, never commit the populated versions.
+</Callout>
+
+## Making it yours
+
+To turn ForgeStack into your product:
+
+1. Rename the service(s) and set your `DOMAIN`, registry and secrets in the env
+   files.
+2. Build your bounded contexts following the [Backend](/docs/backend) patterns —
+   the lint rules will keep you on the rails.
+3. Add datastores or external adapters behind ports as needed.
+4. `npm run prod:update` to ship.
+
+That's the full tour. Jump back to the **[Introduction](/docs)** any time, or
+explore the **[architecture diagram](/)** on the landing page.

@@ -1,0 +1,206 @@
+# CQRS
+
+Reads and writes want different things. A write must enforce business rules,
+run in a transaction and announce what changed. A read wants to fetch data and
+shape it for whoever is asking, as directly as possible. When both go through
+the same service methods, each one drags the other's baggage: reads pass
+through write-oriented models, writes accumulate presentation concerns, and
+the methods grow into do-everything functions.
+
+CQRS (Command Query Responsibility Segregation) splits the two paths.
+A **command** changes state and returns nothing. A **query**
+answers a question and changes nothing. Every use case in the system is one or
+the other, and the split is visible in the folder structure of every bounded
+context: `application/commands/` and `application/queries/`.
+
+## Commands
+
+A command is an immutable object describing one intention, named in the
+imperative: `RegisterUser_Command`, `CreateGreeting_Command`,
+`RevokeAllUserTokens_Command`. It carries data, not behaviour:
+
+```ts
+// …/application/commands/register-user/register-user.command.ts
+export class RegisterUser_Command extends Base_Command implements ICommand {
+  public readonly email: string;
+  public readonly password: string;
+
+  constructor(props: { email: string; password: string }) {
+    super();
+    this.email = props.email;
+    this.password = props.password;
+  }
+}
+```
+
+Every command must extend `Base_Command`.
+
+Each command has exactly one **handler**, in the same folder. A handler
+implements three methods, and the framework always runs them in the same
+order:
+
+1. `authorize` — is the requester allowed to do this?
+2. `validate` — are the command's preconditions met?
+3. `handle` — do the work.
+
+`handle` orchestrates but does not decide: a typical command handler  builds value objects, calls the
+aggregate (where the business rules run), persists inside a transaction, and
+dispatches the aggregate's domain events:
+
+```ts
+// …/commands/register-user/register-user.command-handler.ts
+export class RegisterUser_CommandHandler extends Base_CommandHandler(RegisterUser_Command) {
+  constructor(
+    @Inject(USER_REPOSITORY) private readonly userRepository: User_Repository,
+    @Inject(USER_UNIQUENESS_CHECKER) private readonly uniquenessChecker: IUserUniquenessChecker,
+    @Inject(EVENT_BUS) eventBus: IEventBus,
+  ) {
+    super(eventBus);
+  }
+
+  async handle(command: RegisterUser_Command) {
+    // wrap the raw input in value objects: invalid data can't get past this point
+    const email = new Email(command.email);
+    const password = await Password.createFromPlainText(command.password);
+
+    // the aggregate creates the user: the business rules run inside it
+    const user = await User.create({ email, password }, this.uniquenessChecker);
+
+    // persist through the repository port
+    await this.userRepository.save(user);
+
+    // dispatch the domain events the aggregate recorded
+    await this.sendDomainEvents<User>(user);
+  }
+
+  async authorize(_: RegisterUser_Command) { return true; }
+  async validate(_: RegisterUser_Command) {}
+}
+```
+
+Note what the handler returns: nothing. If a caller wants to see the result of
+a command, it asks a query afterwards, or reacts to the events the command
+caused. That one-way flow is what keeps writes clean.
+
+## Queries
+
+A query reads state and returns a **response object shaped for the caller**,
+never a domain object. Every query must extend `Base_Query`. It has a handler
+with the same authorize → validate → handle lifecycle, with one difference:
+`handle` returns data.
+
+A query carries its parameters, and its response type declares exactly what
+the caller gets back:
+
+```ts
+// …/application/queries/list-greetings/list-greetings.query.ts
+export class ListGreetings_Query extends Base_Query implements IQuery {
+  constructor(public readonly limit: number = 10) {
+    super();
+  }
+}
+
+// list-greetings.query-response.ts
+export interface ListGreetings_QueryResponse {
+  greetings: Array<{
+    id: string;
+    message: string;
+    source: string;
+    createdAt: Date;
+  }>;
+}
+```
+
+The handler reads through a repository port and maps the domain objects to
+that plain response. No aggregate is mutated and no event is published:
+
+```ts
+// list-greetings.query-handler.ts
+export class ListGreetings_QueryHandler extends Base_QueryHandler(
+  ListGreetings_Query,
+)<ListGreetings_QueryResponse>() {
+  constructor(
+    @Inject(GREETING_REPOSITORY) private readonly greetingRepository: Greeting_Repository,
+  ) {
+    super();
+  }
+
+  async handle(query: ListGreetings_Query): Promise<ListGreetings_QueryResponse> {
+    // read through the repository port
+    const greetings = await this.greetingRepository.findLatest(query.limit);
+
+    // map domain objects to the plain response shaped for the caller
+    return {
+      greetings: greetings.map((g) => ({
+        id: g.id.toValue(),
+        message: g.message.toValue(),
+        source: g.source,
+        createdAt: g.timestamps.createdAt.toValue(),
+      })),
+    };
+  }
+
+  async authorize(_: ListGreetings_Query) { return true; }
+  async validate(_: ListGreetings_Query) {}
+}
+```
+
+## Controllers
+
+Commands and queries enter the system through **controllers**, the HTTP side
+of a context's `interfaces/` layer. A controller is deliberately thin: it
+validates the raw input, builds the command or query, and dispatches it
+through the injected bus. No business logic lives here:
+
+```ts
+// …/interfaces/controllers/greetings/create-greeting.controller.ts
+@ApiTags('greetings')
+@Controller('greetings')
+export class CreateGreeting_Controller {
+  constructor(@Inject(COMMAND_BUS) private readonly commandBus: ICommandBus) {}
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a greeting' })
+  async createGreeting(@Body() body: CreateGreeting_ControllerParams) {
+    await this.commandBus.execute(new CreateGreeting_Command(body.message, 'api'));
+  }
+}
+```
+
+The conventions:
+
+- **One controller per operation**, named after it
+  (`CreateGreeting_Controller`), in `interfaces/controllers/<resource>/`.
+- **Input validation at the edge** — a `…_ControllerParams` class with
+  `class-validator` decorators, enforced by the global validation pipe.
+  Domain rules still live in value objects; the params class only guards
+  shape.
+- **Controllers use the command bus and the query bus** (injected via the
+  `COMMAND_BUS` and `QUERY_BUS` tokens) to dispatch commands and queries; the
+  bus finds the handler, so the controller never sees one directly.
+- **Swagger decorators** feed the docs UI every service serves at `/docs`.
+
+
+## What you get with this base classes
+
+Every handler extends a shared base class (`Base_CommandHandler` or
+`Base_QueryHandler`). The base is what runs the
+authorize → validate → handle sequence, and it wraps every execution with:
+
+- a **tracing span** (`command.execute` / `query.execute`) named after the
+  handler class;
+- **metrics** — a duration histogram and success/error counters, visible on
+  the CQRS Grafana dashboard;
+- **structured logs** with correlation IDs.
+
+
+## Further reading
+
+- [CQRS](https://martinfowler.com/bliki/CQRS.html) — Martin Fowler. A short,
+  balanced overview, including when not to use it.
+- [CQRS Documents](https://cqrs.files.wordpress.com/2010/11/cqrs_documents.pdf)
+  — Greg Young. The original, deeper treatment by the person who coined the
+  term.
+
+Next: **[Event-Driven Architecture](/docs/backend/events)**.

@@ -1,0 +1,33 @@
+import { RuntimeAutoDiscovery } from '@libs/nestjs-common';
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { GREETING_REPOSITORY } from './domain/aggregates/greeting/greeting.repository';
+import { Greeting_MongodbRepository } from './infrastructure/repositories/mongodb/greeting.mongodb-repository';
+
+// 🚀 RUNTIME AUTO-DISCOVERY — controllers, command/query handlers,
+// domain-event handlers and integration-event handlers are all picked up by
+// their file suffixes; only repositories (ports → adapters) are wired by hand.
+const { controllers, handlers } = RuntimeAutoDiscovery.discoverAllComponents(__dirname);
+
+/**
+ * Starter bounded context demonstrating the full pattern:
+ *
+ *   POST /greetings ──▶ CreateGreeting_Command ──▶ Greeting.create()
+ *   user.created (Kafka, from another service) ──▶ same command
+ *   Greeting.create() raises GreetingCreated_DomainEvent ──▶ handler reacts
+ *   GET /greetings ──▶ ListGreetings_Query ──▶ repository
+ *
+ * Rename it, gut it, or duplicate the folder to start another context.
+ */
+@Module({
+  imports: [ConfigModule],
+  controllers: [...controllers],
+  providers: [
+    ...handlers,
+    {
+      provide: GREETING_REPOSITORY,
+      useClass: Greeting_MongodbRepository,
+    },
+  ],
+})
+export class ExampleBoundedContextModule {}

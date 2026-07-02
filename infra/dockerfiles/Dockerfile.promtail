@@ -1,0 +1,7 @@
+FROM grafana/promtail:3.2.1
+
+# Copy Promtail configuration
+COPY ./infra/monitoring/promtail/promtail-config.yaml /etc/promtail/config.yaml
+
+# Use default Promtail entrypoint with our config
+CMD ["-config.file=/etc/promtail/config.yaml"]

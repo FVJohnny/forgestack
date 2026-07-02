@@ -1,0 +1,83 @@
+# Enforced Boundaries
+
+The patterns in the rest of the backend docs are only useful if they're actually
+followed. ForgeStack doesn't rely on discipline or code review for that — it
+ships a set of **custom ESLint rules** (in `eslint/rules/`) that fail the build
+when an architectural rule is broken. The architecture is executable.
+
+## What gets enforced
+
+### Layer boundaries
+
+`hexagonal-architecture` enforces the dependency direction. The **domain** layer
+may import only from the domain layer; the **application** layer may import from
+domain and application. A domain file that imports from `infrastructure` is an
+error — the core stays pure.
+
+### Bounded-context isolation
+
+`no-cross-bc-imports` stops one bounded context from reaching into another's
+internals. Keyed off the `@bc/*` path alias: from inside `@bc/auth` you may
+import `@bc/auth/...` and `@bc/shared/...`, but **not** `@bc/notifications/...`.
+Contexts collaborate through integration events, not imports.
+
+```js
+// eslint/rules/no-cross-bc-imports.mjs (essence)
+const BC_PATH_REGEX = /bounded-contexts\/([^/]+)\//;
+const BC_ALIAS_REGEX = /^@bc\/([^/]+)/;
+// flag when importing BC !== current BC (allowing 'shared')
+```
+
+### CQRS collocation & naming
+
+- `cqrs-handler-collocation` — a `*.command-handler.ts` must import its command
+  from the **same directory** (likewise queries; domain-event handlers import the
+  event from `domain/.../events`). Keeps each use case self-contained.
+- `handler-naming` — handler classes must end with the right suffix:
+  `_CommandHandler`, `_QueryHandler`, `_DomainEventHandler`,
+  `_IntegrationEventHandler`.
+
+### Base-class conformance
+
+A family of rules guarantees the building blocks actually extend the right base,
+so the cross-cutting behaviour (events, tracing, metrics, transactions) is never
+accidentally missing:
+
+| Rule | File suffix | Must extend / implement |
+| --- | --- | --- |
+| `aggregate-base` | `*.aggregate.ts` | `SharedAggregate` |
+| `aggregate-dto-base` | aggregate DTOs | `SharedAggregateDTO` |
+| `value-object-naming` | `*.vo.ts` | the value-object interface (and VOs must live in `*.vo.ts`) |
+| `command-handler-base` | `*.command-handler.ts` | `Base_CommandHandler(Command)` |
+| `query-handler-base` | `*.query-handler.ts` | `Base_QueryHandler(Query)<Response>()` |
+| `domain-event-base` | `*.domain-event.ts` | `Base_DomainEvent` |
+| `domain-event-handler-base` | domain-event handlers | `Base_DomainEventHandler(Event)` |
+| `repository-base` | concrete repositories | `Base_MongoRepository` (or a `Repository` interface) |
+
+### Aggregate immutability
+
+`no-direct-entity-mutation` forbids assigning directly to properties of a
+`SharedAggregate` instance from outside its own methods. State must change
+through intention-revealing behaviour (`user.canAuthenticate()`,
+`outbox.markAsProcessed()`) so invariants always run.
+
+## Why enforce instead of advise
+
+Three reasons:
+
+- **Boundaries erode silently.** A single "just this once" import from domain
+  into infrastructure is how layered architectures rot. A rule turns that into a
+  red build, not a future refactor.
+- **It's the best documentation.** New contributors — and AI agents — learn the
+  rules by hitting them, with a precise message pointing at the fix.
+- **It keeps the promises true.** Other docs say "the domain is pure" and
+  "contexts talk only through events". These rules are what make those
+  statements reliably true, not aspirational.
+
+<Callout type="tip" title="Extending the rules">
+  The rules live in <code>eslint/rules/</code> as small, standalone <code>.mjs</code>
+  files. When you add a new convention to your fork, add a rule for it — that's
+  how the architecture stays enforceable as it grows.
+</Callout>
+
+That completes the backend tour. Continue with the platform: **[Frontend](/docs/frontend)**.

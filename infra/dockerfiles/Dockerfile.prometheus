@@ -1,0 +1,7 @@
+FROM prom/prometheus:v2.54.1
+
+# Copy Prometheus configuration
+COPY ./infra/monitoring/prometheus/prometheus.yml /etc/prometheus/prometheus.yml
+COPY ./infra/monitoring/prometheus/internal-api-key /etc/prometheus/internal-api-key
+
+# Use default Prometheus entrypoint

@@ -1,0 +1,263 @@
+{
+  "auth": {
+    "login": {
+      "title": "Bon Retour",
+      "subtitle": "Connectez-vous pour accéder à votre tableau de bord",
+      "email": "Email",
+      "emailPlaceholder": "jean.dupont@exemple.fr",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "Entrez votre mot de passe",
+      "submit": "Se Connecter",
+      "submitting": "Connexion...",
+      "noAccount": "Pas encore de compte ?",
+      "createAccount": "Créer un Compte",
+      "successMessage": "Compte créé avec succès ! Veuillez vérifier votre email ({email}) pour un lien de vérification avant de vous connecter.",
+      "errorDefault": "Échec de connexion. Veuillez vérifier vos identifiants.",
+      "orContinueWith": "ou continuer avec",
+      "googleButton": "Continuer avec Google",
+      "googleError": "Échec de connexion Google. Veuillez réessayer.",
+      "forgotPassword": "Mot de passe oublié ?"
+    },
+    "forgotPassword": {
+      "title": "Mot de Passe Oublié",
+      "description": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+      "email": "E-mail",
+      "emailPlaceholder": "jean.dupont@exemple.fr",
+      "submit": "Envoyer le Lien de Réinitialisation",
+      "submitting": "Envoi du lien...",
+      "success": "Vérifiez votre e-mail ! Nous avons envoyé un lien de réinitialisation du mot de passe à {email}.",
+      "backToSignIn": "Retour à la Connexion",
+      "error": "Échec de la demande de réinitialisation du mot de passe. Veuillez réessayer."
+    },
+    "register": {
+      "title": "Créer un Compte",
+      "email": "Email",
+      "emailPlaceholder": "jean.dupont@exemple.fr",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "Entrez votre mot de passe",
+      "confirmPassword": "Confirmer le Mot de passe",
+      "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
+      "submit": "Créer un Compte",
+      "submitting": "Création du compte...",
+      "hasAccount": "Déjà un compte ?",
+      "signIn": "Se Connecter",
+      "errors": {
+        "passwordMismatch": "Les mots de passe ne correspondent pas",
+        "passwordLength": "Le mot de passe doit contenir au moins 6 caractères",
+        "default": "Échec de l'inscription. Veuillez réessayer."
+      }
+    },
+    "verifyEmail": {
+      "loading": {
+        "title": "Vérification de l'Email",
+        "description": "Veuillez patienter pendant que nous vérifions votre adresse email..."
+      },
+      "success": {
+        "title": "Email Vérifié !",
+        "description": "Votre adresse email a été vérifiée avec succès. Redirection vers le tableau de bord..."
+      },
+      "error": {
+        "title": "Vérification Échouée",
+        "tryAgain": "Veuillez réessayer ou contacter le support si le problème persiste.",
+        "goToSignIn": "Aller à la Connexion"
+      },
+      "errors": {
+        "noId": "Lien de vérification invalide. Aucun ID de vérification fourni.",
+        "default": "La vérification de l'email a échoué. Le lien peut être invalide ou expiré."
+      },
+      "backToHome": "← Retour à l'accueil"
+    }
+  },
+  "fmf": {
+    "landing": {
+      "headline": "Une base solide pour <molten>forger</molten> des applications",
+      "sub": "Un starter de microservices NestJS prêt pour la production — DDD, CQRS, messagerie événementielle, observabilité complète et déploiements en une commande, le tout déjà câblé pour que vous puissiez construire au lieu d'initialiser.",
+      "github": "Voir sur GitHub",
+      "openDemo": "Ouvrir la démo",
+      "docs": "Docs",
+      "features": {
+        "ddd": {
+          "title": "La logique métier a un seul foyer",
+          "desc": "Chaque règle est écrite une seule fois, dans les agrégats et value objects de la couche domaine. Des règles de lint cassent le build si une frontière est franchie."
+        },
+        "events": {
+          "title": "Des événements fiables entre services",
+          "desc": "Les services communiquent via Kafka avec outbox transactionnel et inbox idempotent : aucun événement perdu, aucun traitement en double."
+        },
+        "observability": {
+          "title": "Tout voir dès le premier jour",
+          "desc": "Métriques, logs et traces arrivent automatiquement dans Grafana. Chaque commande, requête et événement est mesuré sans code supplémentaire."
+        },
+        "deployable": {
+          "title": "Du portable à la production en une commande",
+          "desc": "Un stack compose pour le dev, des images versionnées pour la prod, TLS géré par Caddy et des scripts qui provisionnent et déploient un serveur neuf."
+        },
+        "agents": {
+          "title": "Un code que les agents IA savent parcourir",
+          "desc": "Chaque fonctionnalité a la même forme et la même place. Humains et agents savent toujours où vont les choses."
+        },
+        "scaffold": {
+          "title": "De nouveaux services en une commande",
+          "desc": "Le générateur crée un service avec un contexte de départ fonctionnel et le branche sur compose, Caddy et le monitoring. Renommez-le et construisez."
+        }
+      }
+    },
+    "auth": {
+      "panelKicker": "la console développeur",
+      "panelTitle": "Pilotez vos services depuis un cockpit unique aux reflets de forge",
+      "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
+      "panelFootnote": "Session sécurisée · rafraîchissement du token · accès basé sur les rôles",
+      "backToHome": "Retour à l'accueil"
+    },
+    "nav": {
+      "overview": "Vue d'ensemble",
+      "account": "Compte",
+      "admin": "Admin",
+      "sectionMain": "Console",
+      "sectionSystem": "Système",
+      "logout": "Se déconnecter",
+      "env": "env",
+      "impersonating": "Usurpation",
+      "exitImpersonation": "Quitter"
+    },
+    "dashboard": {
+      "title": "Vue d'ensemble du système",
+      "subtitle": "Santé en direct et flux d'événements à travers le service.",
+      "live": "en direct",
+      "paused": "en pause",
+      "refreshedAt": "synchronisé {time}",
+      "health": {
+        "title": "Santé du système",
+        "ready": "Prêt",
+        "notReady": "Non prêt",
+        "service": "service",
+        "environment": "env",
+        "noChecks": "Aucun contrôle de santé signalé.",
+        "loadError": "Impossible de charger l'état de santé."
+      },
+      "events": {
+        "title": "Débit d'événements",
+        "totalProcessed": "Total d'événements traités",
+        "byType": "Par type d'événement",
+        "topic": "topic",
+        "success": "ok",
+        "failure": "err",
+        "lastProcessed": "dernier",
+        "none": "Aucun événement traité pour l'instant.",
+        "loadError": "Impossible de charger les données d'événements.",
+        "never": "jamais"
+      },
+      "analytics": {
+        "title": "Activité utilisateurs",
+        "total": "activités totales",
+        "byType": "par type d'événement",
+        "lastActivity": "dernière activité",
+        "never": "jamais",
+        "none": "Pas encore d'activité — inscrivez un utilisateur et observez le flux d'événements.",
+        "loadError": "Impossible de joindre service-2.",
+        "source": "alimenté par les événements Kafka"
+      },
+      "account": {
+        "title": "Votre compte",
+        "email": "Email",
+        "role": "Rôle",
+        "memberSince": "Membre depuis",
+        "view": "Gérer le compte"
+      },
+      "motd": {
+        "label": "Avis"
+      }
+    },
+    "account": {
+      "title": "Compte",
+      "subtitle": "Votre profil et vos identifiants.",
+      "profile": {
+        "title": "Profil",
+        "email": "Email",
+        "role": "Rôle",
+        "userId": "ID utilisateur",
+        "completed": "Terminé",
+        "pending": "En attente"
+      },
+      "password": {
+        "title": "Changer le mot de passe",
+        "current": "Mot de passe actuel",
+        "currentPlaceholder": "Entrez le mot de passe actuel",
+        "new": "Nouveau mot de passe",
+        "newPlaceholder": "Au moins 8 caractères",
+        "confirm": "Confirmer le nouveau mot de passe",
+        "confirmPlaceholder": "Ressaisissez le nouveau mot de passe",
+        "submit": "Mettre à jour le mot de passe",
+        "submitting": "Mise à jour...",
+        "success": "Mot de passe mis à jour. Vous serez déconnecté sous peu.",
+        "errors": {
+          "mismatch": "Les nouveaux mots de passe ne correspondent pas",
+          "tooShort": "Le mot de passe doit contenir au moins 8 caractères",
+          "failed": "Échec du changement de mot de passe. Vérifiez votre mot de passe actuel."
+        }
+      }
+    },
+    "admin": {
+      "title": "Administration",
+      "subtitle": "Gérez les utilisateurs et l'avis public.",
+      "onlyTitle": "Réservé aux admins",
+      "onlyDesc": "Vous devez avoir le rôle admin pour accéder à cette zone.",
+      "users": {
+        "title": "Utilisateurs",
+        "filterEmail": "email",
+        "filterIp": "ip",
+        "filterPlaceholder": "Filtrer par {field}…",
+        "search": "Rechercher",
+        "clear": "Effacer",
+        "columns": {
+          "email": "Email",
+          "role": "Rôle",
+          "status": "Statut",
+          "created": "Créé",
+          "ips": "IPs",
+          "actions": "Actions"
+        },
+        "empty": "Aucun utilisateur trouvé.",
+        "loadError": "Échec du chargement des utilisateurs.",
+        "suspend": "Suspendre",
+        "unsuspend": "Réactiver",
+        "delete": "Supprimer",
+        "impersonate": "Usurper",
+        "page": "Page {current} / {total}",
+        "total": "{count} utilisateurs",
+        "prev": "Préc.",
+        "next": "Suiv.",
+        "confirmDelete": {
+          "title": "Supprimer l'utilisateur",
+          "body": "Supprimer définitivement {email} ? Cette action est irréversible.",
+          "confirm": "Supprimer l'utilisateur"
+        },
+        "toast": {
+          "suspended": "Utilisateur suspendu",
+          "unsuspended": "Utilisateur réactivé",
+          "deleted": "Utilisateur supprimé",
+          "actionFailed": "Échec de l'action"
+        }
+      },
+      "motd": {
+        "title": "Message du jour",
+        "label": "Contenu de l'avis",
+        "placeholder": "Affiché à chaque utilisateur sur la console…",
+        "help": "Laissez un message pour tout le monde (fenêtres de maintenance, versions…).",
+        "save": "Enregistrer l'avis",
+        "saving": "Enregistrement…",
+        "clear": "Effacer",
+        "clearing": "Effacement…",
+        "empty": "Aucun avis n'est défini actuellement.",
+        "updated": "Mis à jour {time}",
+        "toast": {
+          "saved": "Avis enregistré",
+          "cleared": "Avis effacé",
+          "empty": "Le contenu ne peut pas être vide",
+          "saveFailed": "Échec de l'enregistrement de l'avis",
+          "clearFailed": "Échec de l'effacement de l'avis"
+        }
+      }
+    }
+  }
+}

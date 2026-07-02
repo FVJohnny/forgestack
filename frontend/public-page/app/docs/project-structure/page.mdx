@@ -1,0 +1,152 @@
+# Project Structure
+
+ForgeStack is an **Nx monorepo**. Everything lives in one repository: the
+backend services, the shared backend libraries, the frontend, and the
+infrastructure that runs them. Nx handles the build graph, task caching and
+per-project tooling.
+
+## Top-level layout
+
+```
+.
+├── backend/
+│   ├── services/
+│   │   ├── service-1/        NestJS service — the shipped example (auth, notifications)
+│   │   └── service-2/        second example — consumes service-1's events (analytics)
+│   └── libs/
+│       ├── common/           CQRS/DDD base classes, auth, outbox/inbox, otel
+│       ├── kafka/            Kafka producer/consumer + integration events
+│       ├── mongodb/          Mongo client, base repository, transactions
+│       └── redis/            Redis client (cache + pub/sub)
+├── frontend/
+│   └── public-page/          Next.js app (landing, auth, dashboard, these docs)
+├── infra/
+│   ├── compose/              docker-compose.dev.yml / .prod.yml
+│   ├── dockerfiles/          production images (services, caddy, monitoring)
+│   ├── caddy/                Caddyfile (reverse proxy + TLS)
+│   ├── monitoring/           prometheus, grafana, loki, tempo, promtail config
+│   ├── mongo/                replica-set startup script
+│   ├── env/                  *.env.prod.example templates
+│   └── scripts/              dev startup, deploy and server-provision scripts
+└── eslint/
+    └── rules/                the architectural lint rules (see Enforced Boundaries)
+```
+
+New services go in `backend/services/`, next to `service-1`. Each one is an
+independent Nx project with its own build, test and lint targets.
+
+## Inside a service
+
+A service is organised by **bounded context** — a self-contained slice of the
+domain. Each context owns its full hexagonal stack, from domain model to HTTP
+controller:
+
+```
+backend/services/service-1/src/
+├── bounded-contexts/
+│   ├── auth/
+│   │   ├── domain/
+│   │   │   ├── aggregates/          user/, email-verification/, …
+│   │   │   ├── value-objects/       email.vo.ts, password.vo.ts, …
+│   │   │   └── services/            domain services (ports)
+│   │   ├── application/
+│   │   │   ├── commands/            <name>/ → command + handler
+│   │   │   ├── queries/             <name>/ → query + handler
+│   │   │   ├── domain-event-handlers/
+│   │   │   └── bootstrap/           context wiring
+│   │   ├── infrastructure/
+│   │   │   ├── repositories/        mongodb/, in-memory/
+│   │   │   └── services/            external adapters (e.g. google-oauth)
+│   │   ├── interfaces/
+│   │   │   ├── controllers/         HTTP endpoints
+│   │   │   └── integration-events/  Kafka subscribers
+│   │   └── auth.module.ts
+│   ├── notifications/
+│   └── shared/                      domain types shared between contexts
+├── app.module.ts
+├── main.ts                          calls configureApp() from @libs/nestjs-common
+└── otel-instrumentation.ts          OpenTelemetry setup, loaded before the app
+```
+
+Every command or query lives in its own folder together with its handler —
+`commands/register-user/` holds `register-user.command.ts` and
+`register-user.command-handler.ts`. The layout isn't a suggestion: layer
+boundaries, context isolation and handler collocation are all checked at lint
+time. See [Enforced Boundaries](/docs/backend/eslint-rules).
+
+## Shared libraries
+
+The backend libs are the reusable spine every service builds on:
+
+| Library | What it provides |
+| --- | --- |
+| `@libs/nestjs-common` | CQRS and DDD base classes, JWT auth, outbox & inbox, transactions, logging, tracing, metrics |
+| `@libs/nestjs-kafka` | Kafka producer/consumer, the integration-event publisher and listener |
+| `@libs/nestjs-mongodb` | Mongo client module, `Base_MongoRepository`, transaction support |
+| `@libs/nestjs-redis` | Redis client (database, publisher, subscriber) |
+
+## TypeScript path aliases
+
+All aliases live in `tsconfig.base.json`:
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@libs/nestjs-common": ["backend/libs/common/src"],
+      "@libs/nestjs-kafka": ["backend/libs/kafka/src"],
+      "@libs/nestjs-mongodb": ["backend/libs/mongodb/src"],
+      "@libs/nestjs-redis": ["backend/libs/redis/src"],
+      "@bc/*": ["${configDir}/src/bounded-contexts/*"]
+    }
+  }
+}
+```
+
+The `@libs/*` aliases resolve from the repo root and are the same everywhere.
+`@bc/*` uses TypeScript's `${configDir}` template (TS 5.5+): it resolves
+relative to the tsconfig of the project being compiled, so in every service it
+points at **that service's own** `src/bounded-contexts/`. `@bc/auth/...` always
+means "the auth context of *this* service", the import shape is identical in
+every service, and importing another service's contexts is impossible by
+construction — no per-service tsconfig overrides needed. Usage:
+
+```ts
+import { Base_CommandHandler } from '@libs/nestjs-common';
+import { Base_MongoRepository } from '@libs/nestjs-mongodb';
+import { User } from '@bc/auth/domain/aggregates/user/user.aggregate';
+```
+
+The `@bc/*` alias also gives the lint rules a reliable way to detect an import
+that crosses from one bounded context into another.
+
+## The frontend
+
+```
+frontend/public-page/
+├── app/
+│   ├── layout.tsx            root layout (fonts, i18n, providers)
+│   ├── page.tsx              landing
+│   ├── login/ register/ …    auth pages
+│   ├── dashboard/            authenticated console (sidebar + topbar)
+│   ├── docs/                 this documentation (MDX)
+│   └── shared/               auth helpers, components, design-system primitives
+├── i18n/                     next-intl config
+├── messages/                 translation catalogues (8 locales)
+├── middleware.ts             locale + auth routing
+└── lib/                      brand config, utils
+```
+
+The frontend is a standalone pnpm workspace — it keeps its own lockfile and
+`node_modules`, so it stays decoupled from the backend toolchain. See
+[Frontend](/docs/frontend) for the conventions.
+
+## Naming as a contract
+
+File suffixes carry meaning throughout the backend: `*.aggregate.ts`, `*.vo.ts`,
+`*.command.ts`, `*.query-handler.ts`, `*.domain-event.ts`,
+`*.integration-event.ts`. The lint rules use them to decide which base class and
+naming shape each file must follow, so the suffix is a promise about what's
+inside. The full contract is documented in
+[Enforced Boundaries](/docs/backend/eslint-rules).

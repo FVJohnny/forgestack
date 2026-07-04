@@ -5,6 +5,9 @@ export class OutboxProcessedAt extends DateVO {
   static readonly NEVER_PROCESSED = new Date(0);
   // Special marker to indicate event is being processed (claimed but not yet published)
   static readonly PROCESSING = new Date(1);
+  // Terminal marker: retries exhausted. A dead-lettered event that reclaim and
+  // claim both ignore, so a poison event stops looping forever.
+  static readonly FAILED = new Date(2);
   static readonly MAX_RANDOM_PAST_DAYS = 30;
 
   constructor(value: Date) {
@@ -24,6 +27,10 @@ export class OutboxProcessedAt extends DateVO {
     return new OutboxProcessedAt(OutboxProcessedAt.PROCESSING);
   }
 
+  static failed(): OutboxProcessedAt {
+    return new OutboxProcessedAt(OutboxProcessedAt.FAILED);
+  }
+
   static now(): OutboxProcessedAt {
     return new OutboxProcessedAt(new Date());
   }
@@ -34,7 +41,7 @@ export class OutboxProcessedAt extends DateVO {
   }
 
   isProcessed(): boolean {
-    return !this.isNeverProcessed() && !this.isProcessing();
+    return !this.isNeverProcessed() && !this.isProcessing() && !this.isFailed();
   }
 
   isNeverProcessed(): boolean {
@@ -43,6 +50,10 @@ export class OutboxProcessedAt extends DateVO {
 
   isProcessing(): boolean {
     return this.toValue().getTime() === OutboxProcessedAt.PROCESSING.getTime();
+  }
+
+  isFailed(): boolean {
+    return this.toValue().getTime() === OutboxProcessedAt.FAILED.getTime();
   }
 
   private ensureNotFuture(value: Date): void {

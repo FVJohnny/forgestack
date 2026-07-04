@@ -112,8 +112,12 @@ export class OutboxEvent extends SharedAggregate implements OutboxEventAttribute
     return this.processedAt.isNeverProcessed();
   }
 
+  isFailed(): boolean {
+    return this.processedAt.isFailed();
+  }
+
   canRetry(): boolean {
-    return this.retryCount.isLessThan(this.maxRetries) && !this.isProcessed();
+    return this.retryCount.isLessThan(this.maxRetries) && !this.isProcessed() && !this.isFailed();
   }
 
   toValue(): OutboxEventDTO {
@@ -146,6 +150,20 @@ export class OutboxEvent extends SharedAggregate implements OutboxEventAttribute
     this.processedAt = OutboxProcessedAt.now();
   }
 
+  /**
+   * Terminal state for a poison event whose retries are exhausted. Both claim
+   * and stuck-reclaim skip failed events, so it no longer loops forever.
+   */
+  markAsFailed(): void {
+    this.processedAt = OutboxProcessedAt.failed();
+  }
+
+  /**
+   * Increments the retry count AND moves the event back to the unprocessed
+   * state in one step, so a single save persists both. Previously the reset
+   * and the save disagreed, leaving the in-memory PROCESSING marker to be
+   * written back over the DB reset.
+   */
   incrementRetry(): void {
     if (!this.canRetry()) {
       throw new DomainValidationException(
@@ -155,6 +173,7 @@ export class OutboxEvent extends SharedAggregate implements OutboxEventAttribute
       );
     }
     this.retryCount = this.retryCount.increment();
+    this.processedAt = OutboxProcessedAt.never();
   }
 
   private ensureRetryNotExceeded(): void {

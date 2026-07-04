@@ -89,7 +89,11 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
     const eventName = event.eventName.toValue();
     const metrics = getInboxOutboxMetrics();
 
-    TracingService.withSpan(
+    // Return the span promise so the caller's `await` actually waits for the
+    // publish to finish. Without the return, processEvent resolved
+    // immediately, the batch loop ran all events concurrently, and
+    // isProcessing was cleared while publishes were still in flight.
+    return TracingService.withSpan(
       'outbox.process_event',
       async () => {
         try {
@@ -152,22 +156,32 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
 
   private async handleEventError(event: OutboxEvent, error: unknown) {
     this.logger.error(`Failed to process outbox event ${event.id.toValue()}:`, error as Error);
+    const metrics = getInboxOutboxMetrics();
 
     if (event.canRetry()) {
+      // incrementRetry() also moves the event back to the unprocessed state,
+      // so this single save both bumps the count and releases the claim. The
+      // next processing tick will pick it up (no need to wait for the 5-min
+      // stuck-reclaim).
       event.incrementRetry();
-      // Reset the claimed event back to unprocessed state so it can be retried
-      await this.repository.resetClaimedEvent(event.id);
       await this.repository.save(event);
 
-      // Track retry metric
-      const metrics = getInboxOutboxMetrics();
       metrics?.observeOutboxEvent(event.topic.toValue(), event.eventName.toValue(), 0, 'retry');
 
       this.logger.warn(
         `Incremented retry count for event ${event.id.toValue()}: ${event.retryCount.toValue()}/${event.maxRetries.toValue()}`,
       );
     } else {
-      this.logger.error(`Max retries exceeded for event ${event.id.toValue()}, giving up`);
+      // Retries exhausted: dead-letter the event so it stops being reclaimed
+      // and re-tried forever.
+      event.markAsFailed();
+      await this.repository.save(event);
+
+      metrics?.observeOutboxEvent(event.topic.toValue(), event.eventName.toValue(), 0, 'failed');
+
+      this.logger.error(
+        `Max retries exceeded for event ${event.id.toValue()}, marking as failed (dead-letter)`,
+      );
     }
   }
 }

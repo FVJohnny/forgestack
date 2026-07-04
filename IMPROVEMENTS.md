@@ -137,14 +137,17 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **27. Inbox is in-memory only and cannot be swapped** (High)
   `InboxModule` hardcodes the in-memory repository, the Mongo inbox repository exists but is never wired, and Kafka offsets are committed after the in-memory save. A restart loses accepted-but-unprocessed events, which defeats the advertised inbox pattern. Fix: add `forRoot({ repository })` like the outbox has.
 
-- [ ] **28. Poison outbox events retry forever** (High)
-  Events that exhaust their retries sit in the PROCESSING state, and the 5-minute stuck-reclaim resets them endlessly. Fix: add a terminal FAILED / dead-letter state that both claim and reclaim respect.
+- [x] **28. Poison outbox events retry forever** (High)
+  Events that exhaust their retries sat in the PROCESSING state, and the 5-minute stuck-reclaim reset them endlessly.
+  **Status: Done.** Added a terminal FAILED marker (`new Date(2)`) to `OutboxProcessedAt` and `markAsFailed()`/`isFailed()` on the aggregate. When retries are exhausted the service now dead-letters the event instead of leaving it PROCESSING. All three adapters skip FAILED events: Mongo/in-memory stuck-reclaim only touch PROCESSING, `deleteProcessed` now excludes FAILED (dead letters are kept for inspection), and the Redis `save` pulls FAILED events out of every active index. New OutboxService test asserts bounded publish attempts and a FAILED terminal state.
 
-- [ ] **29. Outbox retry-reset is clobbered by the following `save()`** (High)
-  The service resets the claim in the database, then saves the in-memory event which still carries the PROCESSING marker, writing it right back. Retries therefore only ever happen via the 5-minute reclaim path. Fix: make the reset plus retry-count one atomic update.
+- [x] **29. Outbox retry-reset is clobbered by the following `save()`** (High)
+  The service reset the claim in the database, then saved the in-memory event which still carried the PROCESSING marker, writing it right back. Retries therefore only ever happened via the 5-minute reclaim path.
+  **Status: Done.** `incrementRetry()` now also moves the event's `processedAt` back to `never()`, so a single `save()` persists both the bumped count and the released claim. Dropped the separate `resetClaimedEvent` call from the error path. New OutboxService test drives a fail-then-succeed publisher and asserts the event is unprocessed with retryCount 1 after the first tick (not stuck in PROCESSING) and processed after the second.
 
-- [ ] **30. `OutboxService.processEvent` drops its promise** (High)
-  The traced call is neither awaited nor returned, so batch processing is not actually sequential, the `isProcessing` flag releases while publishes are in flight, and per-topic ordering is lost. One missing `return`.
+- [x] **30. `OutboxService.processEvent` drops its promise** (High)
+  The traced call was neither awaited nor returned, so batch processing was not actually sequential, the `isProcessing` flag released while publishes were in flight, and per-topic ordering was lost.
+  **Status: Done.** `processEvent` now returns the `TracingService.withSpan(...)` promise, so the batch loop's `await` genuinely waits for each publish and `isProcessing` is held for the whole batch. New OutboxService test tracks in-flight concurrency across a 4-event batch and asserts it never exceeds 1.
 
 - [ ] **31. No recovery path for PROCESSING or FAILED inbox events** (High)
   A crash between claim and completion strands events forever; FAILED events are never retried. Fix: add stuck-reclaim plus bounded retry, like the outbox side.

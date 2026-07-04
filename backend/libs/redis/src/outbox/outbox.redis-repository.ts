@@ -48,6 +48,12 @@ export class Outbox_RedisRepository
       await client.zrem(this.zUnprocessed, v.id);
       await client.zrem(this.zClaimed, v.id);
       await client.zadd(this.zProcessed, Date.parse(String(v.processedAt)), v.id);
+    } else if (event.isFailed()) {
+      // Dead-lettered: pull it out of every active index so it is never
+      // re-claimed. The item itself is kept for inspection.
+      await client.zrem(this.zUnprocessed, v.id);
+      await client.zrem(this.zClaimed, v.id);
+      await client.zrem(this.zProcessed, v.id);
     }
   }
 

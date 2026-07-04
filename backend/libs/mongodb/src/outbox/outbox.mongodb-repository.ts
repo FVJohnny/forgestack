@@ -111,12 +111,14 @@ export class Outbox_MongodbRepository
     await this.ensureIndexes();
     this.registerTransactionParticipant(context);
 
-    // Safe type assertion - we know OutboxEventDTO structure and MongoDB query operators
-    // Exclude NEVER_PROCESSED (0) and PROCESSING (1) markers
+    // Delete only genuinely-processed events older than `before`. The marker
+    // dates NEVER (0), PROCESSING (1) and FAILED (2) are all excluded by
+    // `$gt: FAILED` so unprocessed, in-flight and dead-lettered events are
+    // retained (dead letters stay for inspection).
     const filter: Filter<OutboxEventDTO> = {
       processedAt: {
         $lt: before,
-        $gt: OutboxProcessedAt.processing().toValue(), // Only delete actually processed events
+        $gt: OutboxProcessedAt.failed().toValue(),
       },
     } as Filter<OutboxEventDTO>;
 

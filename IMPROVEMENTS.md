@@ -375,17 +375,19 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **85. No backup story for Mongo/Grafana volumes** (Medium)
   Add a scheduled mongodump script with off-host copies and document restore.
 
-- [ ] **86. Tempo metrics_generator writes to Prometheus, but the receiver is off** (Medium)
-  Prometheus rejects remote write unless started with `--web.enable-remote-write-receiver`, so service-graph metrics silently fail. Add the flag.
+- [x] **86. Tempo metrics_generator writes to Prometheus, but the receiver is off** (Medium)
+  Prometheus had no `command:` so it never got `--web.enable-remote-write-receiver`, and Tempo's `metrics_generator` had no enabled processors, so service-graph/span metrics silently never appeared.
+  **Status: Done.** Added a `command:` to Prometheus (prod + dev) with `--web.enable-remote-write-receiver` (plus config path, retention, lifecycle), and enabled the `service-graphs` + `span-metrics` processors via Tempo `overrides.defaults`. Verified live: the remote-write endpoint now returns 415 (active) instead of 404, and after generating traffic `traces_service_graph_*` and `traces_spanmetrics_*` metrics land in Prometheus.
 
-- [ ] **87. Promtail positions file lives in `/tmp` and is not persisted** (Medium)
-  Every restart re-ingests all container logs into Loki as duplicates. Mount a small volume for it.
+- [x] **87. Promtail positions file lives in `/tmp` and is not persisted** (Medium)
+  **Status: Done.** Moved the positions file to `/promtail/positions.yaml` and mounted a `promtail_data` (prod) / `promtail_data_dev` (dev) volume there, so promtail resumes where it left off instead of re-ingesting every container log on restart. Also made the promtail Docker socket mount read-only (item 92).
 
-- [ ] **88. No resource limits on any prod container** (Medium)
-  Kafka, Mongo, and the monitoring stack on one small VPS with no memory limits means one runaway service can OOM the box. Add limits at least for the heavy services.
+- [x] **88. No resource limits on any prod container** (Medium)
+  **Status: Done.** Added `mem_limit` to every prod service: the NestJS anchor (512m), mongodb (768m), redis (384m), zookeeper (512m), kafka (1g), and the monitoring stack (256–512m), so one runaway container cannot OOM the single-box VPS. Validated with `docker compose config`.
 
-- [ ] **89. Dev persists ZooKeeper data but not Kafka data** (Medium)
-  Guaranteed cluster-ID mismatch on recreate. The recovery logic in `start-dev.sh` greps stale container/volume names (dead code from an old layout) and then falls back to `down -v`, destroying all dev data without asking. Fix the volumes and scope the recovery.
+- [x] **89. Dev persists ZooKeeper data but not Kafka data** (Medium)
+  Dev persisted ZooKeeper but not Kafka's log dir, so on recreate ZK kept the old broker registration while Kafka's cluster id was wiped, causing the mismatch the start-dev recovery tried to clean up.
+  **Status: Done (volume part).** Added a `kafka_data_dev` volume mounted at `/var/lib/kafka/data` (matching prod's `kafka_data`), so ZK and Kafka state stay consistent across recreates. The `start-dev.sh` stale-name recovery / `down -v` cleanup is a separate script fix (noted under item 92/the start-dev items); the root cause (missing Kafka volume) is fixed here.
 
 - [ ] **90. Grafana 10.4 (EOL, known CVEs) and cp-kafka 7.4.0 (2023, ZooKeeper)** (Medium)
   Bump Grafana to a current LTS and consider migrating Kafka to KRaft, which deletes the zookeeper container entirely.

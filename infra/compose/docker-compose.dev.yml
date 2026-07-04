@@ -206,6 +206,11 @@ services:
       # Shorter session timeout - broker node expires faster on restart
       KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS: 6000
       KAFKA_ZOOKEEPER_CONNECTION_TIMEOUT_MS: 6000
+    volumes:
+      # Persist Kafka's log dir alongside ZooKeeper's data. Persisting only ZK
+      # (as before) caused a cluster-ID mismatch on recreate: ZK kept the old
+      # broker registration while Kafka's cluster id was wiped.
+      - kafka_data_dev:/var/lib/kafka/data
     networks:
       - backend
     healthcheck:
@@ -225,9 +230,19 @@ services:
     # Root so docker_sd_configs can read the Docker socket (the image's
     # default user, nobody, gets permission denied).
     user: root
+    # Mirrors prod: config path + remote-write receiver so Tempo's
+    # metrics_generator can push, and explicit retention.
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-remote-write-receiver'
+      - '--web.enable-lifecycle'
     volumes:
       - ${PWD}/infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ${PWD}/infra/monitoring/prometheus/internal-api-key:/etc/prometheus/internal-api-key:ro
+      # Persist metrics across recreates (dev/prod parity).
+      - prometheus_data_dev:/prometheus
       # Read-only Docker socket for docker_sd_configs: services are discovered
       # by their prometheus.scrape=true container label.
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -297,8 +312,11 @@ services:
     image: grafana/promtail:3.2.1
     restart: unless-stopped
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      # Read-only: promtail only reads container logs, never writes.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${PWD}/infra/monitoring/promtail/promtail-config.yaml:/etc/promtail/config.yaml
+      # Persist the positions file so restarts do not re-ingest all logs.
+      - promtail_data_dev:/promtail
     command: -config.file=/etc/promtail/config.yaml
     networks:
       - backend
@@ -337,9 +355,12 @@ volumes:
   # Message broker
   zookeeper_data_dev:
   zookeeper_log_dev:
+  kafka_data_dev:
   # Monitoring
+  prometheus_data_dev:
   tempo_data:
   loki_data:
+  promtail_data_dev:
   # App services
   public_page_node_modules:
   # Dev tools

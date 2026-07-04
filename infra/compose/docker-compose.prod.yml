@@ -13,6 +13,8 @@ x-logging: &default-logging
 x-nestjs-service: &nestjs-service
   restart: unless-stopped
   logging: *default-logging
+  # Cap memory so one runaway service can't OOM a small single-box VPS.
+  mem_limit: 512m
   networks:
     - backend
   healthcheck:
@@ -114,6 +116,7 @@ services:
   mongodb:
     image: mongo:7.0
     restart: unless-stopped
+    mem_limit: 768m
     command: [ 'bash', '/scripts/mongo-startup.sh' ]
     environment:
       - MONGO_ADMIN_USER=${MONGO_ADMIN_USER:-admin}
@@ -135,6 +138,7 @@ services:
   redis:
     image: redis:7.0-alpine
     restart: unless-stopped
+    mem_limit: 384m
     # Pass the password through the container's own environment and read it
     # inside a shell so compose does not interpolate it into the container's
     # command/args, where `docker inspect` would expose it in plaintext.
@@ -163,6 +167,7 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     restart: unless-stopped
+    mem_limit: 512m
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -187,6 +192,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     restart: unless-stopped
+    mem_limit: 1g
     depends_on:
       zookeeper:
         condition: service_healthy
@@ -218,9 +224,20 @@ services:
   prometheus:
     image: ${DOCKER_REGISTRY}/forgestack-prometheus:v3
     restart: unless-stopped
+    mem_limit: 512m
     # Root so docker_sd_configs can read the Docker socket (the image's
     # default user, nobody, gets permission denied).
     user: root
+    # Overriding command drops the image defaults, so the config path is
+    # repeated. --web.enable-remote-write-receiver lets Tempo's
+    # metrics_generator remote_write into Prometheus; without it those writes
+    # are silently rejected. Retention is pinned explicitly.
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-remote-write-receiver'
+      - '--web.enable-lifecycle'
     volumes:
       - prometheus_data:/prometheus
       # Secret mounted at runtime instead of baked into the pushed image.
@@ -243,6 +260,7 @@ services:
   grafana:
     image: ${DOCKER_REGISTRY}/forgestack-grafana:v3
     restart: unless-stopped
+    mem_limit: 384m
     # No env_file on purpose: everything Grafana needs is listed below,
     # interpolated from compose/.env.
     environment:
@@ -270,6 +288,7 @@ services:
     image: gcr.io/cadvisor/cadvisor:v0.51.0
     privileged: true
     restart: unless-stopped
+    mem_limit: 256m
     command:
       - '--housekeeping_interval=5s'
       - '--disable_metrics=percpu,sched,tcp,udp,hugetlb,referenced_memory,cpu_topology,resctrl'
@@ -294,6 +313,7 @@ services:
   tempo:
     image: ${DOCKER_REGISTRY}/forgestack-tempo:v3
     restart: unless-stopped
+    mem_limit: 384m
     user: '0:0'
     volumes:
       - tempo_data:/tmp/tempo
@@ -309,6 +329,7 @@ services:
   loki:
     image: ${DOCKER_REGISTRY}/forgestack-loki:v3
     restart: unless-stopped
+    mem_limit: 384m
     volumes:
       - loki_data:/loki
     networks:
@@ -324,7 +345,10 @@ services:
     image: ${DOCKER_REGISTRY}/forgestack-promtail:v3
     restart: unless-stopped
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      # Read-only: promtail only reads container logs, never writes.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Persist the positions file so restarts do not re-ingest all logs.
+      - promtail_data:/promtail
     networks:
       - backend
     healthcheck:
@@ -375,6 +399,7 @@ volumes:
   grafana_data:
   tempo_data:
   loki_data:
+  promtail_data:
   # Reverse proxy
   caddy_data:
   caddy_config:

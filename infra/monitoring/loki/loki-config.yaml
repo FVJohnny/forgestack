@@ -41,6 +41,9 @@ limits_config:
   max_global_streams_per_user: 50000
   ingestion_rate_mb: 10
   ingestion_burst_size_mb: 20
+  # Explicit retention window (the compactor below enforces deletion). Without
+  # this, logs are kept indefinitely and fill the disk.
+  retention_period: 168h # 7 days
 
 # Reduce retention to save space
 compactor:

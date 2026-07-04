@@ -2,8 +2,11 @@ server:
   http_listen_port: 9080
   grpc_listen_port: 0
 
+# Persisted so promtail resumes where it left off instead of re-reading every
+# container log from the start on each restart (which duplicated ingestion).
+# The compose files mount a volume at /promtail.
 positions:
-  filename: /tmp/positions.yaml
+  filename: /promtail/positions.yaml
 
 clients:
   - url: http://loki:3100/loki/api/v1/push

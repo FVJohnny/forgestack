@@ -24,6 +24,12 @@ storage:
     wal:
       path: /tmp/tempo/wal
 
+compactor:
+  compaction:
+    # Delete trace blocks older than this so local storage does not grow
+    # without bound.
+    block_retention: 48h
+
 metrics_generator:
   registry:
     external_labels:
@@ -33,3 +39,13 @@ metrics_generator:
     remote_write:
       - url: http://prometheus:9090/api/v1/write
         send_exemplars: true
+
+# The metrics_generator only runs for tenants that enable its processors. This
+# turns on span/service-graph metrics by default (they remote_write into
+# Prometheus, which now has --web.enable-remote-write-receiver).
+overrides:
+  defaults:
+    metrics_generator:
+      processors:
+        - service-graphs
+        - span-metrics

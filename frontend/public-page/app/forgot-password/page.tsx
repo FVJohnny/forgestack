@@ -9,7 +9,7 @@ import { Label } from '@/app/shared/ui/label';
 import { FormAlert } from '@/app/shared/ui/form-alert';
 import { AuthShell } from '@/app/shared/auth/auth-shell';
 import { AuthHeading } from '@/app/shared/auth/auth-heading';
-import { authService } from '@/lib/api/services/auth.service';
+import { authService } from '@/lib/contexts/auth-service';
 
 export default function ForgotPasswordPage() {
   const t = useTranslations('auth.forgotPassword');

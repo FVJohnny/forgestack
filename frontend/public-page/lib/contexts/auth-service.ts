@@ -1,14 +1,6 @@
 import { apiClient } from '@/lib/api/client';
-import { API_ENDPOINTS, type UserFilterField } from '@/lib/api/config';
-import type {
-  AuthResponse,
-  LoginRequest,
-  RegisterRequest,
-  GetMeResponse,
-  SearchUsersResponse,
-  ListUsersResponse,
-  GetMotdResponse,
-} from '@/lib/api/types';
+import { API_ENDPOINTS } from '@/lib/api/config';
+import type { AuthResponse, LoginRequest, RegisterRequest, GetMeResponse } from '@/lib/api/types';
 
 /**
  * Auth is cookie-based: the backend sets httpOnly cookies for the access and
@@ -68,48 +60,16 @@ class AuthService {
       .catch(() => {});
   }
 
-  async listUsers(options?: {
-    page?: number;
-    limit?: number;
-    filterField?: UserFilterField;
-    filterValue?: string;
-  }): Promise<ListUsersResponse> {
-    return apiClient.get<ListUsersResponse>(API_ENDPOINTS.ADMIN.LIST_USERS(options));
+  // Admin (list/search/delete/suspend users) and MOTD live in admin.service.ts;
+  // change-password lives in account.service.ts. This service is auth-only.
+
+  async requestPasswordReset(email: string): Promise<void> {
+    await apiClient.post<void>(API_ENDPOINTS.AUTH.PASSWORD_RESET, { email });
   }
 
-  async searchUsers(email: string, limit: number = 10): Promise<SearchUsersResponse> {
-    return apiClient.get<SearchUsersResponse>(API_ENDPOINTS.ADMIN.SEARCH_USERS(email, limit));
-  }
-
-  async deleteUser(userId: string): Promise<void> {
-    await apiClient.delete<void>(API_ENDPOINTS.ADMIN.DELETE_USER(userId));
-  }
-
-  async suspendUser(userId: string): Promise<void> {
-    await apiClient.post<void>(API_ENDPOINTS.ADMIN.SUSPEND_USER(userId));
-  }
-
-  async unsuspendUser(userId: string): Promise<void> {
-    await apiClient.post<void>(API_ENDPOINTS.ADMIN.UNSUSPEND_USER(userId));
-  }
-
-  async getMotd(): Promise<GetMotdResponse | null> {
-    return apiClient.get<GetMotdResponse | null>(API_ENDPOINTS.MOTD.GET, {
-      showErrorToast: false,
-    });
-  }
-
-  async setMotd(content: string): Promise<void> {
-    await apiClient.put<void>(API_ENDPOINTS.ADMIN.SET_MOTD, { content });
-  }
-
-  async deleteMotd(): Promise<void> {
-    await apiClient.delete<void>(API_ENDPOINTS.ADMIN.DELETE_MOTD);
-  }
-
-  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
-    await apiClient.post<void>(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
-      oldPassword,
+  async executePasswordReset(passwordResetId: string, newPassword: string): Promise<void> {
+    await apiClient.post<void>(API_ENDPOINTS.AUTH.PASSWORD_RESET_EXECUTE, {
+      passwordResetId,
       newPassword,
     });
   }

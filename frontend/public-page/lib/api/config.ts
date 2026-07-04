@@ -38,11 +38,6 @@ export const API_ENDPOINTS = {
     HEALTH: '/dashboard/health',
   },
   ADMIN: {
-    SEARCH_USERS: (email: string, limit?: number) => {
-      const params = new URLSearchParams({ email });
-      if (limit) params.append('limit', limit.toString());
-      return `/admin/users/search?${params.toString()}`;
-    },
     LIST_USERS: (options?: {
       page?: number;
       limit?: number;

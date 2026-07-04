@@ -10,7 +10,7 @@ import { PasswordInput } from '@/app/shared/ui/password-input';
 import { FormAlert } from '@/app/shared/ui/form-alert';
 import { AuthShell } from '@/app/shared/auth/auth-shell';
 import { AuthHeading } from '@/app/shared/auth/auth-heading';
-import { authService } from '@/lib/api/services/auth.service';
+import { authService } from '@/lib/contexts/auth-service';
 import { isPasswordValid } from '@/lib/utils/password';
 
 function ResetPasswordForm() {

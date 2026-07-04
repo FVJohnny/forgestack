@@ -294,8 +294,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **66. Google sign-in sends an access token labeled `idToken`** (Medium)
   Switch to the credential flow (a real ID token with verifiable audience). Pairs with the backend fix in item 3, which already validates audience for the current access-token flow.
 
-- [ ] **67. Two parallel auth service implementations** (Medium)
-  `lib/contexts/auth-service.ts` and `lib/api/services/auth.service.ts` both implement register/login/verify/refresh/logout, and the former also duplicates the admin service. Consolidate into one service layer.
+- [x] **67. Two parallel auth service implementations** (Medium)
+  `lib/contexts/auth-service.ts` (class) and `lib/api/services/auth.service.ts` (object) both implemented register/login/verify/logout, and the class also duplicated the admin and MOTD methods that live in `admin.service.ts` / `account.service.ts`.
+  **Status: Done.** Moved the two password-reset methods onto the class service, migrated the forgot/reset pages to it, and deleted the object `auth.service.ts` (and its dead barrel export). Removed the class service's dead admin/MOTD/change-password duplicates so it is auth-only, and dropped the unused `adminService.searchUsers` + its `SEARCH_USERS` endpoint. Typecheck and build clean; verified the password-reset endpoint the migrated pages hit still returns 200.
 
 - [x] **68. Dead code to delete** (Medium)
   **Status: Done.** Deleted `lib/utils/notifications.tsx` (158 lines, zero imports), `app/login/components/login-background.tsx`, the shadcn leftover `styles/globals.css` (removed the now-empty `styles/` dir), the unreferenced `public/logo.png` / `logo-dark.png`, the unused `IDENTITY.RECORD` config endpoint, and 5 unused message keys across all 8 locales. Verified each was truly unreferenced first, then confirmed the frontend still typechecks and builds with no missing-message warnings.

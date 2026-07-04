@@ -7,5 +7,5 @@ export * from './client';
 export * from './config';
 export * from './types';
 export * from './error-handler';
-export { authService } from './services/auth.service';
+// The auth service lives in lib/contexts/auth-service (imported directly).
 export { analyticsService } from './services/analytics.service';

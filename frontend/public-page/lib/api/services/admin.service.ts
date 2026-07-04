@@ -5,7 +5,7 @@
 
 import { apiClient } from '../client';
 import { API_ENDPOINTS, type UserFilterField } from '../config';
-import type { ListUsersResponse, SearchUsersResponse } from '../types';
+import type { ListUsersResponse } from '../types';
 
 export interface ListUsersOptions {
   page?: number;
@@ -17,10 +17,6 @@ export interface ListUsersOptions {
 export const adminService = {
   async listUsers(options?: ListUsersOptions): Promise<ListUsersResponse> {
     return apiClient.get<ListUsersResponse>(API_ENDPOINTS.ADMIN.LIST_USERS(options));
-  },
-
-  async searchUsers(email: string, limit = 10): Promise<SearchUsersResponse> {
-    return apiClient.get<SearchUsersResponse>(API_ENDPOINTS.ADMIN.SEARCH_USERS(email, limit));
   },
 
   async deleteUser(id: string): Promise<void> {

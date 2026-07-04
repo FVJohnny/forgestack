@@ -1,4 +1,4 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { type INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { COMMAND_BUS, QUERY_BUS } from '@libs/nestjs-common';
@@ -132,10 +132,7 @@ describe('Auth HTTP (e2e, controller layer)', () => {
     });
 
     it('rejects a malformed login body with 400', async () => {
-      await request(app.getHttpServer())
-        .post('/auth/login')
-        .send({ email: 'nope' })
-        .expect(400);
+      await request(app.getHttpServer()).post('/auth/login').send({ email: 'nope' }).expect(400);
       expect(queryBus.execute).not.toHaveBeenCalled();
     });
   });

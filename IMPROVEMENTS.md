@@ -16,7 +16,7 @@ How to read an item:
 | A. Security | 26 | 25 done, 1 partial (item 5) | none (all code done) |
 | B. Backend reliability (outbox/inbox/Kafka) | 19 | 19 (44 deferred) | none |
 | C. Backend code quality | 13 | 13 | none |
-| D. Backend testing | 2 | 0 | 61, 62 |
+| D. Backend testing | 2 | 2 | none |
 | E. Frontend | 15 | 14 | 71 |
 | F. Infra and deployment | 15 | 14 done, 1 won't-do (82) | none |
 | G. Tooling, lint, DX | 18 | 18 | none |
@@ -281,8 +281,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   The auth flows (including everything section A fixed) have no HTTP-level tests, and there are no coverage thresholds. Add a few e2e tests for login/register/refresh/password-reset and set a coverage floor.
   **Status: Done.** Added `auth-http.spec.ts`: a controller-layer HTTP test that boots the real register + login controllers behind the SAME global `ValidationPipe` as production and drives them through supertest with stubbed CQRS buses (8 cases). It asserts the HTTP contract that had zero coverage: register validation (bad email / missing password → 400 with no dispatch, valid → 201 + a `RegisterUser_Command`, whitelist stripping of extra props), and login → 200 with ONLY `userId` in the body (no tokens) plus **httpOnly `access_token`/`refresh_token` cookies** and the right query/command dispatch — i.e. the Section A cookie-auth behavior, now regression-guarded. Fixed a latent jest-config bug this surfaced (the `^express$` mapping pointed at a per-service `node_modules/express` that does not exist under a hoisted install, breaking any test that loads `@nestjs/platform-express`); now uses `require.resolve('express')`, applied to both services. Added a `coverageThreshold` floor to service-1 (statements 60 / branches 45 / functions 65 / lines 60, just under the current 63.5/49.4/68.8/64 so it ratchets) and switched CI's test step to `--coverage` so the floor is enforced. Full run: service-1 55 suites / 514 tests, all 7 projects green with coverage.
 
-- [ ] **62. Zero tests exactly where the risk is** (Medium)
+- [x] **62. Zero tests exactly where the risk is** (Medium)
   No tests for the outbox/inbox processing loops, the Kafka listener/publisher, the guards, the exception filter, or the circuit breaker (which would have caught item 32). `kafka.spec.ts` is a placeholder asserting `true`.
+  **Status: Done.** Re-scoped against the current tree: the outbox/inbox services + repos, the Kafka integration-event listener, and the circuit breaker already gained specs during Section B, and the placeholder `kafka.spec.ts` is gone. The real remaining gaps were the security-critical guards and the error filter, now covered: `jwt-auth.guard.spec.ts` (7 cases — cookie-first extraction, Bearer fallback, cookie-over-header precedence, non-Bearer ignored, and Unauthorized on missing token / verify failure / repository-revocation), `internal-api-key.guard.spec.ts` (6 cases — header + `Authorization: ApiKey` forms, wrong/missing key, unconfigured key, non-ApiKey scheme), and `global-exception.filter.spec.ts` (6 cases — the BaseException/HttpException/unexpected branches produce the standard `{success:false,error}` shape with the right status/code, cause propagation, and message masking in production). Common is now 143 tests (20 suites); lint clean.
 
 ## E. Frontend (website and dev console)
 

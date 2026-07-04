@@ -240,8 +240,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **54. `@IntegrationEventHandler` constructs a random event to read metadata** (Medium)
   It instantiates `eventClass.random()` (running validation on random data) just to read topic and name. Make those static.
 
-- [ ] **55. Mongo config typed as Mongoose options but passed to the native client** (Medium)
-  `dbName` is silently ignored, and the mongoose peer dependencies exist only because of this. Use `MongoClientOptions` and drop the deps.
+- [x] **55. Mongo config typed as Mongoose options but passed to the native client** (Medium)
+  `getMongoConfig()` returned `MongooseModuleOptions` (with a `dbName` the native `MongoClient` silently ignores), and mongoose/@nestjs/mongoose were declared deps only because of that type.
+  **Status: Done.** Retyped `getMongoConfig()` as `MongoClientOptions` and dropped the bogus `dbName` (the db comes from the connection string). Removed `mongoose` and `@nestjs/mongoose` from the mongodb lib and both services (nothing imported them). Verified the service boots and Mongo collections initialize against the running stack; full typecheck and all suites pass.
 
 - [x] **56. Fire-and-forget `RecordUserLogin` command** (Low)
   Login and Google OAuth controllers dispatched it without `await`, so a rejection became an unhandled promise rejection and failures vanished.

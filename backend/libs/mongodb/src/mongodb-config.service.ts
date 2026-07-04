@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MongooseModuleOptions } from '@nestjs/mongoose';
+import type { MongoClientOptions } from 'mongodb';
 
 @Injectable()
 export class MongoDBConfigService {
@@ -38,9 +38,11 @@ export class MongoDBConfigService {
     return '';
   }
 
-  getMongoConfig(): MongooseModuleOptions {
+  getMongoConfig(): MongoClientOptions {
+    // These options are passed to the native MongoClient. The database name
+    // comes from the connection string (there is no dbName option on
+    // MongoClientOptions — the old typing pretended otherwise).
     return {
-      dbName: this.getDatabaseName(),
       retryWrites: true,
       maxPoolSize: Number(process.env.MONGO_MAX_POOL_SIZE) || 20,
       serverSelectionTimeoutMS: Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS) || 5000,

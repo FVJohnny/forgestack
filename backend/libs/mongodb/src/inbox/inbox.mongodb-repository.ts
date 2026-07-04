@@ -75,6 +75,29 @@ export class Inbox_MongodbRepository
     return claimedEvents;
   }
 
+  async reclaimStuckEvents(stuckSince: Date): Promise<number> {
+    await this.ensureIndexes();
+
+    // The inbox aggregate has no updatedAt, so use receivedAt as the age
+    // proxy: claiming happens shortly after receipt, so a PROCESSING event
+    // received long ago is genuinely stuck.
+    const filter: Filter<InboxEventDTO> = {
+      status: InboxStatus.PROCESSING,
+      receivedAt: { $lt: stuckSince },
+    } as Filter<InboxEventDTO>;
+
+    const docs = await this.collection.find(filter).toArray();
+
+    let reclaimed = 0;
+    for (const doc of docs) {
+      const event = InboxEvent.fromValue(doc as InboxEventDTO);
+      event.reclaimFromProcessing();
+      await this.save(event);
+      reclaimed++;
+    }
+    return reclaimed;
+  }
+
   async findByStatus(status: InboxStatusVO, limit = 100): Promise<InboxEvent[]> {
     await this.ensureIndexes();
 

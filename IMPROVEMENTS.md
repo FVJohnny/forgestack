@@ -149,8 +149,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   The traced call was neither awaited nor returned, so batch processing was not actually sequential, the `isProcessing` flag released while publishes were in flight, and per-topic ordering was lost.
   **Status: Done.** `processEvent` now returns the `TracingService.withSpan(...)` promise, so the batch loop's `await` genuinely waits for each publish and `isProcessing` is held for the whole batch. New OutboxService test tracks in-flight concurrency across a 4-event batch and asserts it never exceeds 1.
 
-- [ ] **31. No recovery path for PROCESSING or FAILED inbox events** (High)
-  A crash between claim and completion strands events forever; FAILED events are never retried. Fix: add stuck-reclaim plus bounded retry, like the outbox side.
+- [x] **31. No recovery path for PROCESSING or FAILED inbox events** (High)
+  A crash between claim and completion stranded events forever; FAILED events were never retried.
+  **Status: Done.** Added `retryCount`/`maxRetries` to the inbox aggregate and DTO (defaulted for old rows). `markAsFailed()` now requeues to PENDING while retries remain and only dead-letters (terminal FAILED) once exhausted, so a transient handler failure is retried instead of stranding the event. A new `reclaimStuckEvents(stuckSince)` on the repository (Mongo + in-memory) returns stale PROCESSING events to PENDING (counting a retry), and the service runs it on a 1-minute interval with a 5-minute stuck threshold, mirroring the outbox. Covered by new aggregate and in-memory-repo specs (10 tests). Verified live: a fresh registration flowed through outbox → Kafka → inbox → notifications and processed successfully with the new schema.
 
 - [x] **32. `CircuitBreakerInterceptor` replays the first request's handler** (High)
   The opossum breaker is cached with the first request's closure and fires that same closure for every later request. Fundamentally broken. Fix: pass the current handler as a fire argument (`new CircuitBreaker((fn) => fn())` pattern).
@@ -186,8 +187,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **42. "Distributed transaction" is sequential best-effort, not two-phase commit** (Medium)
   Participants commit in a loop with no rollback of earlier commits. The Redis participant also ignores per-command errors in `exec()`, calls `quit()` on a pipeline, and reads bypass the pipeline so a transaction cannot read its own writes. Fix: document the real guarantee and fix the participant.
 
-- [ ] **43. `handleEventFailure` is un-awaited in the inbox catch path** (Medium)
+- [x] **43. `handleEventFailure` is un-awaited in the inbox catch path** (Medium)
   A floating promise: if the failure-save rejects it becomes an unhandled rejection, and processing continues before the status is persisted. There is also a leftover commented-out `throw`.
+  **Status: Done.** Folded in with item 31: the `safeProcessEvent` catch now `await`s `handleEventFailure`, and the stray `// throw error;` was removed. (The other call site, inside `processEvent`, was already awaited.)
 
 - [ ] **44. Outbox uses magic sentinel dates for state** (Low)
   `new Date(0)` / `new Date(1)` encode NEVER / PROCESSING inside a timestamp while the inbox uses a proper status enum. Unify on the enum.

@@ -16,12 +16,15 @@ import { getInboxOutboxMetrics } from '../metrics/metrics.service';
 export class InboxService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new CorrelationLogger(InboxService.name);
   private processingInterval?: NodeJS.Timeout;
+  private stuckRecoveryInterval?: NodeJS.Timeout;
   private readonly eventHandlers = new Map<string, Map<string, IIntegrationEventHandler[]>>(); // topic -> eventName -> handler
   private trackEvent?: (topic: string, message: ParsedIntegrationMessage, success: boolean) => void;
 
   private readonly config = {
     batchSize: 10,
     intervalMs: 500,
+    stuckRecoveryIntervalMs: 60_000, // Check every minute
+    stuckThresholdMs: 5 * 60_000, // PROCESSING longer than 5 min is stuck
   };
 
   constructor(
@@ -39,6 +42,13 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
       });
     }, this.config.intervalMs);
 
+    // Recover events stranded in PROCESSING by a crashed instance.
+    this.stuckRecoveryInterval = setInterval(() => {
+      this.reclaimStuckEvents().catch((error) => {
+        this.logger.error('Inbox stuck-event reclaim tick failed', error as Error);
+      });
+    }, this.config.stuckRecoveryIntervalMs);
+
     this.logger.log(`Inbox processor started with ${this.config.intervalMs}ms interval`);
   }
 
@@ -46,7 +56,18 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     if (this.processingInterval) {
       clearInterval(this.processingInterval);
     }
+    if (this.stuckRecoveryInterval) {
+      clearInterval(this.stuckRecoveryInterval);
+    }
     this.logger.log('Inbox processor stopped');
+  }
+
+  private async reclaimStuckEvents(): Promise<void> {
+    const stuckSince = new Date(Date.now() - this.config.stuckThresholdMs);
+    const reclaimed = await this.inboxRepository.reclaimStuckEvents(stuckSince);
+    if (reclaimed > 0) {
+      this.logger.warn(`Reclaimed ${reclaimed} stuck inbox events (processing > 5 min)`);
+    }
   }
 
   setEventTracker(
@@ -154,8 +175,7 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
           await this.processEvent(event);
           this.trackEvent?.(topic, message, true);
         } catch (error) {
-          this.handleEventFailure(event, message, topic, error);
-          // throw error;
+          await this.handleEventFailure(event, message, topic, error);
         }
       },
       {

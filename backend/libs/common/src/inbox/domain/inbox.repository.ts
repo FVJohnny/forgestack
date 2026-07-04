@@ -14,5 +14,12 @@ export interface InboxRepository extends Repository<InboxEvent, Id> {
    */
   claimPendingEvents(limit?: number): Promise<InboxEvent[]>;
   findByStatus(status: InboxStatusVO, limit?: number): Promise<InboxEvent[]>;
+  /**
+   * Recovers events stuck in the PROCESSING state since before `stuckSince`
+   * (the instance crashed after claiming but before finishing) by returning
+   * them to PENDING, or dead-lettering them once retries are exhausted.
+   * Returns the number of events reclaimed.
+   */
+  reclaimStuckEvents(stuckSince: Date): Promise<number>;
   deleteProcessed(olderThan: DateVO, context?: RepositoryContext): Promise<void>;
 }

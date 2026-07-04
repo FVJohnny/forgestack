@@ -18,6 +18,8 @@ export class InboxEventDTO extends SharedAggregateDTO {
   receivedAt!: Date;
   processedAt!: Date;
   status!: InboxStatus;
+  retryCount!: number;
+  maxRetries!: number;
 
   static random(overrides: Partial<InboxEventDTO> = {}): InboxEventDTO {
     const entity = InboxEvent.random({
@@ -28,6 +30,8 @@ export class InboxEventDTO extends SharedAggregateDTO {
       receivedAt: overrides.receivedAt ? new InboxReceivedAt(overrides.receivedAt) : undefined,
       processedAt: overrides.processedAt ? new InboxProcessedAt(overrides.processedAt) : undefined,
       status: overrides.status ? new InboxStatusVO(overrides.status) : undefined,
+      retryCount: overrides.retryCount,
+      maxRetries: overrides.maxRetries,
     });
     return entity.toValue();
   }
@@ -41,7 +45,11 @@ export interface InboxEventAttributes {
   receivedAt: InboxReceivedAt;
   processedAt: InboxProcessedAt;
   status: InboxStatusVO;
+  retryCount: number;
+  maxRetries: number;
 }
+
+export const INBOX_DEFAULT_MAX_RETRIES = 5;
 
 export interface CreateInboxEventProps {
   id: Id;
@@ -57,6 +65,8 @@ export class InboxEvent extends SharedAggregate implements InboxEventAttributes 
   receivedAt: InboxReceivedAt;
   processedAt: InboxProcessedAt;
   status: InboxStatusVO;
+  retryCount: number;
+  maxRetries: number;
 
   constructor(props: InboxEventAttributes) {
     super(props.id);
@@ -66,6 +76,8 @@ export class InboxEvent extends SharedAggregate implements InboxEventAttributes 
     this.receivedAt = props.receivedAt;
     this.processedAt = props.processedAt;
     this.status = props.status;
+    this.retryCount = props.retryCount;
+    this.maxRetries = props.maxRetries;
     this.ensureValidState();
   }
 
@@ -78,6 +90,8 @@ export class InboxEvent extends SharedAggregate implements InboxEventAttributes 
       receivedAt: InboxReceivedAt.now(),
       processedAt: InboxProcessedAt.never(),
       status: InboxStatusVO.pending(),
+      retryCount: 0,
+      maxRetries: INBOX_DEFAULT_MAX_RETRIES,
     });
   }
 
@@ -92,6 +106,8 @@ export class InboxEvent extends SharedAggregate implements InboxEventAttributes 
         overrides.processedAt ??
         (Math.random() > 0.5 ? InboxProcessedAt.random() : InboxProcessedAt.never()),
       status: overrides.status ?? InboxStatusVO.random(),
+      retryCount: overrides.retryCount ?? 0,
+      maxRetries: overrides.maxRetries ?? INBOX_DEFAULT_MAX_RETRIES,
     });
   }
 
@@ -119,6 +135,10 @@ export class InboxEvent extends SharedAggregate implements InboxEventAttributes 
     return this.status.isPending();
   }
 
+  canRetry(): boolean {
+    return this.retryCount < this.maxRetries;
+  }
+
   toValue(): InboxEventDTO {
     const dto = new InboxEventDTO();
     dto.id = this.id.toValue();
@@ -128,6 +148,8 @@ export class InboxEvent extends SharedAggregate implements InboxEventAttributes 
     dto.receivedAt = this.receivedAt.toValue();
     dto.processedAt = this.processedAt.toValue();
     dto.status = this.status.toValue();
+    dto.retryCount = this.retryCount;
+    dto.maxRetries = this.maxRetries;
     return dto;
   }
 
@@ -140,6 +162,9 @@ export class InboxEvent extends SharedAggregate implements InboxEventAttributes 
       receivedAt: new InboxReceivedAt(new Date(value.receivedAt)),
       processedAt: new InboxProcessedAt(new Date(value.processedAt)),
       status: new InboxStatusVO(value.status),
+      // Default for rows persisted before retry tracking existed.
+      retryCount: value.retryCount ?? 0,
+      maxRetries: value.maxRetries ?? INBOX_DEFAULT_MAX_RETRIES,
     });
   }
 
@@ -166,8 +191,41 @@ export class InboxEvent extends SharedAggregate implements InboxEventAttributes 
     this.processedAt = InboxProcessedAt.now();
   }
 
+  /**
+   * Records a processing failure. If retries remain, the event goes back to
+   * PENDING (incrementing the retry count) so a later tick re-runs the
+   * handlers; once retries are exhausted it stays FAILED as a terminal
+   * dead-letter state that is never re-claimed.
+   */
   markAsFailed(): void {
-    this.status = InboxStatusVO.failed();
+    if (this.canRetry()) {
+      this.retryCount += 1;
+      this.status = InboxStatusVO.pending();
+    } else {
+      this.status = InboxStatusVO.failed();
+    }
+  }
+
+  /**
+   * Recovers an event stranded in PROCESSING (e.g. the instance crashed
+   * between claim and completion) by returning it to PENDING so it can be
+   * claimed again. Counts as a retry so a repeatedly-crashing event
+   * eventually dead-letters instead of looping.
+   */
+  reclaimFromProcessing(): void {
+    if (!this.isProcessing()) {
+      throw new DomainValidationException(
+        'InboxStatus',
+        this.status.toValue(),
+        'Cannot reclaim: event is not in processing state',
+      );
+    }
+    if (this.canRetry()) {
+      this.retryCount += 1;
+      this.status = InboxStatusVO.pending();
+    } else {
+      this.status = InboxStatusVO.failed();
+    }
   }
 
   markAsDuplicate(): void {

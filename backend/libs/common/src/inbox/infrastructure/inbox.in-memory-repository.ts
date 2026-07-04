@@ -77,6 +77,19 @@ export class Inbox_InMemoryRepository
       .slice(0, limit);
   }
 
+  async reclaimStuckEvents(stuckSince: Date): Promise<number> {
+    const entities = await this.findAll();
+    let reclaimed = 0;
+    for (const event of entities) {
+      if (event.isProcessing() && event.receivedAt.toValue().getTime() < stuckSince.getTime()) {
+        event.reclaimFromProcessing();
+        await this.save(event);
+        reclaimed++;
+      }
+    }
+    return reclaimed;
+  }
+
   async deleteProcessed(olderThan: DateVO, context?: RepositoryContext): Promise<void> {
     const entities = await this.findAll();
     const toDelete = entities.filter(

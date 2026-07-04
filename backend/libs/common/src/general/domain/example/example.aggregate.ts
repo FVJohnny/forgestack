@@ -18,7 +18,10 @@ export class EntityExample extends SharedAggregate {
   value: string;
 
   private constructor(props: EntityExampleAttributes) {
-    super();
+    // Pass id/timestamps through so fromValue() rehydrates the SAME aggregate.
+    // Calling super() with no args would assign a fresh random id and new
+    // timestamps, so a repository round-trip would return a different entity.
+    super(props.id, props.timestamps);
     this.value = props.value;
   }
 

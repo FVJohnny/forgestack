@@ -20,7 +20,7 @@ How to read an item:
 | E. Frontend | 15 | 15 | none |
 | F. Infra and deployment | 15 | 14 done, 1 won't-do (82) | none |
 | G. Tooling, lint, DX | 18 | 18 | none |
-| H. Docs, identity, positioning | 8 | 3 | 114-118 |
+| H. Docs, identity, positioning | 8 | 7 done, 1 owner-action (116) | none |
 
 All of Section A is code-complete. Item 5's remaining work is manual secret rotation by the maintainer (the repo and its history are already clean).
 
@@ -540,8 +540,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   No "make it yours" guide (rename service-1, rebrand, set domain and registry), no "add a bounded context" walkthrough, no troubleshooting section, the one-command `npm run prod:setup` path is undocumented, and pnpm is missing from the prerequisites.
   **Status: Done.** Added a `/docs/guides/make-it-yours` page covering rebranding (name/APP_NAME/frontend copy), setting the domain + Docker registry + prod secrets, renaming/replacing the example services and bounded contexts (pointing at the `bounded-context` generator from item 106), the one-command `npm run prod:setup` provisioning path (previously undocumented), and a Troubleshooting section (Node not found, cert trust, 502 on cold start, stale Kafka/Mongo volumes, missing handler via the item-48 fail-loud, unhealthy prod deploy). Wired into the docs nav. pnpm is now covered by the README Package managers section (item 105). Verified: the frontend builds and the new `/docs/guides/make-it-yours` route compiles into the manifest.
 
-- [ ] **116. No screenshots or demo** (Medium)
+- [~] **116. No screenshots or demo** (Medium)
   The template ships a dashboard, Grafana boards, and a docs site but the README is text-only. Visuals drive starter-template adoption.
+  **Status: OWNER ACTION.** Screenshots need the real branding, seeded data, and a running stack, so the owner will capture them (landing page, dashboard, a Grafana board, the docs site) and add a README Screenshots section. Not scaffolded, to avoid shipping broken image links.
 
 - [x] **117. Docs violate the repo's own style rules** (Medium)
   Dozens of em-dashes and clever-parallelism marketing lines ("Commands mutate, queries read", "Deployable day one") across README and docs/. Flatten to plain sentences.

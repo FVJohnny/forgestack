@@ -19,10 +19,17 @@ frontend/public-page/.vercel/**
 !nx.json
 !tsconfig*.json
 
-# Allow infra files for monitoring images
+# Allow infra files for monitoring images. Do NOT whitelist infra/env/** as
+# a whole: the *.env.prod files hold real secrets and one stray COPY would
+# bake them into a pushed image. The public-page env file is the only one a
+# Dockerfile needs (build-time NEXT_PUBLIC_* values).
 !infra/caddy/**
-!infra/env/**
 !infra/monitoring/**
+!infra/env/public-page.env.prod
+!infra/env/public-page.env.prod.example
+
+# Runtime secret, mounted by compose; never part of a build context.
+infra/monitoring/prometheus/internal-api-key
 
 # Ignore build artifacts and dependencies in backend
 backend/**/node_modules/**

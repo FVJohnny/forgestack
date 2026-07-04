@@ -57,6 +57,11 @@ export class Outbox_RedisRepository
     }
   }
 
+  async countUnprocessed(): Promise<number> {
+    // O(1) from the secondary index maintained on save.
+    return this.getRedisClient().zcard(this.zUnprocessed);
+  }
+
   async findUnprocessed(limit = 100) {
     const client = this.getRedisClient();
 
@@ -136,6 +141,32 @@ export class Outbox_RedisRepository
    * Reclaims events stuck in "processing" state since before the given date.
    * Resets them to unprocessed so they can be picked up again.
    */
+  // Atomically reclaims one stuck event: if it is still PROCESSING, reset it to
+  // never-processed and move it from the claimed index back to unprocessed; in
+  // all cases remove it from the claimed index. Doing the read-modify-write in
+  // a single Lua call (like the claim path) avoids the race where a concurrent
+  // completion or reset interleaves with the reclaim.
+  // KEYS[1]=zClaimed, KEYS[2]=zUnprocessed; ARGV[1]=item key, ARGV[2]=id,
+  // ARGV[3]=never marker, ARGV[4]=processing marker, ARGV[5]=createdAt score.
+  // Returns 1 if reclaimed, 0 otherwise.
+  private static readonly RECLAIM_EVENT_LUA = `
+    local json = redis.call('GET', ARGV[1])
+    if not json then
+      redis.call('ZREM', KEYS[1], ARGV[2])
+      return 0
+    end
+    local event = cjson.decode(json)
+    if event['processedAt'] ~= ARGV[4] then
+      redis.call('ZREM', KEYS[1], ARGV[2])
+      return 0
+    end
+    event['processedAt'] = ARGV[3]
+    redis.call('SET', ARGV[1], cjson.encode(event))
+    redis.call('ZADD', KEYS[2], ARGV[5], ARGV[2])
+    redis.call('ZREM', KEYS[1], ARGV[2])
+    return 1
+  `;
+
   async reclaimStuckEvents(stuckSince: Date): Promise<number> {
     const client = this.getRedisClient();
 
@@ -143,24 +174,28 @@ export class Outbox_RedisRepository
     const ids = await client.zrangebyscore(this.zClaimed, '-inf', stuckSince.getTime());
     if (ids.length === 0) return 0;
 
+    const neverMarker = OutboxProcessedAt.NEVER_PROCESSED.toISOString();
+    const processingMarker = OutboxProcessedAt.PROCESSING.toISOString();
+
     let reclaimed = 0;
     for (const id of ids) {
       const key = this.itemKey(id);
       const json = await client.get(key);
-      if (!json) {
-        await client.zrem(this.zClaimed, id);
-        continue;
-      }
+      const createdAtScore = json ? this.toEntity(json).timestamps.createdAt.getTime() : Date.now();
 
-      const event = this.toEntity(json);
-      // Only reclaim if still in processing state (not already completed)
-      if (event.processedAt.isProcessing()) {
-        event.processedAt = OutboxProcessedAt.never();
-        await client.set(key, JSON.stringify(event.toValue()));
-        await client.zadd(this.zUnprocessed, event.timestamps.createdAt.getTime(), id);
-        reclaimed++;
-      }
-      await client.zrem(this.zClaimed, id);
+      const result = (await client.eval(
+        Outbox_RedisRepository.RECLAIM_EVENT_LUA,
+        2,
+        this.zClaimed,
+        this.zUnprocessed,
+        key,
+        id,
+        neverMarker,
+        processingMarker,
+        createdAtScore.toString(),
+      )) as number;
+
+      if (result === 1) reclaimed++;
     }
 
     return reclaimed;

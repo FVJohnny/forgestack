@@ -120,6 +120,13 @@ export class Inbox_MongodbRepository
     return reclaimed;
   }
 
+  async countPending(): Promise<number> {
+    await this.ensureIndexes();
+    return this.collection.countDocuments({
+      status: InboxStatus.PENDING,
+    } as Filter<InboxEventDTO>);
+  }
+
   async findByStatus(status: InboxStatusVO, limit = 100): Promise<InboxEvent[]> {
     await this.ensureIndexes();
 

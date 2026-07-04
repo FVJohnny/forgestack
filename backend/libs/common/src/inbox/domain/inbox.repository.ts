@@ -21,6 +21,8 @@ export interface InboxRepository extends Repository<InboxEvent, Id> {
    * Returns the claimed events (already marked as processing).
    */
   claimPendingEvents(limit?: number): Promise<InboxEvent[]>;
+  /** Number of events still waiting to be processed (backlog depth). */
+  countPending(): Promise<number>;
   findByStatus(status: InboxStatusVO, limit?: number): Promise<InboxEvent[]>;
   /**
    * Recovers events stuck in the PROCESSING state since before `stuckSince`

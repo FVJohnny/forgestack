@@ -75,6 +75,13 @@ export class Outbox_MongodbRepository
     return claimedEvents;
   }
 
+  async countUnprocessed(): Promise<number> {
+    await this.ensureIndexes();
+    return this.collection.countDocuments({
+      processedAt: OutboxProcessedAt.never().toValue(),
+    } as Filter<OutboxEventDTO>);
+  }
+
   /**
    * Resets a claimed event back to unprocessed state (for failed publishes).
    */

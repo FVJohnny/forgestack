@@ -39,6 +39,11 @@ export class Outbox_InMemoryRepository
     return unprocessed;
   }
 
+  async countUnprocessed(): Promise<number> {
+    this.validate('countUnprocessed');
+    return (await this.findAll()).filter((e) => e.processedAt.isNeverProcessed()).length;
+  }
+
   async resetClaimedEvent(eventId: Id): Promise<void> {
     this.validate('resetClaimedEvent');
     const event = await this.findById(eventId);

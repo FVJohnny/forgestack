@@ -11,8 +11,10 @@ export const OUTBOX_REPOSITORY = 'OutboxRepository';
 @Injectable()
 export class OutboxService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new CorrelationLogger(OutboxService.name);
-  private readonly PROCESSING_INTERVAL_MS = 100;
-  private readonly BATCH_SIZE = 100;
+  // Tunable via env so high-volume deployments can trade latency for load.
+  private readonly PROCESSING_INTERVAL_MS =
+    Number(process.env.OUTBOX_PROCESSING_INTERVAL_MS) || 100;
+  private readonly BATCH_SIZE = Number(process.env.OUTBOX_BATCH_SIZE) || 100;
   private readonly STUCK_RECOVERY_INTERVAL_MS = 60_000; // Check every minute
   private readonly STUCK_THRESHOLD_MS = 5 * 60_000; // 5 minutes
   private readonly CLEANUP_INTERVAL_MS = 6 * 60 * 60_000; // Every 6 hours
@@ -77,10 +79,6 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
     try {
       // Use atomic claiming to prevent race conditions across instances
       const events = await this.repository.claimUnprocessedEvents(this.BATCH_SIZE);
-
-      // Report queue size metric
-      const metrics = getInboxOutboxMetrics();
-      metrics?.setOutboxQueueSize(events.length);
 
       if (!events.length) {
         return;
@@ -155,6 +153,12 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
       if (reclaimed > 0) {
         this.logger.warn(`Reclaimed ${reclaimed} stuck outbox events (processing > 5 min)`);
       }
+
+      // Report the true backlog depth here (on the slow 60s tick) rather than
+      // on every 100ms processing tick where it was just the claimed batch
+      // size capped at BATCH_SIZE.
+      const backlog = await this.repository.countUnprocessed();
+      getInboxOutboxMetrics()?.setOutboxQueueSize(backlog);
     } catch (error) {
       this.logger.error('Failed to reclaim stuck outbox events', error as Error);
     }

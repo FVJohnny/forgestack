@@ -20,9 +20,10 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
   private readonly eventHandlers = new Map<string, Map<string, IIntegrationEventHandler[]>>(); // topic -> eventName -> handler
   private trackEvent?: (topic: string, message: ParsedIntegrationMessage, success: boolean) => void;
 
+  // Tunable via env so high-volume deployments can trade latency for load.
   private readonly config = {
-    batchSize: 10,
-    intervalMs: 500,
+    batchSize: Number(process.env.INBOX_BATCH_SIZE) || 10,
+    intervalMs: Number(process.env.INBOX_PROCESSING_INTERVAL_MS) || 500,
     stuckRecoveryIntervalMs: 60_000, // Check every minute
     stuckThresholdMs: 5 * 60_000, // PROCESSING longer than 5 min is stuck
     cleanupIntervalMs: 6 * 60 * 60_000, // Every 6 hours
@@ -81,6 +82,11 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     if (reclaimed > 0) {
       this.logger.warn(`Reclaimed ${reclaimed} stuck inbox events (processing > 5 min)`);
     }
+
+    // Report the true backlog depth here (on the slow 60s tick) rather than
+    // the claimed batch size that processInboxEvents used to report.
+    const backlog = await this.inboxRepository.countPending();
+    getInboxOutboxMetrics()?.setInboxQueueSize(backlog);
   }
 
   private async cleanupProcessedEvents(): Promise<void> {
@@ -178,10 +184,6 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     // Atomically claim pending events (marks them as processing in the same operation)
     // This prevents race conditions across multiple service instances
     const claimedEvents = await this.inboxRepository.claimPendingEvents(this.config.batchSize);
-
-    // Report queue size metric
-    const metrics = getInboxOutboxMetrics();
-    metrics?.setInboxQueueSize(claimedEvents.length);
 
     if (claimedEvents.length === 0) {
       return;

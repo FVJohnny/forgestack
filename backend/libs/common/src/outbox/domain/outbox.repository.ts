@@ -12,6 +12,8 @@ export interface Outbox_Repository extends Repository<OutboxEvent, Id> {
    * Uses a special "processing" marker (far-future date) to indicate claimed events.
    */
   claimUnprocessedEvents(limit?: number): Promise<OutboxEvent[]>;
+  /** Number of events still waiting to be published (backlog depth). */
+  countUnprocessed(): Promise<number>;
   /**
    * Resets a claimed event back to unprocessed state (for failed publishes).
    */

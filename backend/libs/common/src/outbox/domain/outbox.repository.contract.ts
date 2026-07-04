@@ -271,6 +271,20 @@ export function testOutboxRepositoryContract(
       });
     });
 
+    describe('countUnprocessed', () => {
+      it('counts only unprocessed (never-processed) events', async () => {
+        expect(await repo.countUnprocessed()).toBe(0);
+
+        await repo.save(OutboxEvent.random({ processedAt: OutboxProcessedAt.never() }));
+        await repo.save(OutboxEvent.random({ processedAt: OutboxProcessedAt.never() }));
+        expect(await repo.countUnprocessed()).toBe(2);
+
+        // Claiming (→ PROCESSING) removes it from the unprocessed count.
+        await repo.claimUnprocessedEvents(1);
+        expect(await repo.countUnprocessed()).toBe(1);
+      });
+    });
+
     describe('reclaimStuckEvents', () => {
       it('reclaims events stuck in processing state past threshold', async () => {
         const event = OutboxEvent.random({

@@ -3,7 +3,10 @@ import { GetUserTokenByToken_Query } from './get-user-token-by-token.query';
 import { UserToken_InMemoryRepository } from '../../../testing/user-token.in-memory-repository';
 import { UserToken } from '../../../domain/entities/user-token.aggregate';
 import { Token } from '../../../domain/entities/token.vo';
-import { NotFoundException, InfrastructureException } from '../../../../errors/application.exceptions';
+import {
+  NotFoundException,
+  InfrastructureException,
+} from '../../../../errors/application.exceptions';
 import { Id } from '../../../../general/domain/value-objects/id.vo';
 
 describe('GetUserTokenByToken_QueryHandler', () => {

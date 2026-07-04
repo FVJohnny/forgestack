@@ -78,6 +78,11 @@ export class Inbox_InMemoryRepository
     return claimed;
   }
 
+  async countPending(): Promise<number> {
+    // O(1): the pending index is kept up to date on every save.
+    return this.pendingIds.length;
+  }
+
   async findByStatus(status: InboxStatusVO, limit = 100): Promise<InboxEvent[]> {
     const entities = await this.findAll();
     return entities

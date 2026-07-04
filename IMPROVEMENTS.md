@@ -326,8 +326,8 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [x] **75. `fmf.*` translation namespace is unexplained legacy naming** (Medium)
   **Status: Done.** Renamed the top-level `fmf` message namespace to `app` in all 8 locale files and updated the ~15 `useTranslations('fmf.…')` call sites (and the one MDX docs example that referenced it). Locales stay in parity, typecheck and build clean, and the landing/dashboard render with no missing-message errors.
 
-- [ ] **76. Language switcher rough edges** (Low)
-  Flags load from flagcdn.com (external dependency), switching does a full page reload, blocked cookies can cause an infinite reload loop, flags-for-languages is an i18n anti-pattern, and the Accept-Language parsing is duplicated.
+- [x] **76. Language switcher rough edges** (Low)
+  **Status: Mostly done.** Removed the mount-time reconciliation effect that could loop forever when cookies are blocked (the cookie is now the single source of truth, set only on change). Switched flags from the external flagcdn.com images to the local emoji flags the config already defined, dropping the external dependency entirely (also removed the flagcdn `remotePatterns` and CSP allowance, and the now-unused `localeFlagCodes`). Improved the trigger's `aria-label` to include the current language and marked the decorative flags `aria-hidden`. Verified live: emoji flags render, zero flagcdn requests. Not changed: the switch still does a full reload (next-intl locale change without a full i18n-router migration), and the flags-as-languages convention is kept for now; the duplicated Accept-Language parsing (middleware vs request.ts) is a separate small cleanup.
 
 - [x] **77. Small frontend cleanups** (Low)
   **Status: Done.**

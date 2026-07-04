@@ -30,26 +30,19 @@ const nextConfig = {
   pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
   images: {
     unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'flagcdn.com',
-      },
-    ],
   },
   output: 'standalone',
   async headers() {
     // Baseline security headers. The CSP is deliberately pragmatic rather
     // than nonce-strict: Next.js inline runtime scripts need 'unsafe-inline',
-    // Google Sign-In loads from accounts.google.com, language flags come from
-    // flagcdn.com, and the API lives on another origin (https in docker/prod,
-    // http://localhost in bare dev). Tighten connect-src to your API hosts
-    // when you fork this template.
+    // Google Sign-In loads from accounts.google.com, and the API lives on
+    // another origin (https in docker/prod, http://localhost in bare dev).
+    // Tighten connect-src to your API hosts when you fork this template.
     const csp = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://flagcdn.com",
+      "img-src 'self' data: blob:",
       "font-src 'self' data:",
       "connect-src 'self' https: http://localhost:* http://127.0.0.1:*",
       'frame-src https://accounts.google.com',

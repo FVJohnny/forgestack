@@ -25,15 +25,3 @@ export const localeFlags: Record<Locale, string> = {
   pl: '🇵🇱',
   th: '🇹🇭',
 };
-
-// Country codes for flag images (ISO 3166-1 alpha-2)
-export const localeFlagCodes: Record<Locale, string> = {
-  en: 'us',
-  es: 'es',
-  pt: 'br',
-  de: 'de',
-  fr: 'fr',
-  nl: 'nl',
-  pl: 'pl',
-  th: 'th',
-};

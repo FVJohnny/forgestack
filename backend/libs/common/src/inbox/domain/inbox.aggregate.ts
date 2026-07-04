@@ -11,7 +11,6 @@ import {
 } from './value-objects';
 
 export class InboxEventDTO extends SharedAggregateDTO {
-  messageId!: string;
   eventName!: string;
   topic!: string;
   payload!: string;

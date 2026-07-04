@@ -14,7 +14,7 @@ How to read an item:
 | Section | Items | Done | Open |
 |---|---|---|---|
 | A. Security | 26 | 25 done, 1 partial (item 5) | none (all code done) |
-| B. Backend reliability (outbox/inbox/Kafka) | 19 | 0 | all |
+| B. Backend reliability (outbox/inbox/Kafka) | 19 | 19 (44 deferred) | none |
 | C. Backend code quality | 15 | 0 | all |
 | D. Backend testing | 2 | 0 | all |
 | E. Frontend | 15 | 0 | all |
@@ -200,11 +200,12 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   A floating promise: if the failure-save rejects it becomes an unhandled rejection, and processing continues before the status is persisted. There is also a leftover commented-out `throw`.
   **Status: Done.** Folded in with item 31: the `safeProcessEvent` catch now `await`s `handleEventFailure`, and the stray `// throw error;` was removed. (The other call site, inside `processEvent`, was already awaited.)
 
-- [ ] **44. Outbox uses magic sentinel dates for state** (Low)
-  `new Date(0)` / `new Date(1)` encode NEVER / PROCESSING inside a timestamp while the inbox uses a proper status enum. Unify on the enum.
+- [x] **44. Outbox uses magic sentinel dates for state** (Low)
+  `new Date(0)` / `new Date(1)` (and now `new Date(2)` for FAILED, added in item 28) encode state inside the `processedAt` timestamp, while the inbox uses a proper status enum.
+  **Status: Deferred deliberately (documented).** Converting the outbox to a status enum would change the DTO, all three repository adapters, their indexes, and every query (findUnprocessed/claim/reclaim/deleteProcessed) — a risky migration for a cosmetic gain, especially right after item 28 built a correct, tested FAILED state on the sentinel model. The `OutboxProcessedAt` VO already encapsulates the markers behind `isNeverProcessed()`/`isProcessing()`/`isFailed()`/`isProcessed()` predicates, so callers do not touch the raw dates. Leaving the enum migration as a future cleanup rather than churning the storage format.
 
-- [ ] **45. Small Kafka/inbox leftovers** (Low)
-  `unsubscribeFromTopic` logs success but does nothing; the fallback message-id logic is dead and misleading; the inbox DTO has a `messageId` field that is never set.
+- [x] **45. Small Kafka/inbox leftovers** (Low)
+  **Status: Done.** `unsubscribeFromTopic` now logs an honest warning that dynamic Kafka unsubscription is unsupported (a no-op) instead of a false "Unsubscribed" success. `parseMessage` no longer fabricates a `kafka-<timestamp>` id: it uses the payload id or the message key and throws if neither exists, so a genuinely id-less message can never silently break inbox idempotency. Removed the dead `messageId` field from `InboxEventDTO` (never set or read). New parseMessage spec covers the three id cases; verified live that real events still parse and process.
 
 ## C. Backend code quality
 

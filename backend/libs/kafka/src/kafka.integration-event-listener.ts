@@ -113,22 +113,35 @@ export class KafkaIntegrationEventListener
   }
 
   protected async unsubscribeFromTopic(topicName: string) {
-    // Note: KafkaService doesn't currently support unregistering handlers
-    this.logger.log(`Unsubscribed from Kafka topic: ${topicName}`);
+    // kafkajs has no per-topic unsubscribe on a running consumer; changing the
+    // subscription set requires stopping and re-running the consumer. This is
+    // intentionally unsupported here, so be honest about it rather than logging
+    // a success that did not happen.
+    this.logger.warn(
+      `unsubscribeFromTopic('${topicName}') is a no-op: dynamic Kafka unsubscription is not supported; restart the consumer to change topics.`,
+    );
   }
 
   protected parseMessage(message: KafkaMessage): ParsedIntegrationMessage {
+    let parsedMessage: Record<string, unknown>;
     try {
-      const messageValue = message.value?.toString();
-      const messageKey = message.key?.toString();
-
-      const messageId = messageKey || `kafka-${Date.now()}`;
-      const parsedMessage = JSON.parse(messageValue || '{}');
-
-      return { id: messageId, name: parsedMessage.name, ...parsedMessage };
+      parsedMessage = JSON.parse(message.value?.toString() || '{}');
     } catch (error) {
       this.logger.error(`Error parsing Kafka message: ${error}`);
       throw error;
     }
+
+    // The id is what the inbox dedupes on, so it must be stable. Prefer the
+    // event payload's own id, fall back to the Kafka message key. Never
+    // fabricate one (e.g. a timestamp) — that would silently break
+    // idempotency by making every redelivery look like a new message.
+    const id = (parsedMessage.id as string) || message.key?.toString();
+    if (!id) {
+      throw new Error(
+        'Kafka message has no id (neither payload.id nor message key); cannot dedupe it in the inbox.',
+      );
+    }
+
+    return { ...parsedMessage, id, name: parsedMessage.name as string };
   }
 }

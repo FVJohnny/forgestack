@@ -8,6 +8,19 @@
 (tls-prod) {
 }
 
+# Basic auth for admin surfaces (Portainer). Enforced in prod, open in dev.
+# Prod requires CADDY_BASIC_AUTH_HASH (see infra/env/infra.env.prod.example);
+# Caddy refuses to start if it is missing, which is intentional: Portainer has
+# root-equivalent Docker socket access and must never be public without auth.
+(admin-auth-dev) {
+}
+
+(admin-auth-prod) {
+    basic_auth {
+        {$CADDY_BASIC_AUTH_USER:admin} {$CADDY_BASIC_AUTH_HASH}
+    }
+}
+
 {$PROTOCOL:http}://www.{$DOMAIN:localhost} {
     import tls-{$TLS_ENV:dev}
     redir {$PROTOCOL:http}://{$DOMAIN:localhost}{uri} permanent
@@ -43,6 +56,7 @@
 
 {$PROTOCOL:http}://portainer.{$DOMAIN:localhost} {
     import tls-{$TLS_ENV:dev}
+    import admin-auth-{$TLS_ENV:dev}
     reverse_proxy portainer:9000
 }
 

@@ -28,7 +28,8 @@ Check items off as they are done.
   - DONE. Added `ChangePassword_ControllerParams` with `@IsString @IsNotEmpty` on oldPassword and `@IsString @MinLength(8)` on newPassword. Same correction as item 10: the body was not stripped to undefined (interface bodies skip validation entirely), it was simply unvalidated. Verified with typecheck and service-1 tests (503 passed).
 - [x] 12. [M] Weak and inconsistent password policy. Backend VO only checks length >= 8. Frontend forms enforce 6, 8, and nothing across register/change/reset. Unify and strengthen.
   - DONE. One policy everywhere: at least 8 characters with a letter and a number, max 72 bytes (bcrypt truncates beyond that). Backend `Password` VO enforces it with new spec cases; frontend has a shared `lib/utils/password.ts` validator now used by register (was 6), change-password, and reset-password (was nothing). Error messages updated in all 8 locales. Existing users are unaffected because login verifies via bcrypt compare, not the creation-time policy. Verified with backend+frontend typecheck and all test suites.
-- [ ] 13. [M] Login/register accept any string as email. Missing `@IsEmail()`.
+- [x] 13. [M] Login/register accept any string as email. Missing `@IsEmail()`.
+  - DONE. Both `LoginUser_ControllerParams` and `RegisterUser_ControllerParams` now use `@IsEmail()`, matching the password-reset params, so malformed emails 400 at the API boundary instead of failing in the domain VO. Verified with typecheck and service-1 tests (506 passed).
 - [ ] 14. [M] `Base_RedisRepository.clear()` deletes every key in the Redis DB via `keys('*')` + `del`. Scope to the repo's prefix and use SCAN.
 - [ ] 15. [M] Mongo `/mongodb/health` returns the full connection string (with credentials) and never pings the DB.
 - [ ] 16. [M] Regex injection in Mongo criteria converter. CONTAINS filters pass raw user input into `$regex` (ReDoS). Escape metacharacters.

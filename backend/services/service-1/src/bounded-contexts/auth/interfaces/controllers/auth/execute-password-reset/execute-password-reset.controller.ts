@@ -3,11 +3,7 @@ import { type ICommandBus } from '@nestjs/cqrs';
 import { COMMAND_BUS, PublicApi, StrictRateLimit } from '@libs/nestjs-common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ExecutePasswordReset_Command } from '@bc/auth/application/commands/execute-password-reset/execute-password-reset.command';
-
-export interface ExecutePasswordResetParams {
-  passwordResetId: string;
-  newPassword: string;
-}
+import { ExecutePasswordReset_ControllerParams } from './execute-password-reset.params';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -27,7 +23,7 @@ export class ExecutePasswordReset_Controller {
     status: HttpStatus.NOT_FOUND,
     description: 'Password reset ID not found or already used',
   })
-  async executePasswordReset(@Body() body: ExecutePasswordResetParams): Promise<void> {
+  async executePasswordReset(@Body() body: ExecutePasswordReset_ControllerParams): Promise<void> {
     const command = new ExecutePasswordReset_Command(body.passwordResetId, body.newPassword);
     await this.commandBus.execute(command);
   }

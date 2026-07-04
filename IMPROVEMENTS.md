@@ -532,17 +532,21 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   The README tree showed a nonexistent `infra/docker/` and omitted `tools/forgestack/`; the deploy-menu numbers in the README, `docs/deployment.md`, and `prod-setup.sh` did not match `deploy.sh`.
   **Status: Done.** Rewrote the README `infra/` tree to the real subdirs (compose, caddy, dockerfiles, env, mongo, scripts, monitoring) and added `tools/forgestack/`. Fixed the README deploy menu to match `deploy.sh` exactly (and noted that a single service is deployed by typing its name). Fixed the two wrong option numbers in `docs/deployment.md` (ALL is 5, deploy-only is 6) and the two in `prod-setup.sh`.
 
-- [ ] **114. Two documentation sites that do not know about each other** (Medium)
-  Root `docs/` and the MDX site under `frontend/public-page/app/docs/` will drift. Cross-link them and declare one canonical. **Partially done:** `docs/frontend.md` no longer calls the app an "auth-only shell" (it now lists the dashboard and docs routes). Still open: cross-linking the two doc sites and the `commands.md` unlinked reference.
+- [x] **114. Two documentation sites that do not know about each other** (Medium)
+  Root `docs/` and the MDX site under `frontend/public-page/app/docs/` will drift. Cross-link them and declare one canonical.
+  **Status: Done.** Declared the frontend MDX docs site (served at `/docs`, the richer of the two) canonical: the README Documentation section now explains both doc sets, names the site as canonical, and says the site wins on conflict. Each root `docs/*.md` got a header note linking to its canonical docs-site page. Also swept the MDX site for em-dashes as part of item 117 (~93 removed).
 
-- [ ] **115. Missing adoption docs** (Medium)
+- [x] **115. Missing adoption docs** (Medium)
   No "make it yours" guide (rename service-1, rebrand, set domain and registry), no "add a bounded context" walkthrough, no troubleshooting section, the one-command `npm run prod:setup` path is undocumented, and pnpm is missing from the prerequisites.
+  **Status: Done.** Added a `/docs/guides/make-it-yours` page covering rebranding (name/APP_NAME/frontend copy), setting the domain + Docker registry + prod secrets, renaming/replacing the example services and bounded contexts (pointing at the `bounded-context` generator from item 106), the one-command `npm run prod:setup` provisioning path (previously undocumented), and a Troubleshooting section (Node not found, cert trust, 502 on cold start, stale Kafka/Mongo volumes, missing handler via the item-48 fail-loud, unhealthy prod deploy). Wired into the docs nav. pnpm is now covered by the README Package managers section (item 105). Verified: the frontend builds and the new `/docs/guides/make-it-yours` route compiles into the manifest.
 
 - [ ] **116. No screenshots or demo** (Medium)
   The template ships a dashboard, Grafana boards, and a docs site but the README is text-only. Visuals drive starter-template adoption.
 
-- [ ] **117. Docs violate the repo's own style rules** (Medium)
+- [x] **117. Docs violate the repo's own style rules** (Medium)
   Dozens of em-dashes and clever-parallelism marketing lines ("Commands mutate, queries read", "Deployable day one") across README and docs/. Flatten to plain sentences.
+  **Status: Done.** Removed every prose em-dash across the README, CONTRIBUTING, SECURITY, the six `docs/*.md` files, and the ~20 MDX docs pages (roughly 150 total), rewriting to plain punctuation and leaving code-block em-dashes (TS comments, ASCII trees) literal. Flattened the two flagged parallelism lines ("Commands mutate, queries read" → "Commands change state and queries read it"; "Deployable day one" → "Deploy on the first day"). Frontend builds clean.
 
-- [ ] **118. Community files** (Low)
+- [x] **118. Community files** (Low)
   No CODE_OF_CONDUCT, SECURITY.md has no concrete contact or supported-versions statement, no CHANGELOG or release process, no README badges (add after CI exists), "provisions prerequisites" overstates what `start-dev.sh` does, and the LICENSE copyright says "FVJohnny" instead of a legal name.
+  **Status: DONE (one owner-only item left).** Added `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, linked from CONTRIBUTING) and `CHANGELOG.md` (Keep a Changelog format, 1.0.0 baseline). Gave SECURITY.md a Supported versions section and a concrete private vulnerability-reporting path (GitHub Security Advisories, no public issues) under item 117's sweep. Fixed the README overstatement: `dev:start` CHECKS prerequisites (verifies Node, can install Docker) rather than provisioning them. README badges (CI/license/node) already exist. Left for the owner: the LICENSE copyright says "FVJohnny" (their handle); swapping it for a legal name is their call, not something to change unilaterally.

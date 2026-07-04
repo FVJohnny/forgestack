@@ -1,5 +1,5 @@
 /**
- * Docs navigation tree — single source of truth for the sidebar and for
+ * Docs navigation tree. Single source of truth for the sidebar and for
  * prev/next links. Order here is the order shown in the sidebar.
  */
 export type DocLink = { title: string; href: string };
@@ -49,13 +49,14 @@ export const DOCS_NAV: DocSection[] = [
   {
     title: 'Guides',
     links: [
+      { title: 'Make It Yours', href: '/docs/guides/make-it-yours' },
       { title: 'Adding a Service', href: '/docs/guides/adding-a-service' },
       { title: 'Login with Google', href: '/docs/guides/login-with-google' },
     ],
   },
 ];
 
-/** Flattened, ordered list of every doc link — used for prev/next. */
+/** Flattened, ordered list of every doc link, used for prev/next. */
 export const DOCS_FLAT: DocLink[] = DOCS_NAV.flatMap((s) => s.links);
 
 export function getAdjacentDocs(pathname: string): { prev?: DocLink; next?: DocLink } {

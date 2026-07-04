@@ -1,0 +1,74 @@
+# Make It Yours
+
+This template ships as a working demo (the `auth` and `notifications` contexts,
+an `analytics` service, and a `public-page` frontend). Here is how to turn it
+into your own product.
+
+## 1. Rebrand
+
+The brand name comes from a few places:
+
+- `package.json` `name` (root and `frontend/public-page`).
+- The `APP_NAME` env var, which the backend uses for the outbound email
+  from-name (defaults to `ForgeStack`). Set it in your service `.env` files.
+- The frontend copy under `frontend/public-page/messages/*.json` and the
+  landing page components.
+
+Search the repo for `ForgeStack` and `forgestack` and replace what you want.
+
+## 2. Set your domain and TLS
+
+Local dev uses `localhost` hostnames behind Caddy with a local CA. For
+production, set your real domain and registry in `infra/env/infra.env.prod`
+(copy it from `infra.env.prod.example`):
+
+- `DOMAIN` is your apex domain. Caddy serves the app at `DOMAIN` and each
+  service at `service1.DOMAIN`, `service2.DOMAIN`, and so on, with automatic
+  Let's Encrypt certificates.
+- `DOCKER_REGISTRY` is where built images are pushed and pulled
+  (for example `docker.io/your-username`).
+- Fill in the database, Redis, Grafana, and `CADDY_BASIC_AUTH_HASH` secrets in
+  the same file. Caddy refuses to start in production without the basic-auth
+  hash, since Portainer sits behind it.
+
+## 3. Rename or replace the example code
+
+- **Services**: `service-1` and `service-2` are examples. Keep one, rename it,
+  or generate your own with `npx nx g @forgestack/tools:service <name>`.
+- **Bounded contexts**: `auth` and `notifications` are the demo domains.
+  Generate your own with
+  `npx nx g @forgestack/tools:bounded-context <name> --service=<service>`
+  (see [Adding a Service](/docs/guides/adding-a-service) and the generator).
+- **Framework vs example**: `backend/libs/common` mixes reusable framework code
+  with demo-specific code. Its `README.md` marks which is which, so you know
+  what to keep and what to replace.
+
+## 4. Provision a server (one command)
+
+`npm run prod:setup` provisions a fresh Ubuntu VPS end to end: it installs
+Docker, creates a non-root deploy user with your SSH key, hardens SSH, opens the
+firewall, configures Docker log rotation, sets up swap, and registers the daily
+Mongo backup cron. It reads `SERVER_IP` and `SERVER_USER` from
+`infra/env/infra.env.prod`, and prompts for the server's root password on the
+first run (or pass `ROOT_PASS=...` to run it non-interactively).
+
+After it finishes, deploy with `npm run prod:update`.
+
+## Troubleshooting
+
+- **`dev:start` cannot find Node**: the script never auto-installs Node. Install
+  the version in `.nvmrc` (`nvm install && nvm use`) and re-run.
+- **Browser does not trust the local certificate**: run
+  `npm run dev:trust-cert` to install Caddy's local CA, then restart the
+  browser.
+- **A service returns 502 through Caddy right after `dev:start`**: on a cold
+  start the service is still installing dependencies and building. Watch it with
+  `npm run dev:logs` until you see "Nest application successfully started".
+- **Kafka or Mongo fails to start after a recreate**: the dev volumes may hold
+  stale cluster state. `npm run dev:restart:all` does a clean down and up.
+- **A handler or controller is missing at runtime**: discovery fails loud now,
+  so check the boot logs for a load error or a "matches suffix but exports no
+  class" warning (usually a rename or a wrong export).
+- **Production deploy reports a service is unhealthy**: `prod:update` waits for
+  health and stops on failure. SSH in and read
+  `docker compose -f compose/docker-compose.yml logs --tail=100`.

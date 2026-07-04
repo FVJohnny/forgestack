@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "ForgeStackBoundedContext",
+  "title": "Scaffold a new bounded context inside a service",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Bounded context name (kebab-case, e.g. billing or catalog)",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "What is the bounded context called (kebab-case)?",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "service": {
+      "type": "string",
+      "description": "The service to add the context to (e.g. service-1)",
+      "x-prompt": "Which service does it belong to (kebab-case)?",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "command": {
+      "type": "string",
+      "description": "Starter command name (kebab-case). Defaults to do-<name>.",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    }
+  },
+  "required": ["name", "service"]
+}

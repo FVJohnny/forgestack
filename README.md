@@ -151,6 +151,24 @@ Two contexts ship as a working reference for the pattern:
 
 Add your own contexts by following the same four-layer layout; the ESLint rules will keep the boundaries honest.
 
+### Scaffolding
+
+The `@forgestack/tools` Nx generator scaffolds the two units of growth:
+
+```bash
+# A whole new service (wires compose, Caddy, env templates)
+npx nx g @forgestack/tools:service billing
+
+# A bounded context inside an existing service (module + starter command +
+# controller, wired into the service's app.module.ts)
+npx nx g @forgestack/tools:bounded-context billing --service=service-1
+
+# ...with a named starter command
+npx nx g @forgestack/tools:bounded-context billing --service=service-1 --command=charge-card
+```
+
+Both print next steps and pass typecheck/lint out of the box. Flesh the context out with an aggregate, repository, queries, and events following the `example` context.
+
 ## Observability
 
 The Docker Compose stack wires a complete observability pipeline:

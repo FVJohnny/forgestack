@@ -4,6 +4,11 @@
       "factory": "./src/generators/service/generator",
       "schema": "./src/generators/service/schema.json",
       "description": "Scaffold a new NestJS service and wire it into compose, Caddy and the env templates"
+    },
+    "bounded-context": {
+      "factory": "./src/generators/bounded-context/generator",
+      "schema": "./src/generators/bounded-context/schema.json",
+      "description": "Scaffold a bounded context (module + starter command + controller) inside an existing service and wire it into app.module.ts"
     }
   }
 }

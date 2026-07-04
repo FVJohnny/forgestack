@@ -1,0 +1,23 @@
+import { Controller, Post, Body, HttpCode, HttpStatus, Inject } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { type ICommandBus } from '@nestjs/cqrs';
+import { COMMAND_BUS } from '@libs/nestjs-common';
+import { <%= commandClassName %>_Command } from '@bc/<%= contextFileName %>/application/commands/<%= commandFileName %>/<%= commandFileName %>.command';
+import { <%= commandClassName %>_ControllerParams } from './<%= commandFileName %>.params';
+
+@ApiTags('<%= contextFileName %>')
+@Controller('<%= contextFileName %>')
+export class <%= commandClassName %>_Controller {
+  constructor(@Inject(COMMAND_BUS) private readonly commandBus: ICommandBus) {}
+
+  @Post()
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: '<%= commandClassName %> (starter write endpoint)' })
+  @ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Command accepted' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid message' })
+  async <%= commandPropertyName %>(@Body() body: <%= commandClassName %>_ControllerParams) {
+    const command = new <%= commandClassName %>_Command(body.message);
+
+    await this.commandBus.execute(command);
+  }
+}

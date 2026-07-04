@@ -1,0 +1,26 @@
+import { type IEventBus } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
+import { <%= commandClassName %>_Command } from './<%= commandFileName %>.command';
+import { Base_CommandHandler, EVENT_BUS } from '@libs/nestjs-common';
+
+export class <%= commandClassName %>_CommandHandler extends Base_CommandHandler(<%= commandClassName %>_Command) {
+  constructor(
+    @Inject(EVENT_BUS)
+    eventBus: IEventBus,
+  ) {
+    super(eventBus);
+  }
+
+  async handle(command: <%= commandClassName %>_Command) {
+    // TODO: load an aggregate, invoke a behaviour, persist inside a
+    // Transaction, and dispatch its domain events. See the `example` context
+    // for the full pattern. For now this just logs.
+    this.logger.log(`<%= commandClassName %> handled: ${command.message}`);
+  }
+
+  async authorize(_command: <%= commandClassName %>_Command): Promise<boolean> {
+    return true;
+  }
+
+  async validate(_command: <%= commandClassName %>_Command): Promise<void> {}
+}

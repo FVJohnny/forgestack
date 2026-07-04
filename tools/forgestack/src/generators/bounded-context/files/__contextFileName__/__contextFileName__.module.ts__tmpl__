@@ -1,0 +1,25 @@
+import { RuntimeAutoDiscovery } from '@libs/nestjs-common';
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+
+// 🚀 RUNTIME AUTO-DISCOVERY — controllers, command/query handlers,
+// domain-event handlers and integration-event handlers are picked up by their
+// file suffixes. Add a repository provider here (port → adapter) when this
+// context grows an aggregate that needs persistence.
+const { controllers, handlers } = RuntimeAutoDiscovery.discoverAllComponents(__dirname);
+
+/**
+ * <%= contextClassName %> bounded context. Scaffolded with a single
+ * <%= commandClassName %>_Command as a starting point:
+ *
+ *   POST /<%= contextFileName %> ──▶ <%= commandClassName %>_Command ──▶ handler
+ *
+ * Flesh it out with an aggregate + repository, queries, and domain/integration
+ * events following the `example` context in the generated service.
+ */
+@Module({
+  imports: [ConfigModule],
+  controllers: [...controllers],
+  providers: [...handlers],
+})
+export class <%= contextClassName %>BoundedContextModule {}

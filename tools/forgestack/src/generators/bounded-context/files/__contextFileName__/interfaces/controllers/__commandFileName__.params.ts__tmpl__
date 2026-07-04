@@ -1,0 +1,10 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, MaxLength } from 'class-validator';
+
+export class <%= commandClassName %>_ControllerParams {
+  @ApiProperty({ example: 'Hello', description: 'Message payload' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  message!: string;
+}

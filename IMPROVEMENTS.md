@@ -483,8 +483,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   npm at the root, pnpm in `frontend/public-page` (excluded from workspaces, no `packageManager` field). Pick one or pin and document the split.
   **Status: DONE (pinned and documented the split).** Kept the intentional split (forcing the Next.js app into the npm workspace, or the backend onto pnpm, is a large change with no functional gain). Pinned both sides via `packageManager`: root `npm@10.9.0` (item 103) and `frontend/public-page` now `pnpm@10.17.1`. Documented the split in the README (which manager owns which part, and that the frontend installs its own deps via pnpm/Docker). Verified the frontend pin with a clean `pnpm install --frozen-lockfile`.
 
-- [ ] **106. No bounded-context generator** (Medium)
+- [x] **106. No bounded-context generator** (Medium)
   The forgestack CLI scaffolds whole services well, but the day-to-day unit of growth is the bounded context (and commands/queries inside it), which is fully manual. Extend the CLI.
+  **Status: Done.** Added a `bounded-context` generator to `@forgestack/tools`: `nx g @forgestack/tools:bounded-context <name> --service=<svc> [--command=<cmd>]` scaffolds a context (module + a starter command with handler + a controller/params) under the target service and wires its module into the service's `app.module.ts` (both the import and the `imports:` array entry, inserted after the last existing bounded-context module). Uses `names()` for kebab→PascalCase derivations and RuntimeAutoDiscovery so handlers/controllers need no manual registration. Verified end-to-end: generated a `billing` context into service-2 and confirmed it typechecks (fixed a missing `validate()` override) and lints clean under strict; added a 5-case RuleTester-style Nx generator spec (files land, app.module wired, custom command name, kebab validation, missing-service error) that passes. Documented both generators in the README.
 
 - [x] **107. Generator prints commands and links that do not exist** (Medium)
   Its next-steps output suggests `npm run dev` (not a script) and `/docs/guides/adding-a-service` (not a path in `docs/`). Fix both.

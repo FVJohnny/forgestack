@@ -470,8 +470,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   `eslint` and `prettier` are only transitive dependencies, and root package.json has no `engines` or `packageManager` fields.
   **Status: Done.** Added `eslint` (^9.37.0) and `prettier` (^3.6.2) as direct devDependencies (pinned to the versions that were resolving transitively), plus `"engines": { "node": ">=22" }` (matching `.nvmrc`) and `"packageManager": "npm@10.9.0"` (the npm that ships with node 22). Also corrected the `repository.url` to the real repo (`nestjs-microservices-framework`, was `forgestack`). `npm install` and lint verified green.
 
-- [ ] **104. `check-typescript.sh` skips the shared libs and greps output** (Medium)
+- [x] **104. `check-typescript.sh` skips the shared libs and greps output** (Medium)
   `backend/libs/*` are never directly typechecked, and success is determined by grepping for "error TS" instead of exit codes. Convert to cached Nx typecheck targets.
+  **Status: Done.** Added a cached `typecheck` target (`tsc --noEmit -p tsconfig.json`) to all 6 backend project.json files plus a `typecheck` targetDefault in nx.json (cache + inputs). Rewrote `check-typescript.sh` to `exec npx nx run-many -t typecheck`, so it now covers the libs (previously skipped), keys off tsc's exit code (not a stdout grep), and is Nx-cached. `npm run typecheck` (used by CI and pre-commit) now runs all 7 projects (6 backend + public-page). Updated the pre-commit hook to `nx affected -t typecheck`. Verified: full run is green across 7 projects, a probe type error makes the target exit 1, and CI needs no change since it already calls `npm run typecheck`.
 
 - [ ] **105. Two package managers in one repo** (Medium)
   npm at the root, pnpm in `frontend/public-page` (excluded from workspaces, no `packageManager` field). Pick one or pin and document the split.

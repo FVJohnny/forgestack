@@ -10,10 +10,10 @@ npx --no-install lint-staged || {
   exit 1
 }
 
-# 2. Typecheck. There is no per-project Nx typecheck target yet (see the
-#    backlog), so this runs the workspace script; it is cached by Nx underneath.
-echo "Typechecking..."
-npm run -s typecheck || {
+# 2. Typecheck only the projects affected by the staged changes. Each project
+#    has a cached Nx `typecheck` target (tsc --noEmit against its own tsconfig).
+echo "Typechecking affected projects..."
+npx nx affected -t typecheck --base=HEAD || {
   printf '\n%s\n' "Typecheck failed. Fix the errors before committing."
   exit 1
 }

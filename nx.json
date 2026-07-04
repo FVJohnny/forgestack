@@ -44,6 +44,13 @@
         "{workspaceRoot}/eslint.config.mjs"
       ],
       "cache": true
+    },
+    "typecheck": {
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": true
     }
   },
   "plugins": [

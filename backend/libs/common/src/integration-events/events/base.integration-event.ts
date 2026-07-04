@@ -11,10 +11,33 @@ export interface Base_IntegrationEventProps {
 }
 
 /**
+ * Static routing metadata (topic/name/version) for an integration event class.
+ * Each subclass declares it once; the handler decorator reads it WITHOUT
+ * constructing an instance (see the note on `metadata` below).
+ */
+export interface IntegrationEventMetadata {
+  topic: string;
+  name: string;
+  version: string;
+}
+
+/**
  * Base class for all integration events.
  * Enforces common properties and provides standard serialization/deserialization.
  */
 export abstract class Base_IntegrationEvent {
+  /**
+   * Routing metadata as a STATIC so consumers (the @IntegrationEventHandler
+   * decorator) can read topic/name without instantiating the event. Subclasses
+   * must override this and feed it into their `super(...)` call so instance and
+   * static stay in sync. The base value is a placeholder that is never routed.
+   */
+  static readonly metadata: IntegrationEventMetadata = {
+    topic: '',
+    name: '',
+    version: '',
+  };
+
   readonly id: string;
   readonly occurredOn: Date;
 

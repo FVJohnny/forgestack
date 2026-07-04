@@ -38,15 +38,16 @@ export function IntegrationEventHandler<TEvent extends Base_IntegrationEvent>(
       public readonly inboxService?: InboxService;
 
       async onModuleInit() {
-        // Create a temporary instance to access topic and name (instance properties)
-        // We use fromJSON with minimal data to get an instance without needing to know
-        // the specific constructor signature of each event subclass
-        const event = this.eventClass.random();
+        // Read the event's routing metadata STATICALLY. Previously this built a
+        // throwaway `eventClass.random()` instance (which runs validation on
+        // random data) just to read topic/name; the static `metadata` avoids
+        // constructing anything.
+        const { topic, name } = this.eventClass.metadata;
 
-        await this.integrationEventListener.registerEventHandler(event.topic, event.name, this);
+        await this.integrationEventListener.registerEventHandler(topic, name, this);
 
         if (this.inboxService) {
-          await this.inboxService.registerEventHandler(event.topic, event.name, this);
+          await this.inboxService.registerEventHandler(topic, name, this);
         }
       }
 

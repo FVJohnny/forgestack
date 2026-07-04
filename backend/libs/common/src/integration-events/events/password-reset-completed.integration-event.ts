@@ -9,11 +9,22 @@ interface PasswordResetCompleted_IntegrationEventProps extends Base_IntegrationE
 }
 
 export class PasswordResetCompleted_IntegrationEvent extends Base_IntegrationEvent {
+  static readonly metadata = {
+    topic: Topics.USERS.topic,
+    name: Topics.USERS.events.PASSWORD_RESET_COMPLETED,
+    version: '1.0',
+  };
+
   public readonly userId: string;
   public readonly email: string;
 
   constructor(props: PasswordResetCompleted_IntegrationEventProps) {
-    super(props, Topics.USERS.topic, Topics.USERS.events.PASSWORD_RESET_COMPLETED, '1.0');
+    super(
+      props,
+      PasswordResetCompleted_IntegrationEvent.metadata.topic,
+      PasswordResetCompleted_IntegrationEvent.metadata.name,
+      PasswordResetCompleted_IntegrationEvent.metadata.version,
+    );
 
     this.userId = props.userId;
     this.email = props.email;

@@ -8,10 +8,21 @@ export interface UserExample_IntegrationEventProps extends Base_IntegrationEvent
 }
 
 export class UserExample_IntegrationEvent extends Base_IntegrationEvent {
+  static readonly metadata = {
+    topic: Topics.USERS.topic,
+    name: Topics.USERS.events.USER_EXAMPLE,
+    version: '1.0',
+  };
+
   public readonly example: string;
 
   constructor(props: UserExample_IntegrationEventProps) {
-    super(props, Topics.USERS.topic, Topics.USERS.events.USER_EXAMPLE, '1.0');
+    super(
+      props,
+      UserExample_IntegrationEvent.metadata.topic,
+      UserExample_IntegrationEvent.metadata.name,
+      UserExample_IntegrationEvent.metadata.version,
+    );
     this.example = props.example;
 
     this.validate();

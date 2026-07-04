@@ -10,12 +10,23 @@ interface UserCreated_IntegrationEventProps extends Base_IntegrationEventProps {
 }
 
 export class UserCreated_IntegrationEvent extends Base_IntegrationEvent {
+  static readonly metadata = {
+    topic: Topics.USERS.topic,
+    name: Topics.USERS.events.USER_CREATED,
+    version: '1.0',
+  };
+
   public readonly userId: string;
   public readonly email: string;
   public readonly role: string;
 
   constructor(props: UserCreated_IntegrationEventProps) {
-    super(props, Topics.USERS.topic, Topics.USERS.events.USER_CREATED, '1.0');
+    super(
+      props,
+      UserCreated_IntegrationEvent.metadata.topic,
+      UserCreated_IntegrationEvent.metadata.name,
+      UserCreated_IntegrationEvent.metadata.version,
+    );
 
     this.userId = props.userId;
     this.email = props.email;

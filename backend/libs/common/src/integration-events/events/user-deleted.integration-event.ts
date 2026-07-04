@@ -9,11 +9,22 @@ interface UserDeleted_IntegrationEventProps extends Base_IntegrationEventProps {
 }
 
 export class UserDeleted_IntegrationEvent extends Base_IntegrationEvent {
+  static readonly metadata = {
+    topic: Topics.USERS.topic,
+    name: Topics.USERS.events.USER_DELETED,
+    version: '1.0',
+  };
+
   public readonly userId: string;
   public readonly email: string;
 
   constructor(props: UserDeleted_IntegrationEventProps) {
-    super(props, Topics.USERS.topic, Topics.USERS.events.USER_DELETED, '1.0');
+    super(
+      props,
+      UserDeleted_IntegrationEvent.metadata.topic,
+      UserDeleted_IntegrationEvent.metadata.name,
+      UserDeleted_IntegrationEvent.metadata.version,
+    );
 
     this.userId = props.userId;
     this.email = props.email;

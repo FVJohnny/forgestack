@@ -11,13 +11,24 @@ interface EmailVerificationCreated_IntegrationEventProps extends Base_Integratio
 }
 
 export class EmailVerificationCreated_IntegrationEvent extends Base_IntegrationEvent {
+  static readonly metadata = {
+    topic: Topics.USERS.topic,
+    name: Topics.USERS.events.EMAIL_VERIFICATION_CREATED,
+    version: '1.0',
+  };
+
   public readonly userId: string;
   public readonly email: string;
   public readonly emailVerificationId: string;
   public readonly expiresAt: Date;
 
   constructor(props: EmailVerificationCreated_IntegrationEventProps) {
-    super(props, Topics.USERS.topic, Topics.USERS.events.EMAIL_VERIFICATION_CREATED, '1.0');
+    super(
+      props,
+      EmailVerificationCreated_IntegrationEvent.metadata.topic,
+      EmailVerificationCreated_IntegrationEvent.metadata.name,
+      EmailVerificationCreated_IntegrationEvent.metadata.version,
+    );
 
     this.userId = props.userId;
     this.email = props.email;

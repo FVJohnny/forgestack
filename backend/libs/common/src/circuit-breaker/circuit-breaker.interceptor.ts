@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { from, Observable } from 'rxjs';
+import { from, lastValueFrom, Observable } from 'rxjs';
 
 import { CIRCUIT_BREAKER_METADATA_KEY, type CircuitBreakerConfig } from './circuit-breaker.config';
 import { CircuitBreakerService } from './circuit-breaker.service';
@@ -51,12 +51,10 @@ export class CircuitBreakerInterceptor implements NestInterceptor {
       Reflect.getMetadata('circuit-breaker:name', target.prototype, handler.name) ||
       `${target.name}.${handler.name}`;
 
-    // Wrap the handler execution with circuit breaker
-    const wrappedExecution = async () => {
-      // Get the result from the original handler
-      const result = await next.handle().toPromise();
-      return result;
-    };
+    // Wrap the handler execution with circuit breaker. This closure is created
+    // per request and passed into fire() each time, so the shared breaker
+    // always runs the current request's handler.
+    const wrappedExecution = () => lastValueFrom(next.handle());
 
     // Execute with circuit breaker protection
     return from(this.circuitBreakerService.execute(circuitName, wrappedExecution, config));

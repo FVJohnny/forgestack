@@ -26,23 +26,24 @@ export class CircuitBreakerService implements OnModuleDestroy {
   ) {}
 
   /**
-   * Execute a function with circuit breaker protection
+   * Execute a function with circuit breaker protection.
+   *
+   * The breaker's action is a passthrough `(fn) => fn()`, and each call fires
+   * with the *current* request's function. This is deliberate: a breaker is
+   * cached by name and reused across calls, so it must NOT close over the
+   * first caller's `fn` — otherwise every later call would re-run the first
+   * request's work.
    */
-  async execute<T>(
-    name: string,
-    fn: (...args: any[]) => Promise<T>,
-    config?: CircuitBreakerConfig,
-    ...args: any[]
-  ): Promise<T> {
-    const breaker = this.getOrCreateBreaker(name, fn, config);
+  async execute<T>(name: string, fn: () => Promise<T>, config?: CircuitBreakerConfig): Promise<T> {
+    const breaker = this.getOrCreateBreaker(name, config);
 
     if (!breaker) {
       // Circuit breaker disabled, execute directly
-      return fn(...args);
+      return fn();
     }
 
     try {
-      return (await breaker.fire(...args)) as T;
+      return (await breaker.fire(fn)) as T;
     } catch (error) {
       this.logger.error(
         `Circuit breaker "${name}" call failed`,
@@ -53,13 +54,11 @@ export class CircuitBreakerService implements OnModuleDestroy {
   }
 
   /**
-   * Get or create a circuit breaker instance
+   * Get or create a circuit breaker instance. The action is a passthrough
+   * that invokes whatever function `fire()` is called with, so the breaker is
+   * safe to cache and reuse across requests.
    */
-  private getOrCreateBreaker<T>(
-    name: string,
-    fn: (...args: any[]) => Promise<T>,
-    config?: CircuitBreakerConfig,
-  ): CircuitBreaker | null {
+  private getOrCreateBreaker(name: string, config?: CircuitBreakerConfig): CircuitBreaker | null {
     const finalConfig = this.mergeConfig(name, config);
 
     // If disabled, return null to bypass circuit breaker
@@ -71,7 +70,8 @@ export class CircuitBreakerService implements OnModuleDestroy {
       return this.breakers.get(name)!;
     }
 
-    const breaker = new CircuitBreaker(fn, finalConfig);
+    const action = (fn: () => Promise<unknown>) => fn();
+    const breaker = new CircuitBreaker(action, finalConfig);
     this.setupEventListeners(name, breaker);
     this.breakers.set(name, breaker);
 

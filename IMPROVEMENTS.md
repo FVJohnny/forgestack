@@ -149,8 +149,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **31. No recovery path for PROCESSING or FAILED inbox events** (High)
   A crash between claim and completion strands events forever; FAILED events are never retried. Fix: add stuck-reclaim plus bounded retry, like the outbox side.
 
-- [ ] **32. `CircuitBreakerInterceptor` replays the first request's handler** (High)
+- [x] **32. `CircuitBreakerInterceptor` replays the first request's handler** (High)
   The opossum breaker is cached with the first request's closure and fires that same closure for every later request. Fundamentally broken. Fix: pass the current handler as a fire argument (`new CircuitBreaker((fn) => fn())` pattern).
+  **Status: Done.** The breaker is now constructed with a passthrough action `(fn) => fn()` and `execute` calls `breaker.fire(fn)` with the current request's function, so a reused breaker runs the current call rather than the first one. Dropped the old `...args` passthrough (it was part of the bug) and the deprecated `toPromise()` in favor of `lastValueFrom`. Added a regression test that runs two different functions through one shared circuit and asserts each ran exactly once with its own result; the old code would have re-run the first. Common lib build, typecheck, lint, and all 85 tests pass. No service uses the decorator yet, so nothing downstream changed.
 
 - [ ] **33. Inbox dedup is check-then-act, not atomic** (Medium)
   Two concurrent deliveries of the same message both pass the null check and can double-process. Fix: insert against the unique id index and treat duplicate-key as "already seen".

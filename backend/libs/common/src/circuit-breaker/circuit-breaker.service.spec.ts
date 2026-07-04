@@ -20,13 +20,22 @@ describe('CircuitBreakerService - Programmatic Usage', () => {
     expect(mockFn).toHaveBeenCalledTimes(1);
   });
 
-  it('should execute function with arguments', async () => {
-    const mockFn = jest.fn().mockImplementation(async (a: number, b: number) => a + b);
+  it('should run the CURRENT function on a reused breaker, not the first one', async () => {
+    // Regression: the breaker is cached by name and reused across calls. It
+    // must run the function passed to THIS call, not close over the first
+    // caller's function. Previously every reused call re-ran the first fn.
+    const first = jest.fn().mockResolvedValue('first');
+    const second = jest.fn().mockResolvedValue('second');
 
-    const result = await service.execute('add-circuit', mockFn, undefined, 5, 3);
+    const r1 = await service.execute('shared-circuit', first);
+    const r2 = await service.execute('shared-circuit', second);
 
-    expect(result).toBe(8);
-    expect(mockFn).toHaveBeenCalledWith(5, 3);
+    expect(r1).toBe('first');
+    expect(r2).toBe('second');
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledTimes(1);
+    // Only one breaker was created, proving it was genuinely reused.
+    expect(service.getBreakerNames()).toEqual(['shared-circuit']);
   });
 
   it('should throw error when function fails', async () => {

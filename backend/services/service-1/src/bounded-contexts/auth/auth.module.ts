@@ -5,6 +5,7 @@ import { Module } from '@nestjs/common';
 import {
   GetUserTokenByToken_QueryHandler,
   StoreTokens_CommandHandler,
+  RevokeToken_CommandHandler,
   USER_TOKEN_REPOSITORY,
 } from '@libs/nestjs-common';
 import { UserToken_RedisRepository } from '@libs/nestjs-redis';
@@ -42,6 +43,7 @@ const { controllers, handlers } = RuntimeAutoDiscovery.discoverAllComponents(__d
   providers: [
     ...handlers,
     StoreTokens_CommandHandler,
+    RevokeToken_CommandHandler,
     GetUserTokenByToken_QueryHandler,
     // Repositories (Secondary Ports)
     {

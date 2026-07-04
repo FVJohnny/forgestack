@@ -12,7 +12,7 @@ import { RefreshToken_ControllerParams } from './refresh-token.params';
 import { RefreshToken_ResponseDto } from './refresh-token.controller-response';
 import { JwtAuthGuard } from '@libs/nestjs-common';
 import { UseGuards } from '@nestjs/common';
-import { StoreTokens_Command } from '@libs/nestjs-common';
+import { StoreTokens_Command, RevokeToken_Command } from '@libs/nestjs-common';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -43,6 +43,10 @@ export class RefreshToken_Controller {
     // Get new tokens
     const getTokensQuery = new GetNewTokensFromRefreshToken_Query(body.refreshToken);
     const { userId, accessToken, refreshToken } = await this.queryBus.execute(getTokensQuery);
+
+    // Rotate: revoke the presented refresh token so it cannot be reused
+    const revokeTokenCommand = new RevokeToken_Command({ token: body.refreshToken });
+    await this.commandBus.execute(revokeTokenCommand);
 
     // Store new tokens
     const storeTokensCommand = new StoreTokens_Command({ userId, accessToken, refreshToken });

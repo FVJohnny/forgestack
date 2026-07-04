@@ -227,8 +227,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   The interceptor recorded each request into `http_request_duration_seconds` twice: once via a `startTimer()` stop callback and once via `observeHttpRequest()`.
   **Status: Done.** Kept the single explicit `observeHttpRequest()` (it carries the status_code label) and removed the timer path. Also deleted the now-unused `startHttpRequestTimer` method so the double-count cannot be reintroduced.
 
-- [ ] **51. OTel SIGTERM handler hijacks shutdown** (Medium)
-  It calls `process.exit(0)`, racing Nest's shutdown hooks (Kafka/Mongo/Redis disconnect, outbox drain). Let Nest own the shutdown.
+- [x] **51. OTel SIGTERM handler hijacks shutdown** (Medium)
+  The OTel bootstrap installed its own `SIGTERM` handler that called `process.exit(0)`, which could kill the process before Nest's `enableShutdownHooks` ran `onModuleDestroy` (Kafka/Mongo/Redis disconnect, outbox drain).
+  **Status: Done.** Replaced the SIGTERM+exit handler with a `beforeExit` flush that shuts the SDK down without terminating the process. Nest now owns the SIGTERM → graceful-shutdown flow (shutdown hooks were already enabled in `configureApp`), and the SDK still flushes spans on exit. Verified the service starts and stops cleanly against the running stack.
 
 - [ ] **52. Product features live inside the shared framework lib** (Medium)
   The user-token auth context, app-specific Kafka topics, and example events sit in `libs/common`. Separate "framework" from "example app" or mark them clearly as examples.

@@ -78,13 +78,16 @@ export function initializeOpenTelemetry() {
   sdk.start();
   console.log('✅ OpenTelemetry SDK started successfully');
 
-  // Graceful shutdown
-  process.on('SIGTERM', () => {
-    sdk
+  // Flush the SDK when the process is exiting. Use 'beforeExit' (and unref the
+  // handler) rather than a SIGTERM handler that calls process.exit(0): that
+  // exit raced Nest's enableShutdownHooks and could kill the process before
+  // onModuleDestroy ran (Kafka/Mongo/Redis disconnect, outbox drain). Nest owns
+  // the SIGTERM → graceful-shutdown flow; this only ensures spans are flushed.
+  process.once('beforeExit', () => {
+    void sdk
       .shutdown()
       .then(() => console.log('OpenTelemetry SDK shut down successfully'))
-      .catch((error) => console.error('Error shutting down OpenTelemetry SDK', error))
-      .finally(() => process.exit(0));
+      .catch((error) => console.error('Error shutting down OpenTelemetry SDK', error));
   });
 
   return sdk;

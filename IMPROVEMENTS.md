@@ -279,14 +279,17 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 
 ## E. Frontend (website and dev console)
 
-- [ ] **63. English landing hero subtitle is "Idk what to write here yet"** (High)
-  All 7 other locales have real copy; only the default locale shows the placeholder. Write the English subtitle.
+- [x] **63. English landing hero subtitle is "Idk what to write here yet"** (High)
+  All 7 other locales had real copy; only the default (English) locale showed the placeholder.
+  **Status: Done.** Wrote the English subtitle (back-translated from the other locales, in the maintainer's plain-sentence, no-em-dash style). Verified it renders live on the landing page.
 
-- [ ] **64. No refresh-and-retry on 401** (High)
-  Any non-auth 401 clears tokens and hard-redirects to `/login`, even though a valid refresh token exists. The first access-token expiry mid-session kicks the user out. Fix: refresh and retry the request before logging out. (Related to item 8.)
+- [x] **64. No refresh-and-retry on 401** (High)
+  Any non-auth 401 cleared tokens and hard-redirected to `/login` even with a valid refresh token, so the first access-token expiry mid-session logged the user out.
+  **Status: Done (as part of item 8).** The rewritten API client does a one-shot cookie-based refresh and retries the original request on a 401 (with a shared in-flight refresh promise so concurrent 401s trigger a single refresh), and only signals unauthenticated if the refresh itself fails. Auth endpoints are excluded from the retry.
 
-- [ ] **65. `typescript.ignoreBuildErrors: true` in next.config** (High)
-  Type errors are silently ignored during `next build`. `tsc --noEmit` currently passes, so just remove the flag and add a typecheck script.
+- [x] **65. `typescript.ignoreBuildErrors: true` in next.config** (High)
+  Type errors were silently ignored during `next build`.
+  **Status: Done.** Removed the flag and added a `typecheck` script (`tsc --noEmit`) to the frontend package.json. Verified the frontend typechecks and builds clean, so a future type error now fails the build (and CI).
 
 - [ ] **66. Google sign-in sends an access token labeled `idToken`** (Medium)
   Switch to the credential flow (a real ID token with verifiable audience). Pairs with the backend fix in item 3, which already validates audience for the current access-token flow.

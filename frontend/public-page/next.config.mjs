@@ -28,9 +28,6 @@ const nextConfig = {
   },
   // Allow .mdx files to be treated as pages/components (docs live as MDX).
   pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     unoptimized: true,
     remotePatterns: [

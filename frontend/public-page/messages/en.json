@@ -88,7 +88,7 @@
   "fmf": {
     "landing": {
       "headline": "A solid foundation for <molten>forging</molten> applications",
-      "sub": "Idk what to write here yet",
+      "sub": "A production-ready NestJS microservices starter with DDD, CQRS, event-driven messaging, full observability, and one-command deploys. Everything is wired up so you build instead of setting up.",
       "github": "View on GitHub",
       "openDemo": "Open Demo",
       "seeDocs": "See Docs",

@@ -5,6 +5,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "typecheck": "tsc --noEmit",
     "lint": "prettier --config ../../.prettierrc --check \"app/**/*.{ts,tsx,json}\" \"lib/**/*.{ts,tsx,json}\" \"messages/*.json\" \"i18n/**/*.{ts,tsx}\"",
     "lint:fix": "prettier --config ../../.prettierrc --write \"app/**/*.{ts,tsx,json}\" \"lib/**/*.{ts,tsx,json}\" \"messages/*.json\" \"i18n/**/*.{ts,tsx}\"",
     "start": "next start"

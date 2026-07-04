@@ -9,8 +9,11 @@
 #
 # What it does:
 #   - Installs Docker Engine + the compose plugin (official Docker apt repo)
-#   - Creates a non-root deploy user, adds it to the docker + sudo groups
+#   - Creates a non-root deploy user in the docker group (no sudo: deploys
+#     only need Docker and rsync into the deploy directory)
 #   - Installs your SSH public key for that user (passwordless deploys)
+#   - Hardens SSH: key-only logins (password auth off, root by key only)
+#   - Installs fail2ban (SSH brute-force protection) + unattended-upgrades
 #   - Opens the firewall (UFW) for SSH + HTTP + HTTPS
 #   - Creates the deploy directory (/opt/forgestack) owned by the deploy user
 #   - Enables swap if the box has none (Kafka/Mongo/JVM headroom)
@@ -70,7 +73,8 @@ log "Updating apt and installing base packages..."
 apt-get update -y
 apt-get install -y \
     ca-certificates curl gnupg lsb-release \
-    ufw rsync git htop ncdu jq
+    ufw rsync git htop ncdu jq \
+    fail2ban unattended-upgrades
 
 # ---------------------------------------------------------------------------
 # 2. Docker Engine + compose plugin (official repo)
@@ -107,13 +111,19 @@ else
     adduser --disabled-password --gecos "" "$DEPLOY_USER"
 fi
 
-log "Adding '$DEPLOY_USER' to docker and sudo groups..."
+log "Adding '$DEPLOY_USER' to the docker group..."
 usermod -aG docker "$DEPLOY_USER"
-usermod -aG sudo "$DEPLOY_USER"
 
-# Passwordless sudo so non-interactive deploys never block on a prompt.
-echo "$DEPLOY_USER ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/90-$DEPLOY_USER"
-chmod 0440 "/etc/sudoers.d/90-$DEPLOY_USER"
+# The deploy user gets NO sudo: deploys only need the docker group (which is
+# root-equivalent on this box anyway) and write access to $REMOTE_PATH.
+# Administration happens as root over its SSH key.
+if [ -f "/etc/sudoers.d/90-$DEPLOY_USER" ]; then
+    log "Removing legacy passwordless-sudo grant for '$DEPLOY_USER'..."
+    rm -f "/etc/sudoers.d/90-$DEPLOY_USER"
+fi
+if id -nG "$DEPLOY_USER" | grep -qw sudo; then
+    gpasswd -d "$DEPLOY_USER" sudo >/dev/null
+fi
 
 # ---------------------------------------------------------------------------
 # 4. SSH key for the deploy user
@@ -133,6 +143,41 @@ chown "$DEPLOY_USER:$DEPLOY_USER" "$AUTH_KEYS"
 chmod 600 "$AUTH_KEYS"
 
 # ---------------------------------------------------------------------------
+# 4b. SSH hardening — runs only after the deploy user's key is installed so
+#     it cannot lock you out. Root stays reachable by key (not password).
+# ---------------------------------------------------------------------------
+log "Hardening SSH (key-only logins: password auth off, root by key only)..."
+mkdir -p /etc/ssh/sshd_config.d
+cat > /etc/ssh/sshd_config.d/99-forgestack-hardening.conf <<'SSHD'
+PermitRootLogin prohibit-password
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+SSHD
+systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null || true
+log_warn "SSH password logins are now disabled. Keep your private key safe;"
+log_warn "root remains reachable with its key only."
+
+# ---------------------------------------------------------------------------
+# 4c. fail2ban (SSH brute-force protection) + unattended security upgrades
+# ---------------------------------------------------------------------------
+log "Enabling fail2ban for sshd..."
+cat > /etc/fail2ban/jail.local <<'JAIL'
+[sshd]
+enabled = true
+maxretry = 5
+findtime = 10m
+bantime = 1h
+JAIL
+systemctl enable --now fail2ban >/dev/null
+
+log "Enabling unattended security upgrades..."
+cat > /etc/apt/apt.conf.d/20auto-upgrades <<'APT'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT
+systemctl enable --now unattended-upgrades >/dev/null 2>&1 || true
+
+# ---------------------------------------------------------------------------
 # 5. Deploy directory
 # ---------------------------------------------------------------------------
 log "Creating deploy directory $REMOTE_PATH..."
@@ -148,6 +193,8 @@ ufw allow 80/tcp     >/dev/null
 ufw allow 443/tcp    >/dev/null
 ufw --force enable   >/dev/null
 log_warn "UFW enabled. Only 22/80/443 are open. Monitoring UIs are reached via Caddy on 443."
+log_warn "Note: Docker publishes container ports via iptables, BYPASSING UFW —"
+log_warn "never add 'ports:' mappings to the prod compose file for internal services."
 
 # ---------------------------------------------------------------------------
 # 7. Swap (Kafka/Mongo/JVM headroom on small boxes)
@@ -186,7 +233,7 @@ log "✅ Server prepared."
 echo ""
 echo "   Docker:        $(docker --version)"
 echo "   Compose:       $(docker compose version | head -1)"
-echo "   Deploy user:   $DEPLOY_USER (docker + sudo, key-based SSH)"
+echo "   Deploy user:   $DEPLOY_USER (docker group, key-based SSH, no sudo)"
 echo "   Deploy dir:    $REMOTE_PATH"
 echo ""
 echo "   Next steps on your workstation:"
@@ -194,7 +241,7 @@ echo "     1. Point infra/env/infra.env.prod at this server:"
 echo "          SERVER_IP=<this server's IP>"
 echo "          SERVER_USER=$DEPLOY_USER"
 echo "     2. Verify SSH:   ssh $DEPLOY_USER@<IP> 'docker ps'"
-echo "     3. Deploy:       npm run prod:update   (choose 7 = ALL for a first deploy)"
+echo "     3. Deploy:       npm run prod:update   (choose 5 = ALL for a first deploy)"
 echo ""
 log_warn "MongoDB starts as a single-node replica set (rs0) via mongo/mongo-startup.sh —"
 log_warn "the first 'docker compose up' initializes it automatically. No manual step needed."

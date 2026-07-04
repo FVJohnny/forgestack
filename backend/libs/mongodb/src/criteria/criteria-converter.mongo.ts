@@ -142,10 +142,10 @@ export class MongoCriteriaConverter<D extends SharedAggregateDTO> extends Criter
           break;
         }
         case Operator.CONTAINS:
-          condition[fieldName] = { $regex: value, $options: 'i' };
+          condition[fieldName] = { $regex: this.escapeRegex(value), $options: 'i' };
           break;
         case Operator.NOT_CONTAINS:
-          condition[fieldName] = { $not: { $regex: value, $options: 'i' } };
+          condition[fieldName] = { $not: { $regex: this.escapeRegex(value), $options: 'i' } };
           break;
         case Operator.GT:
           condition[fieldName] = { $gt: Data.parseFromString(value) };
@@ -168,6 +168,15 @@ export class MongoCriteriaConverter<D extends SharedAggregateDTO> extends Criter
     });
 
     return filters;
+  }
+
+  /**
+   * Escapes regex metacharacters so CONTAINS/NOT_CONTAINS match the filter
+   * value literally (like the in-memory converter's String.includes) instead
+   * of interpreting user input as a pattern (regex injection / ReDoS).
+   */
+  private escapeRegex(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   private buildCursorFilter(criteria: Criteria): MongoFilterCondition | undefined {

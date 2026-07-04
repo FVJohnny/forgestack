@@ -188,6 +188,17 @@ export function testCriteriaConverterContract<T extends CriteriaConverter<TestEn
           expect(result.data).toHaveLength(2); // "Item 1" and "Item 10"
           expect(result.data.map((e) => e.id).sort()).toEqual(['entity-1', 'entity-10']);
         });
+
+        it('should treat regex metacharacters as literal text (no regex injection)', async () => {
+          // ".*" as a regex would match every entity; as literal text it
+          // matches none of the seeded names.
+          const criteria = new Criteria({
+            filters: new Filters([createFilter('name', Operator.CONTAINS, '.*')]),
+          });
+
+          const result = await converter.executeQuery(criteria);
+          expect(result.data).toHaveLength(0);
+        });
       });
 
       describe('NOT_CONTAINS operator', () => {

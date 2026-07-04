@@ -22,7 +22,7 @@ export function AnalyticsPanel({
   loading: boolean;
   error: boolean;
 }) {
-  const t = useTranslations('fmf.dashboard.analytics');
+  const t = useTranslations('app.dashboard.analytics');
   const format = useFormatter();
 
   const { types, max } = useMemo(() => {

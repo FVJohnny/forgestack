@@ -20,7 +20,7 @@ import { useAuth } from '@/lib/contexts/auth-context';
 const ENV = process.env.NEXT_PUBLIC_API_URL?.includes('localhost') ? 'local' : 'prod';
 
 export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
-  const t = useTranslations('fmf.nav');
+  const t = useTranslations('app.nav');
   const { user } = useUser();
   const { logout } = useAuth();
 

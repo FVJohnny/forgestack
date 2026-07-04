@@ -9,7 +9,7 @@ import { Skeleton } from '@/app/shared/ui/skeleton';
 import { useUser } from '@/lib/contexts/user-context';
 
 export function AccountMiniCard() {
-  const t = useTranslations('fmf.dashboard.account');
+  const t = useTranslations('app.dashboard.account');
   const { user, isLoading } = useUser();
 
   return (

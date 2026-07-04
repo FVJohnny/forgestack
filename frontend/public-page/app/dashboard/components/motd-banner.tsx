@@ -5,7 +5,7 @@ import { Megaphone } from 'lucide-react';
 import type { GetMotdResponse } from '@/lib/api/types';
 
 export function MotdBanner({ motd }: { motd: GetMotdResponse | null }) {
-  const t = useTranslations('fmf.dashboard.motd');
+  const t = useTranslations('app.dashboard.motd');
   if (!motd?.content) return null;
 
   return (

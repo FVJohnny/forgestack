@@ -17,7 +17,7 @@ import { isPasswordValid } from '@/lib/utils/password';
 import { PageHeader } from '../components/page-header';
 
 export default function AccountPage() {
-  const t = useTranslations('fmf.account');
+  const t = useTranslations('app.account');
   const { user, isLoading } = useUser();
   const { logout } = useAuth();
 

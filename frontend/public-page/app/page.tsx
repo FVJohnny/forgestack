@@ -68,7 +68,7 @@ const FEATURE_META = [
 ] as const;
 
 export default function Home() {
-  const t = useTranslations('fmf.landing');
+  const t = useTranslations('app.landing');
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">

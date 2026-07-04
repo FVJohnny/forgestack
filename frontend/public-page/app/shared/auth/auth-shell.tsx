@@ -13,7 +13,7 @@ import { LanguageSwitcher } from '@/app/shared/ui/language-switcher';
  * the form on the right. Used by login / register / forgot / reset / verify.
  */
 export function AuthShell({ children }: { children: ReactNode }) {
-  const t = useTranslations('fmf.auth');
+  const t = useTranslations('app.auth');
   const stack = t.raw('panelStack') as string[];
 
   return (

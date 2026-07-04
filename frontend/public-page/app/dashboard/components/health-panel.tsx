@@ -25,7 +25,7 @@ export function HealthPanel({
   loading: boolean;
   error: boolean;
 }) {
-  const t = useTranslations('fmf.dashboard.health');
+  const t = useTranslations('app.dashboard.health');
   const checks = data ? Object.entries(data.checks ?? {}) : [];
 
   return (

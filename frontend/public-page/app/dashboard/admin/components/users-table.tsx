@@ -41,7 +41,7 @@ function statusVariant(status: string): 'live' | 'warn' | 'down' | 'default' {
 }
 
 export function UsersTable() {
-  const t = useTranslations('fmf.admin.users');
+  const t = useTranslations('app.admin.users');
   const format = useFormatter();
 
   const [data, setData] = useState<ListUsersResponse | null>(null);

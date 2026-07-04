@@ -9,7 +9,7 @@ import { FormAlert } from '@/app/shared/ui/form-alert';
 import type { DashboardEventsResponse, EventTypeStat } from '@/lib/api/types';
 
 function EventRow({ stat, max }: { stat: EventTypeStat; max: number }) {
-  const t = useTranslations('fmf.dashboard.events');
+  const t = useTranslations('app.dashboard.events');
   const format = useFormatter();
   const total = stat.successCount + stat.failureCount;
   const successPct = max > 0 ? (stat.successCount / max) * 100 : 0;
@@ -72,7 +72,7 @@ export function EventsPanel({
   loading: boolean;
   error: boolean;
 }) {
-  const t = useTranslations('fmf.dashboard.events');
+  const t = useTranslations('app.dashboard.events');
   const format = useFormatter();
 
   const { grouped, max } = useMemo(() => {

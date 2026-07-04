@@ -84,7 +84,7 @@
       "backToHome": "← Back to home"
     }
   },
-  "fmf": {
+  "app": {
     "landing": {
       "headline": "A solid foundation for <molten>forging</molten> applications",
       "sub": "A production-ready NestJS microservices starter with DDD, CQRS, event-driven messaging, full observability, and one-command deploys. Everything is wired up so you build instead of setting up.",

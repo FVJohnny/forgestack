@@ -10,7 +10,7 @@ import { UsersTable } from './components/users-table';
 import { MotdEditor } from './components/motd-editor';
 
 export default function AdminPage() {
-  const t = useTranslations('fmf.admin');
+  const t = useTranslations('app.admin');
   const { user, isLoading } = useUser();
 
   if (isLoading) {

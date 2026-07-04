@@ -321,8 +321,8 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [x] **74. SEO essentials missing** (Medium)
   **Status: Done.** Enriched the root metadata with `metadataBase`, a title template (`%s · ForgeStack`), OpenGraph, and Twitter card tags (driven by `NEXT_PUBLIC_SITE_URL`). Added `app/robots.ts` (allows all, disallows `/dashboard`, points at the sitemap), `app/sitemap.ts` (public routes only), and a branded `app/not-found.tsx`. Verified live that `/robots.txt`, `/sitemap.xml`, and a 404 all serve correctly.
 
-- [ ] **75. `fmf.*` translation namespace is unexplained legacy naming** (Medium)
-  Rename it to match the ForgeStack brand.
+- [x] **75. `fmf.*` translation namespace is unexplained legacy naming** (Medium)
+  **Status: Done.** Renamed the top-level `fmf` message namespace to `app` in all 8 locale files and updated the ~15 `useTranslations('fmf.…')` call sites (and the one MDX docs example that referenced it). Locales stay in parity, typecheck and build clean, and the landing/dashboard render with no missing-message errors.
 
 - [ ] **76. Language switcher rough edges** (Low)
   Flags load from flagcdn.com (external dependency), switching does a full page reload, blocked cookies can cause an infinite reload loop, flags-for-languages is an i18n anti-pattern, and the Accept-Language parsing is duplicated.

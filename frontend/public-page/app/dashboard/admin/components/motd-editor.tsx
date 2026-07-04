@@ -11,7 +11,7 @@ import { dashboardService } from '@/lib/api/services/dashboard.service';
 import type { GetMotdResponse } from '@/lib/api/types';
 
 export function MotdEditor() {
-  const t = useTranslations('fmf.admin.motd');
+  const t = useTranslations('app.admin.motd');
   const format = useFormatter();
   const [content, setContent] = useState('');
   const [current, setCurrent] = useState<GetMotdResponse | null>(null);

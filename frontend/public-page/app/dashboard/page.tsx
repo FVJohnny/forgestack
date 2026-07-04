@@ -24,7 +24,7 @@ const EVENTS_POLL_MS = 5000;
 const HEALTH_POLL_MS = 15000;
 
 export default function DashboardOverviewPage() {
-  const t = useTranslations('fmf.dashboard');
+  const t = useTranslations('app.dashboard');
   const format = useFormatter();
 
   const [health, setHealth] = useState<DashboardHealthResponse | null>(null);

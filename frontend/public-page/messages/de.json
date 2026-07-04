@@ -84,7 +84,7 @@
       "backToHome": "← Zurück zur Startseite"
     }
   },
-  "fmf": {
+  "app": {
     "landing": {
       "headline": "Ein solides Fundament zum <molten>Schmieden</molten> von Anwendungen",
       "sub": "Ein produktionsreifer NestJS-Microservices-Starter – DDD, CQRS, ereignisgesteuerte Kommunikation, vollständige Observability und Deployments mit einem Befehl, alles fertig verdrahtet, damit du bauen kannst, statt aufzusetzen.",

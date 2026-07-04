@@ -84,7 +84,7 @@
       "backToHome": "← Powrót do strony głównej"
     }
   },
-  "fmf": {
+  "app": {
     "landing": {
       "headline": "Solidny fundament do <molten>kucia</molten> aplikacji",
       "sub": "Gotowy do produkcji starter mikroserwisów NestJS — DDD, CQRS, komunikacja sterowana zdarzeniami, pełna obserwowalność i wdrożenia jedną komendą, wszystko gotowe, byś mógł budować zamiast konfigurować od zera.",

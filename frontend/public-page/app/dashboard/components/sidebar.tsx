@@ -23,7 +23,7 @@ const NAV: NavItem[] = [
 ];
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const t = useTranslations('fmf.nav');
+  const t = useTranslations('app.nav');
   const pathname = usePathname();
   const { logout } = useAuth();
   const { user } = useUser();

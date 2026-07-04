@@ -84,7 +84,7 @@
       "backToHome": "← Terug naar home"
     }
   },
-  "fmf": {
+  "app": {
     "landing": {
       "headline": "Een solide basis voor het <molten>smeden</molten> van applicaties",
       "sub": "Een productieklare NestJS microservices-starter — DDD, CQRS, event-driven messaging, volledige observability en deploys met één commando, allemaal kant-en-klaar zodat je kunt bouwen in plaats van opzetten.",

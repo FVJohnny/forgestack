@@ -84,7 +84,7 @@
       "backToHome": "← Voltar ao início"
     }
   },
-  "fmf": {
+  "app": {
     "landing": {
       "headline": "Uma base sólida para <molten>forjar</molten> aplicações",
       "sub": "Um starter de microsserviços NestJS pronto para produção — DDD, CQRS, mensageria orientada a eventos, observabilidade completa e deploys com um único comando, tudo já integrado para você construir em vez de configurar.",

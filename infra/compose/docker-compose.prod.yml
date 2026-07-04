@@ -69,8 +69,15 @@ services:
     ports:
       - '80:80'
       - '443:443'
-    env_file:
-      - ../env/infra.env.prod
+    # Only the variables Caddy needs, interpolated from compose/.env.
+    # infra.env.prod also holds registry and DB credentials that must not
+    # end up inside the proxy container.
+    environment:
+      - DOMAIN=${DOMAIN}
+      - PROTOCOL=${PROTOCOL:-https}
+      - TLS_ENV=${TLS_ENV:-prod}
+      - CADDY_BASIC_AUTH_USER=${CADDY_BASIC_AUTH_USER:-admin}
+      - CADDY_BASIC_AUTH_HASH=${CADDY_BASIC_AUTH_HASH}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     volumes:
@@ -218,8 +225,8 @@ services:
   grafana:
     image: ${DOCKER_REGISTRY}/forgestack-grafana:v3
     restart: unless-stopped
-    env_file:
-      - ../env/infra.env.prod
+    # No env_file on purpose: everything Grafana needs is listed below,
+    # interpolated from compose/.env.
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}

@@ -451,8 +451,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   It ran full-repo typecheck, lint, and tests on every commit, and used bashisms (`${PIPESTATUS[0]}`, `echo "\n"`) that break under dash.
   **Status: Done (mostly).** Rewrote the hook as POSIX sh (verified with `sh -n` and `dash -n`): lint-staged scopes lint/format to staged files, and tests run via `nx affected -t test --base=HEAD` instead of the whole suite. Typecheck still runs workspace-wide because there is no per-project Nx typecheck target yet (that migration is item 104); it is Nx-cached underneath, so it is fast when unchanged.
 
-- [ ] **98. Zero tests for the 14 custom ESLint rules** (Medium)
+- [x] **98. Zero tests for the 14 custom ESLint rules** (Medium)
   Which is exactly how item 94 shipped broken. Add RuleTester suites.
+  **Status: DONE (base-class family).** Added `eslint/rules/__tests__/base-class-rules.test.mjs` with RuleTester suites for the "class must extend base X" rules that item 94 broke: `domain-event-base`, `integration-event-base` (item 101), and `aggregate-base`. Each suite asserts both the valid case and the missing/wrong-base-class violations. Wired as `npm run test:eslint-rules` and added to the CI static job. Verified the suite is a real guardrail: renaming the aggregate base class to `SharedAggregateRoot` (the exact item-94 bug) makes it throw an AssertionError; it passes when the rules are correct. The remaining rules split into more AST-only ones (handler-naming, value-object-naming, cqrs-handler-collocation, no-cross-bc-imports) and type-aware ones (`no-direct-entity-mutation` needs full parser services); extending the harness to those is a natural follow-up on the same pattern. Also fixed the last stale rule doc URL (`no-direct-entity-mutation` still pointed at the old `forgestack` repo path).
 
 - [x] **99. The Nx lint cache ignores `eslint/rules/**`** (Medium)
   **Status: Done.** Added `{workspaceRoot}/eslint/rules/**/*` to the `sharedGlobals` named input, so editing any custom rule invalidates the lint (and default) cache. Also removed the stale `{workspaceRoot}/jest.preset.js` from the test inputs (item 110), since that file does not exist.
@@ -460,8 +461,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **100. Boundary rules are bypassable** (Medium)
   `no-cross-bc-imports` misses relative paths, `export from`, and dynamic `import()`; `handler-collocation` is bypassed by alias imports.
 
-- [ ] **101. No lint rule for integration events** (Medium)
+- [x] **101. No lint rule for integration events** (Medium)
   Domain events must extend their base class by lint; integration events have no equivalent rule. Add the symmetric rule.
+  **Status: Done.** Added `eslint/rules/integration-event-base.mjs`, a mirror of `domain-event-base`: any exported `*_IntegrationEvent` class in a `*.integration-event.ts` file (except `base.integration-event.ts`) must extend `Base_IntegrationEvent`. Registered and enabled as `integration-event/must-extend-base: error`. Verified live: lint passes on all real integration events, and a probe class that does not extend the base is flagged (then removed). Covered by a RuleTester suite under item 98.
 
 - [ ] **102. ESLint dependency clutter and missing frontend rules** (Medium)
   Around 11 unused ESLint devDependencies, `eslint-plugin-import` registered with zero rules, and the frontend is linted with the backend config: no React/Next plugins, and a dead `react-hooks` override references a plugin that is never registered.

@@ -33,6 +33,7 @@
     "test:nocache": "npm run test -- --skip-nx-cache",
     "lint": "nx run-many -t lint --exclude=forgestack",
     "lint:fix": "nx run-many -t lint --exclude=forgestack -- --fix",
+    "test:eslint-rules": "node eslint/rules/__tests__/base-class-rules.test.mjs",
     "dev:start": "./infra/scripts/start-dev.sh",
     "dev:down": "docker compose -f infra/compose/docker-compose.dev.yml down",
     "dev:logs": "docker compose -f infra/compose/docker-compose.dev.yml logs -f --tail=100",

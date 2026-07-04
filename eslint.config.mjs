@@ -16,6 +16,7 @@ import aggregateBaseRule from './eslint/rules/aggregate-base.mjs';
 import aggregateDtoBaseRule from './eslint/rules/aggregate-dto-base.mjs';
 import repositoryBaseRule from './eslint/rules/repository-base.mjs';
 import domainEventBaseRule from './eslint/rules/domain-event-base.mjs';
+import integrationEventBaseRule from './eslint/rules/integration-event-base.mjs';
 import noCrossBcImportsRule from './eslint/rules/no-cross-bc-imports.mjs';
 import handlerNamingRule from './eslint/rules/handler-naming.mjs';
 
@@ -104,6 +105,11 @@ export default [
           'must-extend-base': domainEventBaseRule,
         },
       },
+      'integration-event': {
+        rules: {
+          'must-extend-base': integrationEventBaseRule,
+        },
+      },
       'bounded-context': {
         rules: {
           'no-cross-imports': noCrossBcImportsRule,
@@ -136,6 +142,7 @@ export default [
       'aggregate-dto/must-extend-base': 'error',
       'repository/must-extend-base': 'error',
       'domain-event/must-extend-base': 'error',
+      'integration-event/must-extend-base': 'error',
       'bounded-context/no-cross-imports': 'error',
       'handler/naming': 'error',
     },

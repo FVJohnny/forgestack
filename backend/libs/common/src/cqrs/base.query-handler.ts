@@ -2,6 +2,7 @@ import { QueryHandler, type IQuery } from '@nestjs/cqrs';
 import { WithSpan } from '../tracing';
 import { CorrelationLogger } from '../logger';
 import { getCqrsMetrics } from '../metrics/metrics.service';
+import { ForbiddenException } from '../errors';
 
 /**
  * Base class for query handlers with built-in @QueryHandler decorator.
@@ -52,7 +53,10 @@ export function Base_QueryHandler<TQuery extends IQuery>(
         let status: 'success' | 'error' = 'success';
 
         try {
-          await this.authorize(query);
+          const authorized = await this.authorize(query);
+          if (!authorized) {
+            throw new ForbiddenException(`Not authorized to execute ${queryName}`);
+          }
           await this.validate(query);
           return await this.handle(query);
         } catch (error) {

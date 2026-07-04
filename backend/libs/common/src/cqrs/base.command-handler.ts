@@ -8,7 +8,7 @@ import { OutboxEvent } from '../outbox/domain/outbox.aggregate';
 import { RepositoryContext } from '../transactions';
 import type { Outbox_Repository } from '../outbox';
 import { getCqrsMetrics } from '../metrics/metrics.service';
-import { ApplicationException } from '../errors';
+import { ApplicationException, ForbiddenException } from '../errors';
 
 /**
  * Base class for command handlers with built-in @CommandHandler decorator.
@@ -64,7 +64,10 @@ export function Base_CommandHandler<TCommand extends ICommand>(
       this.logger.log(`Executing command: ${commandName}`);
 
       try {
-        await this.authorize(command);
+        const authorized = await this.authorize(command);
+        if (!authorized) {
+          throw new ForbiddenException(`Not authorized to execute ${commandName}`);
+        }
         await this.validate(command);
         const result = await this.handle(command);
         this.logger.log(`Command completed: ${commandName}`);
@@ -94,7 +97,8 @@ export function Base_CommandHandler<TCommand extends ICommand>(
      * Authorization check that must be implemented by all command handlers
      *
      * @param command - The command to authorize
-     * @throws {Error} Should throw an error if authorization fails
+     * @returns false to deny the command (a ForbiddenException is thrown)
+     * @throws {Error} May also throw a more specific error to deny
      */
     abstract authorize(command: TCommand): Promise<boolean>;
 

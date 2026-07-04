@@ -18,8 +18,8 @@ The shipped contexts are a working demo of the pattern: `auth` publishes user-li
 
 ## Key patterns
 
-- Commands mutate state; queries read state — both are handled by dedicated classes extending base classes from `@libs/nestjs-common`
-- Domain entities are mutated **only through behavior methods**, never by direct property assignment — the custom ESLint rule `no-direct-entity-mutation` enforces this
+- Commands mutate state; queries read state. Both are handled by dedicated classes extending base classes from `@libs/nestjs-common`
+- Domain entities are mutated **only through behavior methods**, never by direct property assignment. The custom ESLint rule `no-direct-entity-mutation` enforces this
 - Integration events flow out with the **Outbox pattern** for delivery guarantees.
 - Repository contracts are defined in `domain/` and implemented in `infrastructure/`
 - Dependency injection uses NestJS tokens so implementations are swappable (e.g., in-memory repos for tests)
@@ -28,12 +28,12 @@ The shipped contexts are a working demo of the pattern: `auth` publishes user-li
 
 Run `npm run lint` to catch violations:
 
-- `hexagonal-architecture` — domain cannot import application/infrastructure; application cannot import infrastructure
-- `no-direct-entity-mutation` — aggregates must be mutated via behavior methods, not direct property assignment
-- `no-direct-cqrs-decorators` — use `Base_*` handler classes instead of raw NestJS CQRS decorators
-- `cqrs-handler-collocation` — commands/queries/events must be imported from the same directory as their handlers
-- `value-object-naming` — `.vo.ts` files must implement `IValueObject` and vice versa
-- `aggregate-base`, `aggregate-dto-base`, `command-handler-base`, `query-handler-base`, `domain-event-handler-base`, `domain-event-base`, `repository-base` — enforce base class extension
+- `hexagonal-architecture`: domain cannot import application/infrastructure; application cannot import infrastructure
+- `no-direct-entity-mutation`: aggregates must be mutated via behavior methods, not direct property assignment
+- `no-direct-cqrs-decorators`: use `Base_*` handler classes instead of raw NestJS CQRS decorators
+- `cqrs-handler-collocation`: commands/queries/events must be imported from the same directory as their handlers
+- `value-object-naming`: `.vo.ts` files must implement `IValueObject` and vice versa
+- `aggregate-base`, `aggregate-dto-base`, `command-handler-base`, `query-handler-base`, `domain-event-handler-base`, `domain-event-base`, `repository-base`: enforce base class extension
 
 ## TypeScript Path Aliases
 

@@ -11,14 +11,14 @@
 
 ## Menu options
 
-Backend services are discovered from `backend/services/*/` — the script needs no changes when one is added. Can also pass the choice as an argument, e.g. `npm run prod:update -- 2` or `npm run prod:update -- service-1`:
+Backend services are discovered from `backend/services/*/`, so the script needs no changes when one is added. Can also pass the choice as an argument, e.g. `npm run prod:update -- 2` or `npm run prod:update -- service-1`:
 
 1. Update frontend
 2. Update ALL apps (frontend + services)
 3. Update Caddy (reverse proxy)
 4. Update monitoring stack (Prometheus, Grafana, Loki, Promtail, Tempo)
 5. Update ALL (apps + proxy + monitoring)
-6. Deploy only (no builds — re-deploys current image versions)
+6. Deploy only (no builds, re-deploys current image versions)
 
 Or type a service name (e.g. `service-1`) to build and deploy just that service.
 
@@ -51,9 +51,9 @@ After it finishes:
 2. Verify SSH: `ssh DEPLOY_USER@SERVER_IP 'docker ps'`.
 3. First deploy: `npm run prod:update` → choose **5** (ALL) so proxy + monitoring images get built and pushed too.
 
-MongoDB comes up as a single-node replica set (`rs0`); `infra/mongo/` initializes it on first boot — no manual step. Data lives in named Docker volumes, so a fresh box starts with an empty DB (migrate/restore separately if needed).
+MongoDB comes up as a single-node replica set (`rs0`); `infra/mongo/` initializes it on first boot, no manual step. Data lives in named Docker volumes, so a fresh box starts with an empty DB (migrate/restore separately if needed).
 
 ## Secrets
 
-All prod secrets live in `infra/env/*.env.prod` (gitignored). The `*.env.prod.example` files in the same directory document the required keys without values. To update a secret, edit the local `.env.prod` file and re-run `npm run prod:update` choosing option **6** (deploy only — rsyncs env files and restarts containers without rebuilding images).
+All prod secrets live in `infra/env/*.env.prod` (gitignored). The `*.env.prod.example` files in the same directory document the required keys without values. To update a secret, edit the local `.env.prod` file and re-run `npm run prod:update` choosing option **6** (deploy only, rsyncs env files and restarts containers without rebuilding images).
 </content>

@@ -11,7 +11,7 @@ Next.js 16 App Router with React 19, standalone output mode. The shipped app has
 
 ## State management
 
-React Context API — providers live in `lib/contexts/` (e.g. `auth-context`, `user-context`, `google-oauth-provider`).
+React Context API. Providers live in `lib/contexts/` (e.g. `auth-context`, `user-context`, `google-oauth-provider`).
 
 ## API layer
 
@@ -23,7 +23,7 @@ Generic `APIClient` class in `lib/api/` with error handling and toast notificati
 
 - Translation files live in `frontend/public-page/messages/{locale}.json` (e.g., `en.json`, `es.json`)
 - Keys are nested by section (e.g., `auth.login.title`)
-- When adding or modifying translations, **always update all 8 locale files** — `en.json` is the source of truth, translate values appropriately for each locale
+- When adding or modifying translations, **always update all 8 locale files**: `en.json` is the source of truth, translate values appropriately for each locale
 - Use `useTranslations('namespace')` hook from `next-intl` to access translations in components
 - Translation keys for domain type values (statuses, enums) must match the value exactly (e.g., `EMAIL_VERIFIED` not `emailVerified`) per the i18n key naming rule
 

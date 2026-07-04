@@ -6,21 +6,21 @@
 
 **A solid foundation for production-ready apps.**
 
-ForgeStack is an opinionated, batteries-included starting point for building real applications — not just a backend framework. It ships a hexagonal architecture with Domain-Driven Design (DDD) and CQRS, an outbox/inbox pattern for reliable integration events over Kafka, a Next.js frontend (landing page, auth, docs, and a live dashboard), full observability (metrics, logs, traces), TLS-terminated deploys, and a set of custom ESLint rules that enforce the architectural boundaries so the design stays intact as the codebase grows.
+ForgeStack is an opinionated, batteries-included starting point for building real applications, not just a backend framework. It ships a hexagonal architecture with Domain-Driven Design (DDD) and CQRS, an outbox/inbox pattern for reliable integration events over Kafka, a Next.js frontend (landing page, auth, docs, and a live dashboard), full observability (metrics, logs, traces), TLS-terminated deploys, and a set of custom ESLint rules that enforce the architectural boundaries so the design stays intact as the codebase grows.
 
-Because the structure is consistent and the boundaries are enforced, the codebase is unusually **legible to both engineers and AI coding agents** — patterns are predictable, so generated code lands in the right place. A demo `auth` → `notifications` event flow shows the end-to-end wiring you can copy for your own bounded contexts.
+Because the structure is consistent and the boundaries are enforced, the codebase is unusually **legible to both engineers and AI coding agents**: patterns are predictable, so generated code lands in the right place. A demo `auth` → `notifications` event flow shows the end-to-end wiring you can copy for your own bounded contexts.
 
 ## Features
 
-- **Hexagonal architecture + DDD + CQRS** — clear separation of `domain`, `application`, `infrastructure`, and `interfaces` layers, with command/query handlers built on shared base classes.
-- **Reliable event-driven messaging** — outbox/inbox pattern over Kafka guarantees at-least-once delivery of integration events between bounded contexts.
-- **Architecture enforced by ESLint** — custom rules block illegal cross-layer and cross-context imports, direct entity mutation, raw CQRS decorators, and more, so violations fail lint instead of review.
-- **Built for AI agents** — predictable structure and enforced patterns mean coding agents (and new teammates) can navigate and extend the codebase without guesswork.
-- **Full observability out of the box** — Prometheus metrics, Grafana dashboards, Loki logs, and Tempo distributed traces, all pre-wired via Docker Compose.
-- **Deployable day one** — Docker Compose, a Caddy reverse proxy with automatic TLS, and one-command deploy + server-provisioning scripts.
-- **Pluggable infrastructure** — repository contracts live in the domain and are bound to MongoDB, Redis, or in-memory implementations via NestJS injection tokens, making tests fast and adapters swappable.
-- **Nx monorepo** — shared libraries, per-project targets, caching, and a single dependency graph across backend services and the frontend.
-- **Auth + a frontend** — a Next.js 16 / React 19 app with login, registration, password reset, and a live dashboard (system health + event throughput + admin), internationalized with `next-intl`.
+- **Hexagonal architecture + DDD + CQRS**: clear separation of `domain`, `application`, `infrastructure`, and `interfaces` layers, with command/query handlers built on shared base classes.
+- **Reliable event-driven messaging**: outbox/inbox pattern over Kafka guarantees at-least-once delivery of integration events between bounded contexts.
+- **Architecture enforced by ESLint**: custom rules block illegal cross-layer and cross-context imports, direct entity mutation, raw CQRS decorators, and more, so violations fail lint instead of review.
+- **Built for AI agents**: predictable structure and enforced patterns mean coding agents (and new teammates) can navigate and extend the codebase without guesswork.
+- **Full observability out of the box**: Prometheus metrics, Grafana dashboards, Loki logs, and Tempo distributed traces, all pre-wired via Docker Compose.
+- **Deploy on the first day**: Docker Compose, a Caddy reverse proxy with automatic TLS, and one-command deploy + server-provisioning scripts.
+- **Pluggable infrastructure**: repository contracts live in the domain and are bound to MongoDB, Redis, or in-memory implementations via NestJS injection tokens, making tests fast and adapters swappable.
+- **Nx monorepo**: shared libraries, per-project targets, caching, and a single dependency graph across backend services and the frontend.
+- **Auth + a frontend**: a Next.js 16 / React 19 app with login, registration, password reset, and a live dashboard (system health + event throughput + admin), internationalized with `next-intl`.
 
 ## Monorepo structure
 
@@ -86,7 +86,7 @@ npm install
 npm run dev:start     # start API, frontend, Mongo, Redis, Kafka, monitoring, Caddy
 ```
 
-The stack is served through Caddy with local HTTPS. The first run installs Caddy's local CA certificate so your browser trusts the self-signed certs; if it was skipped, run `npm run dev:trust-cert`. Default URLs use placeholder hostnames such as `https://localhost`, `https://grafana.localhost`, etc. — configure the domain in `infra/env/`.
+The stack is served through Caddy with local HTTPS. The first run installs Caddy's local CA certificate so your browser trusts the self-signed certs; if it was skipped, run `npm run dev:trust-cert`. Default URLs use placeholder hostnames such as `https://localhost`, `https://grafana.localhost`, etc. Configure the domain in `infra/env/`.
 
 Useful dev scripts:
 
@@ -123,9 +123,9 @@ src/bounded-contexts/<context>/
 
 Key patterns:
 
-- **Commands mutate, queries read** — both extend shared base classes from `@libs/nestjs-common`.
-- **Entities are mutated only through behavior methods** — direct property assignment is blocked by lint.
-- **Dependency inversion** — repository contracts are defined in `domain/` and bound to implementations in `infrastructure/` via NestJS injection tokens, so in-memory adapters can be swapped in for tests.
+- **Commands change state and queries read it**: both extend shared base classes from `@libs/nestjs-common`.
+- **Entities are mutated only through behavior methods**: direct property assignment is blocked by lint.
+- **Dependency inversion**: repository contracts are defined in `domain/` and bound to implementations in `infrastructure/` via NestJS injection tokens, so in-memory adapters can be swapped in for tests.
 
 ### Event flow (outbox → Kafka → inbox)
 
@@ -137,7 +137,7 @@ Bounded contexts never call each other directly. They communicate through integr
 
 1. An aggregate in `auth` raises a domain event (e.g. `UserCreated`).
 2. The event is written to the **outbox** within the same transaction that persists the aggregate, then relayed to **Kafka**.
-3. The `notifications` context consumes it via the **inbox** (which deduplicates) and reacts — e.g. sending a welcome email.
+3. The `notifications` context consumes it via the **inbox** (which deduplicates) and reacts, for example by sending a welcome email.
 
 This gives at-least-once delivery and exactly-once processing without distributed transactions.
 
@@ -145,9 +145,9 @@ This gives at-least-once delivery and exactly-once processing without distribute
 
 Two contexts ship as a working reference for the pattern:
 
-- **`auth`** — user registration, login, JWT issuance, and password reset. Publishes user-lifecycle integration events.
-- **`notifications`** — consumes `auth` integration events and sends emails. Keeps a minimal local user projection rather than reaching into another context's data.
-- **`shared`** — value objects reused across contexts.
+- **`auth`**: user registration, login, JWT issuance, and password reset. Publishes user-lifecycle integration events.
+- **`notifications`**: consumes `auth` integration events and sends emails. Keeps a minimal local user projection rather than reaching into another context's data.
+- **`shared`**: value objects reused across contexts.
 
 Add your own contexts by following the same four-layer layout; the ESLint rules will keep the boundaries honest.
 
@@ -173,10 +173,10 @@ Both print next steps and pass typecheck/lint out of the box. Flesh the context 
 
 The Docker Compose stack wires a complete observability pipeline:
 
-- **Prometheus** — scrapes service metrics.
-- **Grafana** — dashboards over Prometheus, Loki, and Tempo.
-- **Loki** + **Promtail** — log aggregation and shipping.
-- **Tempo** — distributed tracing (OpenTelemetry from the services).
+- **Prometheus**: scrapes service metrics.
+- **Grafana**: dashboards over Prometheus, Loki, and Tempo.
+- **Loki** + **Promtail**: log aggregation and shipping.
+- **Tempo**: distributed tracing (OpenTelemetry from the services).
 
 Each is exposed behind Caddy at a placeholder subdomain (e.g. `https://grafana.localhost`).
 
@@ -196,7 +196,7 @@ The script builds `linux/amd64` images, pushes them to your Docker registry (con
 3. Update Caddy (reverse proxy)
 4. Update monitoring stack
 5. Update ALL (apps + proxy + monitoring)
-6. Deploy only (no builds — re-deploy current image versions)
+6. Deploy only (no builds, re-deploy current image versions)
 0. Exit
 
 To deploy a single backend service, type its name at the prompt (e.g. `service-1`) instead of a number.
@@ -207,13 +207,13 @@ Production env files live in `infra/env/*.env.prod` (gitignored); the matching `
 
 The rules in `eslint/rules/` are what keep the architecture from eroding. They run as part of `npm run lint` and include:
 
-- `hexagonal-architecture` — domain can't import application/infrastructure; application can't import infrastructure.
-- `no-cross-bc-imports` — bounded contexts may not import each other's internals.
-- `no-direct-entity-mutation` — aggregates are changed only through behavior methods.
-- `no-direct-cqrs-decorators` — use the provided `Base_*` handler classes, not raw NestJS CQRS decorators.
-- `cqrs-handler-collocation` / `handler-naming` — commands, queries, and events live and are named consistently with their handlers.
-- `value-object-naming` — `.vo.ts` files implement the value-object contract.
-- `*-base` rules (`aggregate-base`, `command-handler-base`, `query-handler-base`, `domain-event-handler-base`, `repository-base`, …) — enforce extension of the shared base classes.
+- `hexagonal-architecture`: domain can't import application/infrastructure; application can't import infrastructure.
+- `no-cross-bc-imports`: bounded contexts may not import each other's internals.
+- `no-direct-entity-mutation`: aggregates are changed only through behavior methods.
+- `no-direct-cqrs-decorators`: use the provided `Base_*` handler classes, not raw NestJS CQRS decorators.
+- `cqrs-handler-collocation` / `handler-naming`: commands, queries, and events live and are named consistently with their handlers.
+- `value-object-naming`: `.vo.ts` files implement the value-object contract.
+- `*-base` rules (`aggregate-base`, `command-handler-base`, `query-handler-base`, `domain-event-handler-base`, `repository-base`, and more): enforce extension of the shared base classes.
 
 ## Documentation
 

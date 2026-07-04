@@ -16,7 +16,7 @@ Compose. See the [README](README.md) and [`docs/`](docs/) for details.
 ## Development workflow
 
 - **Branch** off `main` for your change.
-- Make focused commits — see commit conventions below.
+- Make focused commits (see commit conventions below).
 - Before opening a PR, make sure the checks pass:
 
   ```bash
@@ -58,5 +58,5 @@ patterns.
 
 ## Reporting security issues
 
-Please do **not** open public issues for security vulnerabilities — see
+Please do **not** open public issues for security vulnerabilities. See
 [SECURITY.md](SECURITY.md).

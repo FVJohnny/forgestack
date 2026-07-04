@@ -130,7 +130,7 @@ async function serviceGenerator(tree, options) {
     console.log(`✅ ${name} scaffolded and installed. Next steps:`);
     console.log('');
     console.log(`  1. npx nx run ${name}:test                # sanity-check the skeleton`);
-    console.log(`  2. npm run dev:restart ${name} caddy      # or npm run dev for the full stack`);
+    console.log(`  2. npm run dev:restart ${name} caddy      # or npm run dev:start for the full stack`);
     if (options.expose !== false) {
       console.log(`     → https://${host}.localhost/api/v1/greetings (GET list / POST {message})`);
     }
@@ -139,7 +139,7 @@ async function serviceGenerator(tree, options) {
       console.log(`  4. Prod DNS: point ${host}.<your-domain> at the server; rebuild caddy on next deploy`);
     }
     console.log('');
-    console.log('  Docs: /docs/guides/adding-a-service (frontend wiring, events, gotchas)');
+    console.log('  Docs: docs/architecture.md (bounded contexts, events, CQRS wiring)');
     for (const w of warnings) console.log(`  ⚠️  ${w}`);
     /* eslint-enable no-console */
   };

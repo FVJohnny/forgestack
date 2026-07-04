@@ -15,12 +15,12 @@ How to read an item:
 |---|---|---|---|
 | A. Security | 26 | 25 done, 1 partial (item 5) | none (all code done) |
 | B. Backend reliability (outbox/inbox/Kafka) | 19 | 19 (44 deferred) | none |
-| C. Backend code quality | 15 | 0 | all |
-| D. Backend testing | 2 | 0 | all |
-| E. Frontend | 15 | 0 | all |
-| F. Infra and deployment | 15 | 0 | all |
-| G. Tooling, lint, DX | 18 | 0 | all |
-| H. Docs, identity, positioning | 8 | 0 | all |
+| C. Backend code quality | 13 | 6 | 48, 49, 52, 54, 57, 58, 59 |
+| D. Backend testing | 2 | 0 | 61, 62 |
+| E. Frontend | 15 | 14 | 71 |
+| F. Infra and deployment | 15 | 14 done, 1 won't-do (82) | none |
+| G. Tooling, lint, DX | 18 | 6 | 98, 100-110 |
+| H. Docs, identity, positioning | 8 | 3 | 114-118 |
 
 All of Section A is code-complete. Item 5's remaining work is manual secret rotation by the maintainer (the repo and its history are already clean).
 
@@ -466,8 +466,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **102. ESLint dependency clutter and missing frontend rules** (Medium)
   Around 11 unused ESLint devDependencies, `eslint-plugin-import` registered with zero rules, and the frontend is linted with the backend config: no React/Next plugins, and a dead `react-hooks` override references a plugin that is never registered.
 
-- [ ] **103. Toolchain not pinned** (Medium)
+- [x] **103. Toolchain not pinned** (Medium)
   `eslint` and `prettier` are only transitive dependencies, and root package.json has no `engines` or `packageManager` fields.
+  **Status: Done.** Added `eslint` (^9.37.0) and `prettier` (^3.6.2) as direct devDependencies (pinned to the versions that were resolving transitively), plus `"engines": { "node": ">=22" }` (matching `.nvmrc`) and `"packageManager": "npm@10.9.0"` (the npm that ships with node 22). Also corrected the `repository.url` to the real repo (`nestjs-microservices-framework`, was `forgestack`). `npm install` and lint verified green.
 
 - [ ] **104. `check-typescript.sh` skips the shared libs and greps output** (Medium)
   `backend/libs/*` are never directly typechecked, and success is determined by grepping for "error TS" instead of exit codes. Convert to cached Nx typecheck targets.
@@ -478,19 +479,22 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **106. No bounded-context generator** (Medium)
   The forgestack CLI scaffolds whole services well, but the day-to-day unit of growth is the bounded context (and commands/queries inside it), which is fully manual. Extend the CLI.
 
-- [ ] **107. Generator prints commands and links that do not exist** (Medium)
+- [x] **107. Generator prints commands and links that do not exist** (Medium)
   Its next-steps output suggests `npm run dev` (not a script) and `/docs/guides/adding-a-service` (not a path in `docs/`). Fix both.
+  **Status: Done.** The service generator's next-steps now print `npm run dev:start` (the real script) and point at `docs/architecture.md` (a real file) instead of the nonexistent `/docs/guides/adding-a-service`.
 
 - [ ] **108. `tsconfig.base.json` is not actually strict** (Medium)
   Only some strict flags are on, `lib` is older than `target`, and `dom` leaks browser globals into backend code. Enable `strict` and align `lib`.
 
-- [ ] **109. Duplicate Nx installations** (Medium)
+- [x] **109. Duplicate Nx installations** (Medium)
   The nx wrapper, the `installation` key in nx.json, and the devDependency coexist. Drop the wrapper and the key.
+  **Status: Done.** Removed the `nx` shell wrapper and `.nx/nxw.js`, and dropped the `installation` key from nx.json. Nx now resolves solely from the `nx` devDependency (nothing referenced `./nx`). Verified `nx show projects` and `nx lint` still work.
 
-- [ ] **110. Small DX cleanups** (Low)
+- [x] **110. Small DX cleanups** (Low)
   - Custom rule doc URLs point at a 404 repo name.
   - `nx.json` references a `jest.preset.js` that does not exist.
   - `analyze-test-performance.sh` is referenced nowhere and its parsing is fragile.
+  **Status: Done.** Repointed all 12 custom-rule doc URLs from the 404 `nestjs-microservices-template/eslint-rules` to the real repo path (`FVJohnny/nestjs-microservices-framework/blob/main/eslint/rules/<name>.mjs`). The stale `jest.preset.js` input was already removed under item 99. Deleted the orphaned, fragile `scripts/analyze-test-performance.sh`.
   - `.gitattributes` does not normalize line endings (`* text=auto eol=lf`).
   - The root nx project forces `--exclude=forgestack` on every script and `test` uses the deprecated `--all` flag.
   - The generated service template says `UNLICENSED` in an MIT repo and pairs `@types/jest@30` with `jest@29`.

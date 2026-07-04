@@ -74,8 +74,13 @@ export class RuntimeAutoDiscovery {
 
       return result;
     } catch (error) {
+      // Fail loud. Previously this swallowed the error and returned whatever
+      // was discovered so far, so a broken handler/controller file booted the
+      // service with that component silently missing. A discovery failure is a
+      // bug that must surface at startup, not manifest as a mysteriously
+      // unregistered route/handler later.
       this.logger.error('❌ Runtime auto-discovery failed:', error as Error);
-      return result;
+      throw error;
     }
   }
 
@@ -101,28 +106,34 @@ export class RuntimeAutoDiscovery {
       // );
 
       for (const filePath of files) {
-        // this.logger.debug(`🔍 Processing file: ${filePath}`);
-        try {
-          // Clear require cache to ensure fresh load
-          delete require.cache[require.resolve(filePath)];
+        // Clear require cache to ensure fresh load
+        delete require.cache[require.resolve(filePath)];
 
-          // Use require for both .js and .ts files (ts-node handles .ts in test env)
-          // eslint-disable-next-line @typescript-eslint/no-require-imports
-          const module = require(filePath);
-          // this.logger.debug(`📦 Module exports: ${Object.keys(module).join(', ')}`);
+        // Use require for both .js and .ts files (ts-node handles .ts in test env).
+        // A require() failure here (syntax error, bad import) is NOT swallowed:
+        // it propagates so a broken handler fails the boot loudly instead of
+        // being silently dropped.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const module = require(filePath);
 
-          const handlerClass = this.extractComponentFromModule(module, 'Handler');
-          // this.logger.debug(`🎯 Extracted handler class: ${handlerClass?.name || 'null'}`);
+        const handlerClass = this.extractComponentFromModule(module, 'Handler');
 
-          if (handlerClass) {
-            handlers.push(handlerClass);
-          }
-        } catch (error) {
-          console.warn(`⚠️ Failed to load handler from ${filePath}:`, (error as Error).message);
+        if (handlerClass) {
+          handlers.push(handlerClass);
+        } else {
+          // The filename matched the handler suffix but exported no class ending
+          // in "Handler" — almost always a rename/typo. Warn so it is visible
+          // instead of manifesting as a mysteriously missing handler.
+          this.logger.warn(
+            `⚠️ ${path.basename(filePath)} matches "${suffix}" but exports no *Handler class — is it named/exported correctly?`,
+          );
         }
       }
     } catch (error) {
-      console.warn(`⚠️ Failed to scan handlers in ${fullPath}:`, (error as Error).message);
+      // Re-throw: a scan/require failure must not be swallowed (see the note in
+      // discoverAllComponents). Directory-not-found is handled above.
+      this.logger.error(`❌ Failed to load handlers in ${fullPath}:`, error as Error);
+      throw error;
     }
 
     return handlers;
@@ -144,24 +155,26 @@ export class RuntimeAutoDiscovery {
       const files = this.getAllFilesRecursively(fullPath, suffix);
 
       for (const filePath of files) {
-        try {
-          // Clear require cache to ensure fresh load
-          delete require.cache[require.resolve(filePath)];
+        // Clear require cache to ensure fresh load
+        delete require.cache[require.resolve(filePath)];
 
-          // Use require for both .js and .ts files (ts-node handles .ts in test env)
-          // eslint-disable-next-line @typescript-eslint/no-require-imports
-          const module = require(filePath);
-          const controllerClass = this.extractComponentFromModule(module, 'Controller');
+        // See discoverHandlers: require failures propagate rather than being
+        // swallowed.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const module = require(filePath);
+        const controllerClass = this.extractComponentFromModule(module, 'Controller');
 
-          if (controllerClass) {
-            controllers.push(controllerClass);
-          }
-        } catch (error) {
-          console.warn(`⚠️ Failed to load controller from ${filePath}:`, (error as Error).message);
+        if (controllerClass) {
+          controllers.push(controllerClass);
+        } else {
+          this.logger.warn(
+            `⚠️ ${path.basename(filePath)} matches "${suffix}" but exports no *Controller class — is it named/exported correctly?`,
+          );
         }
       }
     } catch (error) {
-      console.warn(`⚠️ Failed to scan controllers in ${fullPath}:`, (error as Error).message);
+      this.logger.error(`❌ Failed to load controllers in ${fullPath}:`, error as Error);
+      throw error;
     }
 
     return controllers;

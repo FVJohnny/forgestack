@@ -8,6 +8,7 @@ import {
   StrictRateLimit,
   PublicApi,
   setAuthCookies,
+  CorrelationLogger,
 } from '@libs/nestjs-common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RecordUserLogin_Command } from '@bc/auth/application/commands';
@@ -19,6 +20,8 @@ import { StoreTokens_Command } from '@libs/nestjs-common';
 @ApiTags('auth')
 @Controller('auth')
 export class LoginUser_Controller {
+  private readonly logger = new CorrelationLogger(LoginUser_Controller.name);
+
   constructor(
     @Inject(COMMAND_BUS) private readonly commandBus: ICommandBus,
     @Inject(QUERY_BUS) private readonly queryBus: IQueryBus,
@@ -53,9 +56,13 @@ export class LoginUser_Controller {
     const storeTokensCommand = new StoreTokens_Command({ userId, accessToken, refreshToken });
     await this.commandBus.execute(storeTokensCommand);
 
-    // Record login using command (Async)
+    // Record login without blocking the response (last-login tracking is not
+    // critical), but attach a catch so a failure is logged instead of becoming
+    // an unhandled promise rejection.
     const recordLoginCommand = new RecordUserLogin_Command({ userId });
-    this.commandBus.execute(recordLoginCommand);
+    void this.commandBus.execute(recordLoginCommand).catch((error) => {
+      this.logger.error(`Failed to record login for user ${userId}`, error as Error);
+    });
 
     // Deliver tokens as httpOnly cookies; the body carries only the user id.
     setAuthCookies(res, { accessToken, refreshToken });

@@ -243,8 +243,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **55. Mongo config typed as Mongoose options but passed to the native client** (Medium)
   `dbName` is silently ignored, and the mongoose peer dependencies exist only because of this. Use `MongoClientOptions` and drop the deps.
 
-- [ ] **56. Fire-and-forget `RecordUserLogin` command** (Low)
-  Login and Google OAuth controllers dispatch it without `await`, so failures vanish. Await it or make it an explicit background job with logging.
+- [x] **56. Fire-and-forget `RecordUserLogin` command** (Low)
+  Login and Google OAuth controllers dispatched it without `await`, so a rejection became an unhandled promise rejection and failures vanished.
+  **Status: Done.** Kept it non-blocking (last-login tracking should not delay the login response) but attached a `.catch` that logs via `CorrelationLogger`, so failures are visible and never become unhandled rejections.
 
 - [ ] **57. Value-object equality is shallow and fragile** (Low)
   `ValueObject.equals` uses reference equality plus `constructor.name` (breaks under minification), `DateVO` accepts Invalid Date, and `Id` validates twice.

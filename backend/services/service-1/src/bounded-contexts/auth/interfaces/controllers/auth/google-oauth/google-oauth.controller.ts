@@ -9,6 +9,7 @@ import {
   PublicApi,
   StoreTokens_Command,
   setAuthCookies,
+  CorrelationLogger,
 } from '@libs/nestjs-common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RecordUserLogin_Command } from '@bc/auth/application/commands';
@@ -20,6 +21,8 @@ import { GoogleOAuth_ResponseDto } from './google-oauth.controller-response';
 @ApiTags('auth')
 @Controller('auth')
 export class GoogleOAuth_Controller {
+  private readonly logger = new CorrelationLogger(GoogleOAuth_Controller.name);
+
   constructor(
     @Inject(COMMAND_BUS) private readonly commandBus: ICommandBus,
     @Inject(QUERY_BUS) private readonly queryBus: IQueryBus,
@@ -57,9 +60,12 @@ export class GoogleOAuth_Controller {
     const storeTokensCommand = new StoreTokens_Command({ userId, accessToken, refreshToken });
     await this.commandBus.execute(storeTokensCommand);
 
-    // 4. Record login (async)
+    // 4. Record login without blocking the response; log failures instead of
+    // leaving an unhandled promise rejection.
     const recordLoginCommand = new RecordUserLogin_Command({ userId });
-    this.commandBus.execute(recordLoginCommand);
+    void this.commandBus.execute(recordLoginCommand).catch((error) => {
+      this.logger.error(`Failed to record Google login for user ${userId}`, error as Error);
+    });
 
     // Deliver tokens as httpOnly cookies; the body carries only the user id.
     setAuthCookies(res, { accessToken, refreshToken });

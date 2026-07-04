@@ -221,8 +221,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **48. `RuntimeAutoDiscovery` is fragile** (Medium)
   Runtime `require()` by naming convention, swallowed load errors, breaks under bundlers, and typos become silently missing handlers. Prefer explicit imports or Nest's `DiscoveryService`.
 
-- [ ] **49. EventTracker monkey-patches the EventBus and duplicates metrics** (Medium)
+- [x] **49. EventTracker monkey-patches the EventBus and duplicates metrics** (Medium)
   It overwrites `publish`/`publishAll` at construction, records success before handlers run, and overlaps entirely with the Prometheus CQRS metrics. Consider removing the subsystem.
+  **Status: DONE (fixed in place; not removed).** Removal was reconsidered: EventTracker is not dead code — it powers the JWT-protected `/dashboard/events` throughput endpoint in the dev console and is wired into the inbox via `setEventTracker`. So instead of deleting it, the two real bugs in the domain interceptor were fixed: it now records the outcome AFTER `originalPublish`/`publishAll` settles (marking failure when they throw) instead of unconditionally recording success beforehand, and it wraps-and-delegates around the original method rather than replacing its behaviour. The integration interceptor was already correct (tracks after handling / delegates to the inbox). Verified live against the running stack: after a real user registration the dashboard endpoint reports `Domain Events/UserRegistered_DomainEvent: success=1`, i.e. tracked post-publish with the true outcome. The Prometheus CQRS-metrics overlap is left as-is intentionally (the two serve different consumers: Grafana vs the in-app dashboard). Common lint + 121 tests pass.
 
 - [x] **50. HTTP duration histogram is double-counted** (Medium)
   The interceptor recorded each request into `http_request_duration_seconds` twice: once via a `startTimer()` stop callback and once via `observeHttpRequest()`.

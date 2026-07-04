@@ -31,25 +31,40 @@ export class EventTrackerDomainInterceptor {
   }
 
   /**
-   * Intercepts the EventBus publish methods to track all domain events
+   * Wraps the EventBus publish methods to track all domain events.
+   *
+   * Two fixes over the previous version:
+   *   1. It records the outcome AFTER the original publish settles (and marks
+   *      failure when it throws), instead of unconditionally recording success
+   *      before handlers ran.
+   *   2. It wraps-and-delegates rather than replacing behaviour: the original
+   *      method still does all the work; we only observe around it.
    */
   private interceptEventBus(): void {
     // Store original methods
     this.originalPublish = this.eventBus.publish.bind(this.eventBus);
     this.originalPublishAll = this.eventBus.publishAll.bind(this.eventBus);
 
-    // Override publish method
     this.eventBus.publish = async (event: Base_DomainEvent) => {
-      this.trackDomainEventSafely(event, true);
-      return this.originalPublish(event);
+      try {
+        const result = await this.originalPublish(event);
+        this.trackDomainEventSafely(event, true);
+        return result;
+      } catch (error) {
+        this.trackDomainEventSafely(event, false);
+        throw error;
+      }
     };
 
-    // Override publishAll method
     this.eventBus.publishAll = async (events: Base_DomainEvent[]) => {
-      events.forEach((event) => {
-        this.trackDomainEventSafely(event, true);
-      });
-      return this.originalPublishAll(events);
+      try {
+        const result = await this.originalPublishAll(events);
+        events.forEach((event) => this.trackDomainEventSafely(event, true));
+        return result;
+      } catch (error) {
+        events.forEach((event) => this.trackDomainEventSafely(event, false));
+        throw error;
+      }
     };
   }
 

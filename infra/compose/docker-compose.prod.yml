@@ -1,8 +1,18 @@
+# Cap json-file logs so a chatty service cannot fill the VPS disk. This is
+# also enforced daemon-wide in setup-server.sh (covering containers that do not
+# inherit this anchor), but keeping it here documents the intent per service.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '3'
+
 # Shared shape of every NestJS service in production. A service block only
 # adds its name-specific bits: image, env_file and labels. The
 # prometheus.scrape label opts the container into Prometheus discovery.
 x-nestjs-service: &nestjs-service
   restart: unless-stopped
+  logging: *default-logging
   networks:
     - backend
   healthcheck:

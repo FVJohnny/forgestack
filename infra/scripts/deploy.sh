@@ -129,13 +129,19 @@ build_and_push() {
 
     local current_version=$(get_version "$image")
     local new_version=$((current_version + 1))
-    set_version "$image" "$new_version"
 
     log "Building $service v$new_version..."
 
     local start_time=$(date +%s)
     cd "$context"
-    docker buildx build --platform linux/amd64 --push $build_args -t "${REGISTRY}/${image}:v${new_version}" -f "$dockerfile" .
+    # Build and push FIRST. Only bump the version in the compose file after a
+    # successful push, so a failed build never leaves the compose file pointing
+    # at a tag that was never pushed.
+    if ! docker buildx build --platform linux/amd64 --push $build_args -t "${REGISTRY}/${image}:v${new_version}" -f "$dockerfile" .; then
+        log_error "Build/push failed for $service (v$new_version); compose file left unchanged."
+        return 1
+    fi
+    set_version "$image" "$new_version"
     local end_time=$(date +%s)
     local elapsed=$(( end_time - start_time ))
     local minutes=$(( elapsed / 60 ))
@@ -218,38 +224,60 @@ build_tempo() {
         ""
 }
 
-build_apps() {
-    for svc in "${SERVICES[@]}"; do
-        build_service "$svc" &
+# Wait on every background PID and fail if ANY exited non-zero. A bare `wait`
+# (no args) always returns 0, so `wait || ...` silently proceeds past a failed
+# build; this checks each job's real exit status.
+wait_all() {
+    local label=$1
+    shift
+    local pids=("$@")
+    local failed=0
+    for pid in "${pids[@]}"; do
+        if ! wait "$pid"; then
+            failed=1
+        fi
     done
-    build_public_page &
+    if [ "$failed" -ne 0 ]; then
+        log_error "One or more ${label} builds failed"
+        exit 1
+    fi
+}
 
-    wait || { log_error "One or more app builds failed"; exit 1; }
+build_apps() {
+    local pids=()
+    for svc in "${SERVICES[@]}"; do
+        build_service "$svc" & pids+=($!)
+    done
+    build_public_page & pids+=($!)
+
+    wait_all "app" "${pids[@]}"
 }
 
 build_monitoring_stack() {
-    build_prometheus &
-    build_grafana &
-    build_loki &
-    build_promtail &
-    build_tempo &
+    local pids=()
+    build_prometheus & pids+=($!)
+    build_grafana & pids+=($!)
+    build_loki & pids+=($!)
+    build_promtail & pids+=($!)
+    build_tempo & pids+=($!)
 
-    wait || { log_error "One or more monitoring builds failed"; exit 1; }
+    wait_all "monitoring" "${pids[@]}"
 }
 
 build_all() {
+    local pids=()
     for svc in "${SERVICES[@]}"; do
-        build_service "$svc" &
+        build_service "$svc" & pids+=($!)
     done
-    build_public_page &
-    build_caddy &
-    build_prometheus &
-    build_grafana &
-    build_loki &
-    build_promtail &
-    build_tempo &
+    build_public_page & pids+=($!)
+    build_caddy & pids+=($!)
+    build_prometheus & pids+=($!)
+    build_grafana & pids+=($!)
+    build_loki & pids+=($!)
+    build_promtail & pids+=($!)
+    build_tempo & pids+=($!)
 
-    wait || { log_error "One or more builds failed"; exit 1; }
+    wait_all "" "${pids[@]}"
 }
 
 deploy() {

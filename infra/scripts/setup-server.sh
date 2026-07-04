@@ -101,6 +101,27 @@ fi
 log "Enabling and starting Docker..."
 systemctl enable --now docker
 
+# Daemon-wide log rotation so no container (even ones not covered by the
+# compose logging anchor) can fill the disk with unbounded json-file logs.
+log "Configuring Docker daemon log rotation (10m x 3)..."
+mkdir -p /etc/docker
+if [ ! -f /etc/docker/daemon.json ]; then
+    cat > /etc/docker/daemon.json <<'DAEMON'
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+}
+DAEMON
+    systemctl restart docker
+    log "  daemon.json written; Docker restarted."
+else
+    log_warn "  /etc/docker/daemon.json already exists; leaving it untouched."
+    log_warn "  Ensure it sets log-opts max-size/max-file for log rotation."
+fi
+
 # ---------------------------------------------------------------------------
 # 3. Deploy user
 # ---------------------------------------------------------------------------

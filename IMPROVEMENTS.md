@@ -337,14 +337,17 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 
 ## F. Infra and deployment
 
-- [ ] **78. `wait || exit` never detects failed parallel builds in deploy.sh** (High)
-  Bare `wait` always returns 0, so a failed image build silently proceeds to deploy. Fix: collect PIDs and check each, or use `wait -n` in a loop.
+- [x] **78. `wait || exit` never detects failed parallel builds in deploy.sh** (High)
+  A bare `wait` (no args) always returns 0, so `wait || { exit }` never fired and a failed image build proceeded to deploy.
+  **Status: Done.** Added a `wait_all` helper that collects each background build's PID and `wait $pid`s them individually, failing the deploy if any exited non-zero. All three build functions (apps, monitoring, all) now use it. `build_and_push` returns 1 on a failed build/push so the PID exit status is meaningful. `bash -n` clean.
 
-- [ ] **79. Version bump happens before the build** (High)
-  A failed build leaves the compose file pointing at a tag that was never pushed. Bump after a successful push, or tag by git SHA.
+- [x] **79. Version bump happens before the build** (High)
+  `set_version` mutated the compose file to `v(N+1)` before the build, so a failed build left it pointing at a tag that was never pushed.
+  **Status: Done.** `build_and_push` now builds and pushes first and only calls `set_version` after a successful push; a failed build returns 1 and leaves the compose file unchanged. Combined with item 78, a build failure now aborts the deploy with the compose file still referencing the last good tag.
 
-- [ ] **80. No log rotation in prod** (High)
-  The prod compose has no `logging:` options and the server has no daemon defaults, so a chatty service eventually fills the disk. Dev already caps logs; add the same to prod or write `/etc/docker/daemon.json` during provisioning.
+- [x] **80. No log rotation in prod** (High)
+  The prod compose had no `logging:` options and the server had no daemon defaults, so a chatty service could fill the disk.
+  **Status: Done.** `setup-server.sh` now writes `/etc/docker/daemon.json` with json-file log rotation (10m x 3) and restarts Docker (skipping if the file already exists), which caps logs daemon-wide for every container. Also added a `logging` anchor to the prod compose applied to the app services to document the intent. Validated with `docker compose config` and `bash -n`.
 
 - [ ] **81. No rollback or post-deploy health verification** (Medium)
   Use `docker compose up -d --wait`, keep the previous tag, and revert on failure.

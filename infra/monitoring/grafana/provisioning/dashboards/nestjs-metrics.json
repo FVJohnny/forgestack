@@ -5,7 +5,10 @@
   "schemaVersion": 39,
   "version": 1,
   "refresh": "10s",
-  "time": { "from": "now-15m", "to": "now" },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
   "templating": {
     "list": [
       {
@@ -23,7 +26,12 @@
     {
       "type": "timeseries",
       "title": "Requests per second by route",
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
       "targets": [
         {
           "expr": "sum by (route) (rate(http_requests_total{service=~\"$service\"}[1m]))",
@@ -34,7 +42,12 @@
     {
       "type": "timeseries",
       "title": "p95 latency by route (s)",
-      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
       "targets": [
         {
           "expr": "histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{service=~\"$service\"}[5m])))",
@@ -45,7 +58,12 @@
     {
       "type": "bargauge",
       "title": "Requests by status code",
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
       "targets": [
         {
           "expr": "sum by (status_code) (rate(http_requests_total{service=~\"$service\"}[5m]))",
@@ -56,7 +74,12 @@
     {
       "type": "timeseries",
       "title": "Process CPU user seconds (rate)",
-      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
       "targets": [
         {
           "expr": "rate(process_cpu_user_seconds_total{service=~\"$service\"}[1m])",
@@ -67,7 +90,12 @@
     {
       "type": "timeseries",
       "title": "Resident memory (bytes)",
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 18 },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
       "targets": [
         {
           "expr": "process_resident_memory_bytes{service=~\"$service\"}",
@@ -75,5 +103,6 @@
         }
       ]
     }
-  ]
+  ],
+  "uid": "nestjs-metrics"
 }

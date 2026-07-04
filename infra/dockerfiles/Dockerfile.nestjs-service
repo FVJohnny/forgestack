@@ -36,7 +36,7 @@ COPY backend/services/${SERVICE_NAME} backend/services/${SERVICE_NAME}
 RUN npx nx run ${SERVICE_NAME}:build
 
 # === LAYER 5: Prune dev deps ===
-RUN npm prune --production
+RUN npm prune --omit=dev
 
 # --- Runtime stage ---
 FROM node:${NODE_VERSION}-slim AS runner
@@ -60,8 +60,14 @@ COPY --from=builder --chown=nodejs:nodejs /app/backend/services/${SERVICE_NAME}/
 COPY --from=builder --chown=nodejs:nodejs /app/backend/services/${SERVICE_NAME}/package.json ./backend/services/${SERVICE_NAME}/
 
 ENV SERVICE_NAME=${SERVICE_NAME}
-USER nodejs
 WORKDIR /app/backend/services/${SERVICE_NAME}
 
+# Stable, service-agnostic entrypoint path. dist mirrors the monorepo layout,
+# so main.js lives under dist/services/<name>/src/main.js. Symlinking it to a
+# fixed name lets CMD be exec-form (PID 1 is node, so SIGTERM reaches it and
+# shutdown is graceful; the old `sh -c` shell-form CMD swallowed signals).
+RUN ln -s "dist/services/${SERVICE_NAME}/src/main.js" ./main.js
+
+USER nodejs
 EXPOSE 3000
-CMD sh -c "node dist/services/\${SERVICE_NAME}/src/main.js"
+CMD ["node", "main.js"]

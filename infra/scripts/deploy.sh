@@ -315,8 +315,9 @@ deploy() {
 
         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin docker.io 2>/dev/null
 
-        docker compose -f compose/docker-compose.yml up -d mongodb redis zookeeper kafka
-        sleep 3
+        # --wait blocks until each data store reports healthy (they all define
+        # healthchecks), instead of a fixed sleep that races broker startup.
+        docker compose -f compose/docker-compose.yml up -d --wait mongodb redis zookeeper kafka
 
         docker compose -f compose/docker-compose.yml up -d ${SERVICES[*]} public-page
 

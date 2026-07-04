@@ -98,7 +98,10 @@ services:
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD', 'caddy', 'version' ]
+      # `caddy version` only proves the binary runs. Hit the admin API on
+      # localhost:2019 instead, which is only up once Caddy has loaded its
+      # config and is actually serving.
+      test: [ 'CMD', 'wget', '-q', '-O', '-', 'http://localhost:2019/config/' ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -290,7 +293,7 @@ services:
     restart: unless-stopped
     mem_limit: 256m
     command:
-      - '--housekeeping_interval=5s'
+      - '--housekeeping_interval=15s'
       - '--disable_metrics=percpu,sched,tcp,udp,hugetlb,referenced_memory,cpu_topology,resctrl'
       - '--containerd=/run/containerd/containerd.sock'
       - '--containerd-namespace=moby'

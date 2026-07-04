@@ -2,7 +2,7 @@
 # Dev sets TLS_ENV=dev (self-signed certs), prod sets TLS_ENV=prod (Let's Encrypt)
 
 (tls-dev) {
-    tls internal
+	tls internal
 }
 
 (tls-prod) {
@@ -16,48 +16,71 @@
 }
 
 (admin-auth-prod) {
-    basic_auth {
-        {$CADDY_BASIC_AUTH_USER:admin} {$CADDY_BASIC_AUTH_HASH}
-    }
+	basic_auth {
+		{$CADDY_BASIC_AUTH_USER:admin} {$CADDY_BASIC_AUTH_HASH}
+	}
+}
+
+# Response compression plus baseline security headers. Imported by the public
+# app and API hosts. Grafana and Portainer set their own headers, so they do
+# not import this to avoid duplicating/overriding them.
+(common) {
+	encode zstd gzip
+	header {
+		# Do not advertise the server software.
+		-Server
+		# Only send Referer to same-origin, and never over a downgrade.
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# Block MIME sniffing.
+		X-Content-Type-Options "nosniff"
+		# Limit what other origins may embed us (clickjacking).
+		X-Frame-Options "SAMEORIGIN"
+		# Opt browsers into HTTPS for a year. Harmless in dev (localhost is a
+		# secure context); enforced in prod behind Let's Encrypt.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
 }
 
 {$PROTOCOL:http}://www.{$DOMAIN:localhost} {
-    import tls-{$TLS_ENV:dev}
-    redir {$PROTOCOL:http}://{$DOMAIN:localhost}{uri} permanent
+	import tls-{$TLS_ENV:dev}
+	redir {$PROTOCOL:http}://{$DOMAIN:localhost}{uri} permanent
 }
 
 {$PROTOCOL:http}://{$DOMAIN:localhost} {
-    import tls-{$TLS_ENV:dev}
-    reverse_proxy public-page:3000 {
-        transport http {
-            dial_timeout 5s
-            response_header_timeout 30s
-            max_conns_per_host 0
-            keepalive 90s
-            keepalive_idle_conns 32
-        }
-    }
+	import tls-{$TLS_ENV:dev}
+	import common
+	reverse_proxy public-page:3000 {
+		transport http {
+			dial_timeout 5s
+			response_header_timeout 30s
+			max_conns_per_host 0
+			keepalive 90s
+			keepalive_idle_conns 32
+		}
+	}
 }
 
 {$PROTOCOL:http}://service1.{$DOMAIN:localhost} {
-    import tls-{$TLS_ENV:dev}
-    reverse_proxy service-1:3000
+	import tls-{$TLS_ENV:dev}
+	import common
+	reverse_proxy service-1:3000
 }
 
 {$PROTOCOL:http}://service2.{$DOMAIN:localhost} {
-    import tls-{$TLS_ENV:dev}
-    reverse_proxy service-2:3000
+	import tls-{$TLS_ENV:dev}
+	import common
+	reverse_proxy service-2:3000
 }
 
 {$PROTOCOL:http}://grafana.{$DOMAIN:localhost} {
-    import tls-{$TLS_ENV:dev}
-    reverse_proxy grafana:3000
+	import tls-{$TLS_ENV:dev}
+	reverse_proxy grafana:3000
 }
 
 {$PROTOCOL:http}://portainer.{$DOMAIN:localhost} {
-    import tls-{$TLS_ENV:dev}
-    import admin-auth-{$TLS_ENV:dev}
-    reverse_proxy portainer:9000
+	import tls-{$TLS_ENV:dev}
+	import admin-auth-{$TLS_ENV:dev}
+	reverse_proxy portainer:9000
 }
 
 # Dev-only sites (DB viewers, …). The dev compose mounts infra/caddy/dev-only

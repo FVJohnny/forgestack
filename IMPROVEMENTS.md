@@ -393,10 +393,10 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   Bump Grafana to a current LTS and consider migrating Kafka to KRaft, which deletes the zookeeper container entirely.
   **Status: DONE (bump only).** Grafana `10.4.2` → `11.4.6` in `Dockerfile.grafana` and `docker-compose.dev.yml`. cp-kafka/cp-zookeeper `7.4.0` → `7.7.1` in both dev and prod compose. Verified live: Grafana 11.4.6 restarts and re-provisions all datasources/dashboards/alerting cleanly; Kafka 7.7.1 comes up healthy against the persisted volume (cluster id preserved, `users` + `__consumer_offsets` topics survive, `kafka-topics --list` works). The KRaft migration (deleting the zookeeper container) is a larger change deferred as a follow-up; kept the ZooKeeper setup on the patched image.
 
-- [ ] **91. `CADDY_BASIC_AUTH_HASH` was dead config** (Medium)
-  **Mostly resolved by item 7**, which wired it to the Portainer site and documented it. Remaining: decide whether any other admin surface should sit behind the same snippet.
+- [x] **91. `CADDY_BASIC_AUTH_HASH` was dead config** (Medium)
+  **Resolved by item 7**, which wired it to the Portainer site (via the `admin-auth-prod` snippet) and documented it; Caddy refuses to start in prod if the hash is missing. Portainer is the only admin surface exposed through Caddy in prod (Grafana has its own login), so the snippet covers everything it needs to. No further wiring required.
 
-- [ ] **92. Small infra cleanups** (Low)
+- [x] **92. Small infra cleanups** (Low)
   - Caddy healthcheck only checks the binary runs, not that it serves.
   - Docker socket mounted read-write for promtail; make it `:ro`.
   - Prometheus and Tempo run as root to dodge permissions; prefer `group_add` / chown.
@@ -410,6 +410,19 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   - `flock` is missing on stock macOS although the script supports Darwin.
   - The deploy uses `sleep 3` instead of `up -d --wait`.
   - Stale mongo-express variables sit in the prod env template.
+  **Status: DONE (most; two noted).** Done in this and prior monitoring batches:
+  - Caddy prod healthcheck now `wget`s the admin API on `localhost:2019/config/` (only up once Caddy has loaded config and is serving) instead of `caddy version`.
+  - Promtail Docker socket mounted `:ro` (prior batch).
+  - Prometheus/Loki/Tempo retention set (prior batch: Prometheus `--storage.tsdb.retention.time`, Loki `retention_period: 168h`, Tempo `block_retention: 48h`).
+  - Dev Prometheus data volume added (prior batch: `prometheus_data_dev`).
+  - Scrape interval 5s → 15s (`prometheus.yml`); cAdvisor `--housekeeping_interval` 5s → 15s in dev and prod.
+  - cAdvisor dev version `v0.49.1` → `v0.51.0` to match prod.
+  - `nestjs-metrics.json` dashboard given `uid: nestjs-metrics` (the other three already had uids).
+  - NestJS Dockerfile: `npm prune --production` → `--omit=dev`; CMD is now exec-form `["node","main.js"]` via a build-time symlink to the service's `dist/.../main.js`. Verified live: the built image bootstraps the full app (auto-discovery of 33 handlers/18 controllers) and `docker stop` returns in 0.1s, proving SIGTERM reaches node directly (the old `sh -c` form forced a 10s SIGKILL timeout).
+  - Caddyfile: added a `(common)` snippet with `encode zstd gzip` plus baseline security headers (`-Server`, `Referrer-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security`), imported by the app and both API hosts. `caddy validate` passes; ran `caddy fmt`.
+  - deploy.sh: `sleep 3` → `up -d --wait` for the data stores (they all have healthchecks).
+  - Stale mongo-express vars removed from `infra.env.prod.example` (mongo-express is dev-only, not in prod compose).
+  Noted, not changed: Prometheus/Tempo still run as `user: root` because docker_sd_configs needs to read the Docker socket, and the per-lib COPY lines in the Dockerfile are kept intentionally for build-layer caching (they let `npm ci` cache survive a source-only change). `flock` on macOS is a local-dev-only nicety, left as-is.
 
 ## G. Tooling, lint, DX
 

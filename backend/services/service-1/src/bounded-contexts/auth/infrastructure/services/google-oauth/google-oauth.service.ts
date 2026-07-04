@@ -15,6 +15,14 @@ interface GoogleUserInfoResponse {
   picture?: string;
 }
 
+interface GoogleTokenInfoResponse {
+  aud?: string;
+  azp?: string;
+  sub?: string;
+  scope?: string;
+  expires_in?: string;
+}
+
 @Injectable()
 export class GoogleOAuthService implements IGoogleOAuthService {
   private readonly logger = new Logger(GoogleOAuthService.name);
@@ -34,6 +42,25 @@ export class GoogleOAuthService implements IGoogleOAuthService {
     }
 
     try {
+      // Validate the token itself first: tokeninfo returns the audience the
+      // token was minted for. Without this check, an access token issued to
+      // any other Google OAuth app would be accepted (token substitution).
+      const tokenInfoResponse = await fetch('https://oauth2.googleapis.com/tokeninfo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ access_token: accessToken }),
+      });
+
+      if (!tokenInfoResponse.ok) {
+        throw new BadRequestException('Invalid Google access token');
+      }
+
+      const tokenInfo: GoogleTokenInfoResponse = await tokenInfoResponse.json();
+
+      if (tokenInfo.aud !== this.clientId && tokenInfo.azp !== this.clientId) {
+        throw new BadRequestException('Google token was not issued for this application');
+      }
+
       // Use Google's userinfo endpoint with the access token
       const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: {

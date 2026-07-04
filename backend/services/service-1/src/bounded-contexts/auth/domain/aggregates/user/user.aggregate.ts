@@ -20,6 +20,8 @@ import type { UserDTO } from './user.dto';
 export interface CreateUserProps {
   email: Email;
   password: Password;
+  /** Defaults to a regular user. Used by the bootstrap to seed an admin. */
+  role?: UserRole;
 }
 
 export interface CreateUserFromGoogleProps {
@@ -88,7 +90,7 @@ export class User extends SharedAggregate implements UserAttributes {
       throw new AlreadyExistsException('email', props.email.toValue());
     }
 
-    const role = UserRole.user();
+    const role = props.role ?? UserRole.user();
     // This example template ships WITHOUT email verification: new users are
     // active immediately and can log in right after registering. To require
     // email verification instead, set the status to EMAIL_VERIFICATION_PENDING

@@ -7,7 +7,7 @@ import {
   USER_UNIQUENESS_CHECKER,
   type IUserUniquenessChecker,
 } from '@bc/auth/domain/services/user-uniqueness-checker/user-uniqueness-checker.interface';
-import { Email, Password } from '@bc/auth/domain/value-objects';
+import { Email, Password, UserRole, UserRoleEnum } from '@bc/auth/domain/value-objects';
 import {
   Base_CommandHandler,
   EVENT_BUS,
@@ -38,6 +38,7 @@ export class RegisterUser_CommandHandler extends Base_CommandHandler(RegisterUse
       {
         email: new Email(command.email),
         password: await Password.createFromPlainText(command.password),
+        role: command.role ? new UserRole(command.role as UserRoleEnum) : undefined,
       },
       this.uniquenessChecker,
     );

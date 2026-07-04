@@ -59,14 +59,17 @@ export class DefaultUserBootstrapService implements OnApplicationBootstrap {
 
       this.logger.log('No users found, creating default user...');
 
+      // Seed the bootstrap user as an admin so it can actually use the
+      // admin-guarded endpoints (the whole point of a default account).
       const registerCommand = new RegisterUser_Command({
         email: this.DEFAULT_USER_EMAIL,
         password: this.DEFAULT_USER_PASSWORD,
+        role: 'admin',
       });
 
       await this.commandBus.execute(registerCommand);
 
-      this.logger.log(`Default user registered: ${this.DEFAULT_USER_EMAIL}`);
+      this.logger.log(`Default admin user registered: ${this.DEFAULT_USER_EMAIL}`);
 
       const emailVerification = await this.waitForEmailVerification();
 

@@ -213,8 +213,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   The constructor called `super()` with no args, so `fromValue()` minted a fresh random id and timestamps and a repository round-trip returned a different aggregate. This is the example everyone copies.
   **Status: Done.** The constructor now passes `props.id`/`props.timestamps` to `super()`. Added a round-trip spec asserting `fromValue(toValue(x))` preserves the id and the full DTO — the regression guard that was missing.
 
-- [ ] **47. The default "admin" bootstrap user is a regular user** (Medium)
-  It cannot use any admin endpoint, contradicting its name and intent. Fix: assign the admin role during bootstrap.
+- [x] **47. The default "admin" bootstrap user is a regular user** (Medium)
+  `User.create` hardcoded `UserRole.user()`, so the seeded `admin@example.com` could not use any admin-guarded endpoint.
+  **Status: Done.** Added an optional `role` to `CreateUserProps` / `RegisterUser_Command` (defaulting to a regular user), and the bootstrap now seeds the default user with `role: 'admin'`. Verified live: after wiping and re-seeding, the default user has `role: admin` in the DB and can reach `/admin/users` (HTTP 200), which it could not before.
 
 - [ ] **48. `RuntimeAutoDiscovery` is fragile** (Medium)
   Runtime `require()` by naming convention, swallowed load errors, breaks under bundlers, and typos become silently missing handlers. Prefer explicit imports or Nest's `DiscoveryService`.

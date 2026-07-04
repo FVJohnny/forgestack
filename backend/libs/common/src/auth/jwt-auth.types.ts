@@ -1,13 +1,13 @@
 export class TokenPayload {
-  userId: string;
-  email: string;
-  role: string;
+  userId!: string;
+  email!: string;
+  role!: string;
 }
 
 class JwtPayload {
-  uniqueId: string;
-  iat: number;
-  exp: number;
+  uniqueId!: string;
+  iat!: number;
+  exp!: number;
 }
 
 export type JwtTokenPayload = JwtPayload & TokenPayload;

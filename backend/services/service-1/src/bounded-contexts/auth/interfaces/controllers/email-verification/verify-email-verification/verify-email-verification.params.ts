@@ -9,5 +9,5 @@ export class VerifyEmailRequestDto {
   })
   @IsString()
   @IsNotEmpty()
-  emailVerificationId: string;
+  emailVerificationId!: string;
 }

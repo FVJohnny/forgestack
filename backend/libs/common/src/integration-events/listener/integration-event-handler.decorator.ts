@@ -31,7 +31,7 @@ export function IntegrationEventHandler<TEvent extends Base_IntegrationEvent>(
       public readonly eventClass = eventCtor;
 
       @Inject(INTEGRATION_EVENT_LISTENER)
-      public readonly integrationEventListener: Base_IntegrationEventListener;
+      public readonly integrationEventListener!: Base_IntegrationEventListener;
 
       @Inject()
       @Optional()

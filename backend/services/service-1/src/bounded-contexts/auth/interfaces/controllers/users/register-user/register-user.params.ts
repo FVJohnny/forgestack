@@ -7,10 +7,10 @@ export class RegisterUser_ControllerParams {
     description: 'User email address',
   })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'MySecurePass1', description: 'User password' })
   @IsString()
   @IsNotEmpty()
-  password: string;
+  password!: string;
 }

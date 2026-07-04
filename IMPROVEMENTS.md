@@ -483,8 +483,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   Its next-steps output suggests `npm run dev` (not a script) and `/docs/guides/adding-a-service` (not a path in `docs/`). Fix both.
   **Status: Done.** The service generator's next-steps now print `npm run dev:start` (the real script) and point at `docs/architecture.md` (a real file) instead of the nonexistent `/docs/guides/adding-a-service`.
 
-- [ ] **108. `tsconfig.base.json` is not actually strict** (Medium)
+- [x] **108. `tsconfig.base.json` is not actually strict** (Medium)
   Only some strict flags are on, `lib` is older than `target`, and `dom` leaks browser globals into backend code. Enable `strict` and align `lib`.
+  **Status: Done (full strict).** Enabled `strict: true` (was only `strictNullChecks`/`noImplicitAny`/`strictBindCallApply`) and aligned `lib` to `["es2023"]`, dropping `dom` (backend has no browser globals; the frontend has its own tsconfig). This surfaced 190 errors, all fixed: ~165 `TS2564` (property-initializer on DTO/command/query/entity classes assigned via `Object.assign`) got definite-assignment `!`; the inbox/outbox `forRoot` option types switched from `new (...args: unknown[]) => T` to Nest's `Type<T>` (the old signature rejected concrete repo classes under `strictFunctionTypes`); catch-block `unknown` errors (from `useUnknownInCatchVariables`) were normalized before logging/rethrow; and untyped `Response.json()` results in the Google OAuth service were explicitly cast. Verified end-to-end: `tsc --noEmit` is 0 errors across all 6 backend projects, `nx build` is 7/7, the full test suite is 506/506 passing, and lint is clean.
 
 - [x] **109. Duplicate Nx installations** (Medium)
   The nx wrapper, the `installation` key in nx.json, and the devDependency coexist. Drop the wrapper and the key.

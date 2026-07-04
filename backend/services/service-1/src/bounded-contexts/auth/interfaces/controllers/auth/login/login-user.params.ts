@@ -7,10 +7,10 @@ export class LoginUser_ControllerParams {
     description: 'User email address',
   })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'password123', description: 'User password' })
   @IsString()
   @IsNotEmpty()
-  password: string;
+  password!: string;
 }

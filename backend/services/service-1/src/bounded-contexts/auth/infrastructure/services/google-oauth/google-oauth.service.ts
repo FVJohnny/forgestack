@@ -55,7 +55,7 @@ export class GoogleOAuthService implements IGoogleOAuthService {
         throw new BadRequestException('Invalid Google access token');
       }
 
-      const tokenInfo: GoogleTokenInfoResponse = await tokenInfoResponse.json();
+      const tokenInfo = (await tokenInfoResponse.json()) as GoogleTokenInfoResponse;
 
       if (tokenInfo.aud !== this.clientId && tokenInfo.azp !== this.clientId) {
         throw new BadRequestException('Google token was not issued for this application');
@@ -72,7 +72,7 @@ export class GoogleOAuthService implements IGoogleOAuthService {
         throw new BadRequestException('Invalid Google access token');
       }
 
-      const payload: GoogleUserInfoResponse = await response.json();
+      const payload = (await response.json()) as GoogleUserInfoResponse;
 
       if (!payload.email) {
         throw new BadRequestException('Google account does not have an email address');

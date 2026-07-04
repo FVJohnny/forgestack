@@ -27,7 +27,9 @@ export class TracingMiddleware implements NestMiddleware {
         res.setHeader('x-trace-id', traceMetadata.traceId);
         res.setHeader('x-span-id', traceMetadata.spanId);
       }
-      return originalWriteHead.apply(this, args);
+      // writeHead has several overloads; args is the untyped rest from the
+      // monkey-patch, so forward it through the two-arg signature.
+      return (originalWriteHead as (...a: unknown[]) => Response).apply(this, args);
     };
 
     // Wrap the request in AsyncLocalStorage context

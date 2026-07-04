@@ -11,12 +11,12 @@ import {
 import { type Base_IntegrationEvent } from '../../integration-events/events/base.integration-event';
 
 export class OutboxEventDTO extends SharedAggregateDTO {
-  eventName: string;
-  topic: string;
-  payload: string;
-  processedAt: Date;
-  retryCount: number;
-  maxRetries: number;
+  eventName!: string;
+  topic!: string;
+  payload!: string;
+  processedAt!: Date;
+  retryCount!: number;
+  maxRetries!: number;
 
   static random(overrides: Partial<OutboxEventDTO> = {}): OutboxEventDTO {
     const entity = OutboxEvent.random({

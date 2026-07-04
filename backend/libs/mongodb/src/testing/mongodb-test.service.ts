@@ -43,7 +43,10 @@ export class MongodbTestService<T extends SharedAggregateDTO> {
 
       this.logger.debug('Test setup completed');
     } catch (error) {
-      this.logger.error('Error in database setup:', error);
+      this.logger.error(
+        'Error in database setup:',
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
   }

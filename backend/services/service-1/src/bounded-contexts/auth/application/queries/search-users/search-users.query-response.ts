@@ -7,5 +7,5 @@ export interface SearchUserResult {
 }
 
 export class SearchUsers_QueryResponse {
-  users: SearchUserResult[];
+  users!: SearchUserResult[];
 }

@@ -1,11 +1,14 @@
-import { Global, Module, DynamicModule } from '@nestjs/common';
+import { Global, Module, DynamicModule, Type } from '@nestjs/common';
 import { Inbox_InMemoryRepository } from './infrastructure/inbox.in-memory-repository';
 import type { InboxRepository } from './domain/inbox.repository';
 import { INBOX_REPOSITORY_TOKEN } from './inbox.constants';
 import { InboxService } from './inbox.service';
 
 export interface InboxModuleOptions {
-  repository?: new (...args: unknown[]) => InboxRepository;
+  // Type<T> (new (...args: any[]) => T) is the Nest-standard provider class
+  // type; a `new (...args: unknown[])` signature rejects concrete repository
+  // classes under strictFunctionTypes (constructor-arg contravariance).
+  repository?: Type<InboxRepository>;
 }
 
 @Module({})

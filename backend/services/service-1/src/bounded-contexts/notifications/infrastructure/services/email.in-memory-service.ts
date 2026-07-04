@@ -43,8 +43,9 @@ export class Email_InMemoryService implements Email_Service {
       // Track sent emails for testing
       this.sentEmails.push(options);
     } catch (error) {
-      this.logger.error(`Failed to send email to ${options.to.toValue()}:`, error);
-      throw new SendEmailError(options.to.toValue(), error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(`Failed to send email to ${options.to.toValue()}:`, err.stack);
+      throw new SendEmailError(options.to.toValue(), err);
     }
   }
 }

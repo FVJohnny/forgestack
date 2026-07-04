@@ -49,9 +49,9 @@ export abstract class SharedAggregate extends AggregateRoot<IEvent> {
 
 export class SharedAggregateDTO implements Record<string, unknown> {
   [key: string]: unknown;
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
+  id!: string;
+  createdAt!: Date;
+  updatedAt!: Date;
 
   static random(): SharedAggregateDTO {
     return {

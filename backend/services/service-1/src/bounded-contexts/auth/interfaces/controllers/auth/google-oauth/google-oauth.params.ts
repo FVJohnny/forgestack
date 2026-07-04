@@ -5,5 +5,5 @@ export class GoogleOAuth_ControllerParams {
   @ApiProperty({ description: 'Google access token from frontend' })
   @IsString()
   @IsNotEmpty()
-  accessToken: string;
+  accessToken!: string;
 }

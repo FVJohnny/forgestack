@@ -1,10 +1,12 @@
-import { Module, DynamicModule, Global } from '@nestjs/common';
+import { Module, DynamicModule, Global, Type } from '@nestjs/common';
 import { OutboxService, OUTBOX_REPOSITORY } from './outbox.service';
 import { Outbox_Repository } from './domain/outbox.repository';
 import { Outbox_InMemoryRepository } from './infrastructure/outbox.in-memory-repository';
 
 export interface OutboxModuleOptions {
-  repository?: new (...args: unknown[]) => Outbox_Repository;
+  // Type<T> is the Nest-standard provider class type; see the inbox module for
+  // why `new (...args: unknown[])` fails under strictFunctionTypes.
+  repository?: Type<Outbox_Repository>;
 }
 
 @Module({})

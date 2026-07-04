@@ -26,7 +26,7 @@ class SetMotdDto {
   @ApiProperty({ description: 'MOTD content' })
   @IsString()
   @IsNotEmpty()
-  content: string;
+  content!: string;
 }
 
 @ApiTags('admin')

@@ -8,9 +8,9 @@ export interface IdentityEntry {
 }
 
 export class UserIdentityMarkerDTO extends SharedAggregateDTO {
-  userId: string;
-  ips: IdentityEntry[];
-  userAgents: IdentityEntry[];
-  fingerprints: IdentityEntry[];
-  deviceIds: IdentityEntry[];
+  userId!: string;
+  ips!: IdentityEntry[];
+  userAgents!: IdentityEntry[];
+  fingerprints!: IdentityEntry[];
+  deviceIds!: IdentityEntry[];
 }

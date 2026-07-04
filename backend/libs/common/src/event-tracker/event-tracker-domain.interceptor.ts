@@ -60,7 +60,10 @@ export class EventTrackerDomainInterceptor {
     try {
       this.eventTracker.trackDomainEvent(event, success);
     } catch (error) {
-      this.logger.error(`Failed to track domain event ${event.constructor.name}:`, error);
+      this.logger.error(
+        `Failed to track domain event ${event.constructor.name}:`,
+        error instanceof Error ? error.stack : String(error),
+      );
     }
   }
 }

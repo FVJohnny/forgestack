@@ -9,15 +9,15 @@ export interface IdentityEntry {
 }
 
 export class UserDTO extends SharedAggregateDTO {
-  email: string;
-  password: string;
-  status: string;
-  role: string;
-  lastLogin: Date;
+  email!: string;
+  password!: string;
+  status!: string;
+  role!: string;
+  lastLogin!: Date;
   googleId?: string;
-  authProvider: string;
-  ips: IdentityEntry[];
-  userAgents: IdentityEntry[];
+  authProvider!: string;
+  ips!: IdentityEntry[];
+  userAgents!: IdentityEntry[];
 
   static random(): UserDTO {
     return {

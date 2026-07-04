@@ -1,7 +1,7 @@
 import { SharedAggregateDTO } from '@libs/nestjs-common';
 
 export class MotdDTO extends SharedAggregateDTO {
-  content: string;
+  content!: string;
 
   static random(): MotdDTO {
     return {

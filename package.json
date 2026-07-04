@@ -37,7 +37,17 @@
     "dev:trust-cert": "./infra/scripts/trust-caddy-cert.sh",
     "prod:setup": "./infra/scripts/prod-setup.sh",
     "prod:update": "./infra/scripts/deploy.sh",
+    "prepare": "husky",
     "nx": "nx"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{js,mjs,cjs,json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "workspaces": [
     "backend/libs/*",

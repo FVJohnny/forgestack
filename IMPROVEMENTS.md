@@ -400,14 +400,17 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   It looked for a base class named `SharedAggregateRoot`, but the real class is `SharedAggregate`, so the headline architectural guardrail was dead.
   **Status: Done.** Fixed the class name (and the stale doc URL). Empirically verified with a probe that the rule now flags `user.googleId = 'x'`. Turning it on surfaced real violations: the outbox repositories poked `event.processedAt` directly, so I added `markAsProcessing()` / `markAsUnprocessed()` behaviors to the outbox aggregate and the Redis/in-memory repos now call those; and spec files (which legitimately mutate aggregates for setup) are now exempted in the spec-file override. Full lint and all suites pass. A RuleTester unit test is folded into item 98.
 
-- [ ] **95. The pre-commit hook stages everything** (High)
-  After `lint:fix` it runs `git add` on all modified files, destroying intentionally scoped commits. Use lint-staged (already a devDependency, unused).
+- [x] **95. The pre-commit hook stages everything** (High)
+  After `lint:fix` it ran `git add` on every modified file, destroying intentionally scoped commits.
+  **Status: Done.** The hook now runs `lint-staged` (which was installed but unused): it lints+formats only the staged files and re-stages exactly what it fixed, never the whole tree. Added a `lint-staged` config to package.json. Verified with a probe that a staged file gets formatted while an unrelated unstaged change is left alone.
 
-- [ ] **96. Hooks are not installed on plain `npm install`** (High)
-  There is no `prepare` script, and `start-dev.sh` uses the deprecated `npx husky install` (removed in husky v10).
+- [x] **96. Hooks are not installed on plain `npm install`** (High)
+  There was no `prepare` script, and `start-dev.sh` used the deprecated `npx husky install` (removed in husky v10).
+  **Status: Done.** Added `"prepare": "husky"` so a plain `npm install` installs the hooks for every contributor, and removed the deprecated `npx husky install` from `start-dev.sh`. Verified `npm run prepare` creates `.husky/_/pre-commit`.
 
-- [ ] **97. Pre-commit is slow and not portable** (Medium)
-  It runs full-repo typecheck, lint, and tests on every commit, and uses bashisms (`${PIPESTATUS[0]}`) that break under dash on Linux. Use `nx affected` and POSIX sh.
+- [x] **97. Pre-commit is slow and not portable** (Medium)
+  It ran full-repo typecheck, lint, and tests on every commit, and used bashisms (`${PIPESTATUS[0]}`, `echo "\n"`) that break under dash.
+  **Status: Done (mostly).** Rewrote the hook as POSIX sh (verified with `sh -n` and `dash -n`): lint-staged scopes lint/format to staged files, and tests run via `nx affected -t test --base=HEAD` instead of the whole suite. Typecheck still runs workspace-wide because there is no per-project Nx typecheck target yet (that migration is item 104); it is Nx-cached underneath, so it is fast when unchanged.
 
 - [ ] **98. Zero tests for the 14 custom ESLint rules** (Medium)
   Which is exactly how item 94 shipped broken. Add RuleTester suites.

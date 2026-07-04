@@ -1,22 +1,28 @@
-echo "Running TypeScript compilation check..."
+#!/bin/sh
+# POSIX sh (husky runs hooks with `sh -e`, which may be dash on Linux — no
+# bashisms like ${PIPESTATUS[0]} or echo "\n").
+
+# 1. Lint + format ONLY the staged files, and re-stage exactly what was fixed.
+#    lint-staged handles the add itself, so we never `git add` the whole tree.
+echo "Running lint-staged on staged files..."
+npx --no-install lint-staged || {
+  printf '\n%s\n' "lint-staged failed. Fix the issues before committing."
+  exit 1
+}
+
+# 2. Typecheck. There is no per-project Nx typecheck target yet (see the
+#    backlog), so this runs the workspace script; it is cached by Nx underneath.
+echo "Typechecking..."
 npm run -s typecheck || {
-  echo "\n✖ TypeScript compilation failed. Fix errors before committing.";
-  exit 1;
+  printf '\n%s\n' "Typecheck failed. Fix the errors before committing."
+  exit 1
 }
 
-echo "Running Lint..."
-npm run -s lint:fix || {
-  echo "\n✖ Lint failed. Fix issues before committing.";
-  exit 1;
+# 3. Test only the projects affected by the staged changes.
+echo "Testing affected projects..."
+npx nx affected -t test --base=HEAD || {
+  printf '\n%s\n' "Tests failed. Fix the failures before committing."
+  exit 1
 }
-# Re-stage any files that lint:fix auto-formatted
-git diff --name-only | xargs -r git add
 
-echo "Running Tests..."
-LOG_LEVEL=error CI=true npm run -s test -- --silent --no-colors 2>&1 | grep -E "(FAIL|✖|Error:|●|Expected:|Received:|failed|passed)"
-if [ ${PIPESTATUS[0]} -ne 0 ]; then
-  echo "\n✖ Tests failed. Fix failures before committing.";
-  exit 1;
-fi
-
-echo "✓ All pre-commit checks passed."
+printf '%s\n' "All pre-commit checks passed."

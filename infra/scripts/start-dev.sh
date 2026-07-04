@@ -101,10 +101,9 @@ else
 fi
 
 echo "📦 Installing dependencies..."
+# `npm install` runs the package.json "prepare" script, which installs the
+# husky git hooks — no separate (and now-removed-in-husky-v10) `husky install`.
 npm install
-
-echo "🪝 Installing git hooks..."
-npx husky install
 
 echo "🐳 Starting Docker containers..."
 

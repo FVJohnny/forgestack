@@ -3,7 +3,9 @@
 import { useEffect } from 'react';
 import { Button } from '@/app/shared/ui/button';
 
-export default function GlobalError({
+// Route-level error boundary (catches errors within the app segment). The
+// root-layout errors are caught by global-error.tsx alongside this file.
+export default function RouteError({
   error,
   reset,
 }: {

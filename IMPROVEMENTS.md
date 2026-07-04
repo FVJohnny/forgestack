@@ -327,8 +327,14 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **76. Language switcher rough edges** (Low)
   Flags load from flagcdn.com (external dependency), switching does a full page reload, blocked cookies can cause an infinite reload loop, flags-for-languages is an i18n anti-pattern, and the Accept-Language parsing is duplicated.
 
-- [ ] **77. Small frontend cleanups** (Low)
-  - `ngrok-skip-browser-warning` header sent on every API request.
+- [x] **77. Small frontend cleanups** (Low)
+  **Status: Done.**
+  - [x] `ngrok-skip-browser-warning` header removed (done with the item-8 client rewrite).
+  - [x] The 401 path no longer returns `{} as T` to callers (the item-8 client throws/refreshes instead).
+  - [x] Register-then-login failure now redirects to `/login` instead of showing "registration failed" (done with item 73).
+  - [x] `app/error.tsx`'s component renamed from `GlobalError` to `RouteError` (it is the segment boundary), and a real `app/global-error.tsx` added to catch root-layout errors that the segment boundary cannot reach.
+  - [x] `components.json` `hooks` alias fixed from the nonexistent `@/hooks` to `@/lib/hooks`.
+  - Deferred (small, cosmetic): hardcoded English in a couple of aria-labels; `window.location.href` where the router would do (kept for the deliberate full-reload context resets); admin-table / mobile-drawer a11y polish (tracked with the broader a11y note). The error pages stay English on purpose since i18n may be what failed.
   - The 401 redirect path returns `{} as T` to in-flight callers.
   - Hardcoded English in the error page and several aria-labels.
   - Accessibility gaps in the admin table and mobile drawers (no aria-labels, no focus trap, no Escape).

@@ -80,7 +80,7 @@ npm install
 
 ### Start the local dev stack
 
-`dev:start` provisions prerequisites (Node, Docker), installs git hooks, creates `.env` files from the `.example` templates, and brings up the full stack via Docker Compose.
+`dev:start` checks prerequisites (it verifies Node matches `.nvmrc` and can install Docker if it is missing, but never auto-installs Node), installs git hooks, creates `.env` files from the `.example` templates, and brings up the full stack via Docker Compose.
 
 ```bash
 npm run dev:start     # start API, frontend, Mongo, Redis, Kafka, monitoring, Caddy
@@ -90,14 +90,14 @@ The stack is served through Caddy with local HTTPS. The first run installs Caddy
 
 Useful dev scripts:
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev:start` | Provision prerequisites, install git hooks, create `.env` files, and start all services |
-| `npm run dev:down` | Stop development services |
-| `npm run dev:restart` | Recreate one or more services (e.g. `npm run dev:restart service-1`) |
-| `npm run dev:restart:all` | Full down + up (clean slate) |
-| `npm run dev:logs` | Tail logs from all services |
-| `npm run dev:trust-cert` | Trust Caddy's local CA certificate |
+| Command                   | Description                                                                         |
+| ------------------------- | ----------------------------------------------------------------------------------- |
+| `npm run dev:start`       | Check prerequisites, install git hooks, create `.env` files, and start all services |
+| `npm run dev:down`        | Stop development services                                                           |
+| `npm run dev:restart`     | Recreate one or more services (e.g. `npm run dev:restart service-1`)                |
+| `npm run dev:restart:all` | Full down + up (clean slate)                                                        |
+| `npm run dev:logs`        | Tail logs from all services                                                         |
+| `npm run dev:trust-cert`  | Trust Caddy's local CA certificate                                                  |
 
 ### Verify your changes
 
@@ -197,7 +197,7 @@ The script builds `linux/amd64` images, pushes them to your Docker registry (con
 4. Update monitoring stack
 5. Update ALL (apps + proxy + monitoring)
 6. Deploy only (no builds, re-deploy current image versions)
-0. Exit
+7. Exit
 
 To deploy a single backend service, type its name at the prompt (e.g. `service-1`) instead of a number.
 

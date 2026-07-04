@@ -60,3 +60,8 @@ patterns.
 
 Please do **not** open public issues for security vulnerabilities. See
 [SECURITY.md](SECURITY.md).
+
+## Code of Conduct
+
+This project follows a [Code of Conduct](CODE_OF_CONDUCT.md). By participating,
+you are expected to uphold it.

@@ -42,6 +42,15 @@ export class Inbox_InMemoryRepository
     this.lastPendingReceivedAtMs = -Infinity;
   }
 
+  async insertIfNew(event: InboxEvent): Promise<boolean> {
+    // The in-memory store is single-threaded, so a presence check is atomic.
+    if (this.items.has(event.id.toValue())) {
+      return false;
+    }
+    await this.save(event);
+    return true;
+  }
+
   async findPendingEvents(limit = 100): Promise<InboxEvent[]> {
     const out: InboxEvent[] = [];
     for (const id of this.pendingIds) {

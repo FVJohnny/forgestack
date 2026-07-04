@@ -7,7 +7,6 @@ import type { IIntegrationEventHandler } from '../integration-events/listener/ba
 import type { ParsedIntegrationMessage } from '../integration-events/types/integration-event.types';
 import { InboxEventName, InboxPayload, InboxTopic } from './domain/value-objects';
 import { normalizeError } from '../utils';
-import { ApplicationException } from '../errors';
 import { Id } from '../general';
 import { WithSpan, TracingService } from '../tracing';
 import { getInboxOutboxMetrics } from '../metrics/metrics.service';
@@ -86,17 +85,7 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
 
     const metrics = getInboxOutboxMetrics();
 
-    // Check for duplicate (expected with Kafka's at-least-once delivery)
-    const existingEvent = await this.inboxRepository.findById(new Id(message.id));
-    if (existingEvent) {
-      this.logger.debug(
-        `🔁 Duplicate message received (expected): Topic: ${topicName}, Name: ${message.name}, Id: ${message.id}.`,
-      );
-      metrics?.observeInboxEvent(topicName, message.name, 0, 'duplicate');
-      return { isNew: false, event: existingEvent };
-    }
-
-    // Create new inbox event
+    // Create the aggregate up front so we can return it even when skipping.
     const inboxEvent = InboxEvent.create({
       id: new Id(message.id),
       eventName: new InboxEventName(message.name),
@@ -104,7 +93,31 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
       payload: new InboxPayload(JSON.stringify(message)),
     });
 
-    await this.inboxRepository.save(inboxEvent);
+    // Skip events this service does not handle. A topic can carry events other
+    // bounded contexts care about; persisting them would only pile up
+    // never-processable rows. The Kafka offset is still committed by the
+    // caller, so the message is effectively acked.
+    if (!this.hasHandler(topicName, message.name)) {
+      this.logger.debug(
+        `⏭️  No handler for Topic: ${topicName}, Name: ${message.name} — skipping (not persisted).`,
+      );
+      metrics?.observeInboxEvent(topicName, message.name, 0, 'skipped');
+      return { isNew: false, event: inboxEvent };
+    }
+
+    // Atomic dedup: insert relying on the unique id index. A concurrent
+    // duplicate (expected with Kafka's at-least-once delivery) loses the race
+    // and is reported as a duplicate rather than overwriting the first insert.
+    const inserted = await this.inboxRepository.insertIfNew(inboxEvent);
+    if (!inserted) {
+      this.logger.debug(
+        `🔁 Duplicate message received (expected): Topic: ${topicName}, Name: ${message.name}, Id: ${message.id}.`,
+      );
+      metrics?.observeInboxEvent(topicName, message.name, 0, 'duplicate');
+      const existingEvent = (await this.inboxRepository.findById(new Id(message.id))) ?? inboxEvent;
+      return { isNew: false, event: existingEvent };
+    }
+
     metrics?.observeInboxEvent(topicName, message.name, 0, 'received');
 
     // this.logger.log(
@@ -236,6 +249,19 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     // Find the appropriate handler
     const eventHandlers = this.findHandlers(topic, eventName);
 
+    // Defensive: an event with no handler should have been skipped at receive
+    // time (see receiveMessage). If one slips through (e.g. a handler was
+    // deregistered), ack it as processed rather than treating it as a failure
+    // and retrying forever.
+    if (eventHandlers.length === 0) {
+      this.logger.warn(
+        `No handler for inbox event ${eventId} (topic: ${topic}, event: ${eventName}); marking processed without action.`,
+      );
+      event.markAsProcessed();
+      await this.inboxRepository.save(event);
+      return;
+    }
+
     TracingService.addEvent('inbox.event.handler_found', {
       'handler.name': eventHandlers.map((handler) => handler.constructor.name).join(', '),
     });
@@ -289,16 +315,11 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     );
   }
 
+  private hasHandler(topic: string, eventName: string): boolean {
+    return (this.eventHandlers.get(topic)?.get(eventName)?.length ?? 0) > 0;
+  }
+
   private findHandlers(topic: string, eventName: string): IIntegrationEventHandler[] {
-    const topicHandlers = this.eventHandlers.get(topic);
-    const eventHandlers = topicHandlers?.get(eventName) || [];
-
-    if (eventHandlers.length === 0) {
-      throw new ApplicationException(
-        `No handlers registered for topic '${topic}' and event '${eventName}'`,
-      );
-    }
-
-    return eventHandlers;
+    return this.eventHandlers.get(topic)?.get(eventName) ?? [];
   }
 }

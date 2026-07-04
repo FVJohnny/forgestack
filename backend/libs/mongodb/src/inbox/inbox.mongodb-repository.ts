@@ -28,6 +28,28 @@ export class Inbox_MongodbRepository
     return InboxEvent.fromValue(dto);
   }
 
+  async insertIfNew(event: InboxEvent): Promise<boolean> {
+    await this.ensureIndexes();
+    try {
+      await this.collection.insertOne(event.toValue() as InboxEventDTO);
+      return true;
+    } catch (error: unknown) {
+      // Duplicate key on the unique `id` index → the message was already
+      // accepted by a concurrent delivery. Treat it as a duplicate, not an
+      // error.
+      if (this.isDuplicateKeyError(error)) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  private isDuplicateKeyError(error: unknown): boolean {
+    return (
+      typeof error === 'object' && error !== null && (error as { code?: number }).code === 11000
+    );
+  }
+
   async findPendingEvents(limit = 100): Promise<InboxEvent[]> {
     await this.ensureIndexes();
 

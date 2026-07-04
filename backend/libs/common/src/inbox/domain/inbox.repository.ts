@@ -6,6 +6,14 @@ import type { InboxStatusVO } from './value-objects';
 
 export interface InboxRepository extends Repository<InboxEvent, Id> {
   save(event: InboxEvent, context?: RepositoryContext): Promise<void>;
+  /**
+   * Atomically inserts a new inbox event, relying on the unique `id` index for
+   * deduplication. Returns true if inserted, false if an event with the same
+   * id already exists. Use this instead of check-then-save so two concurrent
+   * deliveries of the same message cannot both be accepted (and the second
+   * cannot overwrite the first's status).
+   */
+  insertIfNew(event: InboxEvent): Promise<boolean>;
   findPendingEvents(limit?: number): Promise<InboxEvent[]>;
   /**
    * Atomically finds pending events AND marks them as processing.

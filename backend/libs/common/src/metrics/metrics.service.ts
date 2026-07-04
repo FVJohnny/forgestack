@@ -24,7 +24,7 @@ type OutboxLabelValues = {
 type InboxLabelValues = {
   topic: string;
   event_name: string;
-  status: 'received' | 'processed' | 'failed' | 'duplicate';
+  status: 'received' | 'processed' | 'failed' | 'duplicate' | 'skipped';
   service: string;
 };
 
@@ -52,7 +52,7 @@ export interface InboxOutboxMetricsInstance {
     topic: string,
     eventName: string,
     durationSeconds: number,
-    status: 'received' | 'processed' | 'failed' | 'duplicate',
+    status: 'received' | 'processed' | 'failed' | 'duplicate' | 'skipped',
   ): void;
   setInboxQueueSize(size: number): void;
 }
@@ -281,7 +281,7 @@ export class MetricsService {
     topic: string,
     eventName: string,
     durationSeconds: number,
-    status: 'received' | 'processed' | 'failed' | 'duplicate',
+    status: 'received' | 'processed' | 'failed' | 'duplicate' | 'skipped',
   ) {
     const labels: InboxLabelValues = {
       topic,

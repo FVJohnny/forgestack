@@ -43,7 +43,7 @@
       "signIn": "Entrar",
       "errors": {
         "passwordMismatch": "As senhas não coincidem",
-        "passwordLength": "A senha deve ter pelo menos 6 caracteres",
+        "passwordLength": "A senha deve ter pelo menos 8 caracteres e incluir uma letra e um número",
         "default": "Falha no cadastro. Por favor tente novamente."
       }
     },
@@ -193,7 +193,7 @@
         "success": "Senha atualizada. Você será desconectado em breve.",
         "errors": {
           "mismatch": "As novas senhas não coincidem",
-          "tooShort": "A senha deve ter pelo menos 8 caracteres",
+          "tooShort": "A senha deve ter pelo menos 8 caracteres e incluir uma letra e um número",
           "failed": "Falha ao alterar a senha. Verifique sua senha atual."
         }
       }

@@ -6,6 +6,7 @@ let _seq = 1;
 export class Password extends StringValueObject {
   private static readonly SALT_ROUNDS = process.env.NODE_ENV === 'test' ? 1 : 12;
   private static readonly MIN_LENGTH = 8;
+  private static readonly MAX_BYTES = 72;
   private static cachedTestPassword: Password | null = null;
 
   static async createFromPlainText(plainText: string) {
@@ -47,7 +48,22 @@ export class Password extends StringValueObject {
       throw new DomainValidationException(
         'password',
         password,
-        `Password must be at least ${Password.MIN_LENGTH} characters long`,
+        `Password must be at least ${Password.MIN_LENGTH} characters and include a letter and a number`,
+      );
+    }
+    // bcrypt silently truncates input beyond 72 bytes; reject instead.
+    if (Buffer.byteLength(password, 'utf8') > Password.MAX_BYTES) {
+      throw new DomainValidationException(
+        'password',
+        password,
+        `Password must be at most ${Password.MAX_BYTES} bytes long`,
+      );
+    }
+    if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+      throw new DomainValidationException(
+        'password',
+        password,
+        `Password must be at least ${Password.MIN_LENGTH} characters and include a letter and a number`,
       );
     }
   }

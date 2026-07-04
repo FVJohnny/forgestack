@@ -35,8 +35,27 @@ describe('Password Value Object', () => {
     });
 
     it('should accept password exactly 8 characters long', async () => {
-      const password = await Password.createFromPlainText('12345678');
+      const password = await Password.createFromPlainText('abcd1234');
       expect(password).toBeDefined();
+    });
+
+    it('should reject password without a letter', async () => {
+      await expect(Password.createFromPlainText('12345678')).rejects.toThrow(
+        DomainValidationException,
+      );
+    });
+
+    it('should reject password without a number', async () => {
+      await expect(Password.createFromPlainText('abcdefgh')).rejects.toThrow(
+        DomainValidationException,
+      );
+    });
+
+    it('should reject password longer than 72 bytes (bcrypt truncation limit)', async () => {
+      const longPassword = 'a1' + 'x'.repeat(71);
+      await expect(Password.createFromPlainText(longPassword)).rejects.toThrow(
+        DomainValidationException,
+      );
     });
   });
 

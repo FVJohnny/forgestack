@@ -43,7 +43,7 @@
       "signIn": "Zaloguj się",
       "errors": {
         "passwordMismatch": "Hasła nie są zgodne",
-        "passwordLength": "Hasło musi mieć co najmniej 6 znaków",
+        "passwordLength": "Hasło musi mieć co najmniej 8 znaków oraz zawierać literę i cyfrę",
         "default": "Rejestracja nie powiodła się. Spróbuj ponownie."
       }
     },
@@ -193,7 +193,7 @@
         "success": "Hasło zaktualizowane. Wkrótce zostaniesz wylogowany.",
         "errors": {
           "mismatch": "Nowe hasła nie są zgodne",
-          "tooShort": "Hasło musi mieć co najmniej 8 znaków",
+          "tooShort": "Hasło musi mieć co najmniej 8 znaków oraz zawierać literę i cyfrę",
           "failed": "Nie udało się zmienić hasła. Sprawdź obecne hasło."
         }
       }

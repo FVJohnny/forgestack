@@ -11,6 +11,7 @@ import { FormAlert } from '@/app/shared/ui/form-alert';
 import { AuthShell } from '@/app/shared/auth/auth-shell';
 import { AuthHeading } from '@/app/shared/auth/auth-heading';
 import { authService } from '@/lib/api/services/auth.service';
+import { isPasswordValid } from '@/lib/utils/password';
 
 function ResetPasswordForm() {
   const t = useTranslations('auth.resetPassword');
@@ -34,6 +35,10 @@ function ResetPasswordForm() {
     setError('');
     if (password !== confirmPassword) {
       setError(t('errors.mismatch'));
+      return;
+    }
+    if (!isPasswordValid(password)) {
+      setError(t('errors.tooShort'));
       return;
     }
     if (!passwordResetId) {
@@ -76,6 +81,7 @@ function ResetPasswordForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          minLength={8}
         />
       </div>
       <div className="space-y-2">

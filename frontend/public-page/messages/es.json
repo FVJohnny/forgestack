@@ -43,7 +43,7 @@
       "signIn": "Iniciar Sesión",
       "errors": {
         "passwordMismatch": "Las contraseñas no coinciden",
-        "passwordLength": "La contraseña debe tener al menos 6 caracteres",
+        "passwordLength": "La contraseña debe tener al menos 8 caracteres e incluir una letra y un número",
         "default": "Error de registro. Por favor intenta de nuevo."
       }
     },
@@ -193,7 +193,7 @@
         "success": "Contraseña actualizada. Se cerrará tu sesión en breve.",
         "errors": {
           "mismatch": "Las nuevas contraseñas no coinciden",
-          "tooShort": "La contraseña debe tener al menos 8 caracteres",
+          "tooShort": "La contraseña debe tener al menos 8 caracteres e incluir una letra y un número",
           "failed": "No se pudo cambiar la contraseña. Verifica tu contraseña actual."
         }
       }

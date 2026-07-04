@@ -43,7 +43,7 @@
       "signIn": "Inloggen",
       "errors": {
         "passwordMismatch": "Wachtwoorden komen niet overeen",
-        "passwordLength": "Wachtwoord moet minimaal 6 tekens zijn",
+        "passwordLength": "Het wachtwoord moet minimaal 8 tekens lang zijn en een letter en een cijfer bevatten",
         "default": "Registratie mislukt. Probeer het opnieuw."
       }
     },
@@ -193,7 +193,7 @@
         "success": "Wachtwoord bijgewerkt. Je wordt zo uitgelogd.",
         "errors": {
           "mismatch": "Nieuwe wachtwoorden komen niet overeen",
-          "tooShort": "Wachtwoord moet minimaal 8 tekens zijn",
+          "tooShort": "Het wachtwoord moet minimaal 8 tekens lang zijn en een letter en een cijfer bevatten",
           "failed": "Wachtwoord wijzigen mislukt. Controleer je huidige wachtwoord."
         }
       }

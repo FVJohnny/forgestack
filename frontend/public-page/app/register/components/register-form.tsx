@@ -13,6 +13,7 @@ import { FormAlert } from '@/app/shared/ui/form-alert';
 import { AuthHeading } from '@/app/shared/auth/auth-heading';
 import { GoogleSignInButton } from '@/app/shared/ui/google-sign-in-button';
 import { useAuth } from '@/lib/contexts/auth-context';
+import { isPasswordValid } from '@/lib/utils/password';
 
 const GOOGLE_OAUTH_ENABLED = !!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -50,7 +51,7 @@ export function RegisterForm() {
       setError(t('errors.passwordMismatch'));
       return;
     }
-    if (password.length < 6) {
+    if (!isPasswordValid(password)) {
       setError(t('errors.passwordLength'));
       return;
     }
@@ -101,7 +102,7 @@ export function RegisterForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={6}
+            minLength={8}
           />
         </div>
 
@@ -114,7 +115,7 @@ export function RegisterForm() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-            minLength={6}
+            minLength={8}
           />
         </div>
 

@@ -42,7 +42,8 @@
       "errors": {
         "mismatch": "Passwords do not match",
         "invalid": "Invalid or expired reset link",
-        "failed": "Failed to reset password. Please try again."
+        "failed": "Failed to reset password. Please try again.",
+        "tooShort": "Password must be at least 8 characters and include a letter and a number"
       }
     },
     "register": {
@@ -59,7 +60,7 @@
       "signIn": "Sign In",
       "errors": {
         "passwordMismatch": "Passwords do not match",
-        "passwordLength": "Password must be at least 6 characters long",
+        "passwordLength": "Password must be at least 8 characters and include a letter and a number",
         "default": "Registration failed. Please try again."
       }
     },
@@ -209,7 +210,7 @@
         "success": "Password updated. You'll be signed out shortly.",
         "errors": {
           "mismatch": "New passwords do not match",
-          "tooShort": "Password must be at least 8 characters",
+          "tooShort": "Password must be at least 8 characters and include a letter and a number",
           "failed": "Failed to change password. Check your current password."
         }
       }

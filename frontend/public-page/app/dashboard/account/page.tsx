@@ -13,6 +13,7 @@ import { Skeleton } from '@/app/shared/ui/skeleton';
 import { useUser } from '@/lib/contexts/user-context';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { accountService } from '@/lib/api/services/account.service';
+import { isPasswordValid } from '@/lib/utils/password';
 import { PageHeader } from '../components/page-header';
 
 export default function AccountPage() {
@@ -34,7 +35,7 @@ export default function AccountPage() {
       setError(t('password.errors.mismatch'));
       return;
     }
-    if (newPassword.length < 8) {
+    if (!isPasswordValid(newPassword)) {
       setError(t('password.errors.tooShort'));
       return;
     }

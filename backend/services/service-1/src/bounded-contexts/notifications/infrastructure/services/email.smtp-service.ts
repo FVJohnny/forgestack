@@ -18,7 +18,7 @@ import * as nodemailer from 'nodemailer';
  * - SMTP_USER: SMTP authentication username
  * - SMTP_PASS: SMTP authentication password
  * - SMTP_FROM: Email address to send from
- * - SMTP_FROM_NAME: Display name for sender (default: "NestJS Framework")
+ * - SMTP_FROM_NAME: Display name for sender (default: APP_NAME, or "ForgeStack")
  *
  * Example for Gmail:
  * SMTP_HOST=smtp.gmail.com
@@ -66,7 +66,9 @@ export class Email_SmtpService implements Email_Service {
       if (!this.transporter) throw new InfrastructureException('SMTP transporter not configured');
 
       const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? 'noreply@example.com';
-      const fromName = process.env.SMTP_FROM_NAME ?? 'NestJS Framework';
+      // Default to the app name (ForgeStack), consistent with the email-body
+      // handlers that use APP_NAME.
+      const fromName = process.env.SMTP_FROM_NAME ?? process.env.APP_NAME ?? 'ForgeStack';
       const from = `"${fromName}" <${fromEmail}>`;
 
       this.logger.log(`Sending email to ${options.to.toValue()} from ${from}...`);

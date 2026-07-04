@@ -6,7 +6,7 @@
 
 **A solid foundation for production-ready apps.**
 
-ForgeStack is an opinionated, batteries-included starting point for building real applications — not just a backend framework. It ships a hexagonal architecture with Domain-Driven Design (DDD) and CQRS, an outbox/inbox pattern for reliable integration events over Kafka, a Next.js dev-console frontend, full observability (metrics, logs, traces), TLS-terminated deploys, and a set of custom ESLint rules that enforce the architectural boundaries so the design stays intact as the codebase grows.
+ForgeStack is an opinionated, batteries-included starting point for building real applications — not just a backend framework. It ships a hexagonal architecture with Domain-Driven Design (DDD) and CQRS, an outbox/inbox pattern for reliable integration events over Kafka, a Next.js frontend (landing page, auth, docs, and a live dashboard), full observability (metrics, logs, traces), TLS-terminated deploys, and a set of custom ESLint rules that enforce the architectural boundaries so the design stays intact as the codebase grows.
 
 Because the structure is consistent and the boundaries are enforced, the codebase is unusually **legible to both engineers and AI coding agents** — patterns are predictable, so generated code lands in the right place. A demo `auth` → `notifications` event flow shows the end-to-end wiring you can copy for your own bounded contexts.
 
@@ -20,7 +20,7 @@ Because the structure is consistent and the boundaries are enforced, the codebas
 - **Deployable day one** — Docker Compose, a Caddy reverse proxy with automatic TLS, and one-command deploy + server-provisioning scripts.
 - **Pluggable infrastructure** — repository contracts live in the domain and are bound to MongoDB, Redis, or in-memory implementations via NestJS injection tokens, making tests fast and adapters swappable.
 - **Nx monorepo** — shared libraries, per-project targets, caching, and a single dependency graph across backend services and the frontend.
-- **Auth + a dev-console frontend** — a Next.js 16 / React 19 app with login, registration, password reset, and a live dashboard (system health + event throughput + admin), internationalized with `next-intl`.
+- **Auth + a frontend** — a Next.js 16 / React 19 app with login, registration, password reset, and a live dashboard (system health + event throughput + admin), internationalized with `next-intl`.
 
 ## Monorepo structure
 
@@ -33,16 +33,26 @@ Because the structure is consistent and the boundaries are enforced, the codebas
 │   │   ├── mongodb/                # MongoDB repository base classes + outbox storage
 │   │   └── redis/                  # Redis caching & session helpers
 │   └── services/
-│       └── service-1/              # The NestJS API (hexagonal + DDD + CQRS)
+│       ├── service-1/              # The main NestJS API (hexagonal + DDD + CQRS)
+│       │   └── src/bounded-contexts/
+│       │       ├── auth/           # Registration, login, JWT, password reset
+│       │       ├── notifications/  # Consumes auth events, sends emails (minimal user projection)
+│       │       └── shared/         # Cross-context value objects
+│       └── service-2/              # A second service showing cross-SERVICE events
 │           └── src/bounded-contexts/
-│               ├── auth/           # Registration, login, JWT, password reset
-│               ├── notifications/  # Consumes auth events, sends emails (minimal user projection)
-│               └── shared/         # Cross-context value objects
+│               └── analytics/      # Consumes service-1 events over Kafka
 ├── frontend/
-│   └── public-page/                # Next.js 16 / React 19 auth shell (Tailwind, Radix UI, next-intl)
+│   └── public-page/                # Next.js 16 / React 19 app (Tailwind, Radix UI, next-intl)
 ├── infra/
-│   ├── docker/                     # Docker Compose (dev/prod), Caddy, env files, deploy scripts
+│   ├── compose/                    # Docker Compose files (dev/prod)
+│   ├── caddy/                      # Caddy reverse-proxy config (automatic TLS)
+│   ├── dockerfiles/                # Dockerfiles for services and monitoring images
+│   ├── env/                        # Production env templates (*.env.prod.example)
+│   ├── mongo/                      # MongoDB replica-set init
+│   ├── scripts/                    # dev-start, deploy, server-provisioning scripts
 │   └── monitoring/                 # Prometheus, Grafana, Loki, Tempo, Promtail configs
+├── tools/
+│   └── forgestack/                 # Nx generator CLI (scaffolds new services)
 └── eslint/rules/                   # Custom ESLint rules enforcing DDD/CQRS/hexagonal boundaries
 ```
 
@@ -155,12 +165,14 @@ npm run prod:update -- 3     # or pass the option number directly
 The script builds `linux/amd64` images, pushes them to your Docker registry (configure in `infra/env/infra.env.prod`), auto-increments the image version tags in the prod compose file, then syncs the compose + env files to the server and runs `docker compose up -d`. Menu options:
 
 1. Update frontend
-2. Update service-1
-3. Update ALL apps
-4. Update Caddy (reverse proxy)
-5. Update monitoring stack
-6. Update ALL (apps + proxy + monitoring)
-7. Deploy only (no builds — re-deploy current image versions)
+2. Update ALL apps (frontend + services)
+3. Update Caddy (reverse proxy)
+4. Update monitoring stack
+5. Update ALL (apps + proxy + monitoring)
+6. Deploy only (no builds — re-deploy current image versions)
+0. Exit
+
+To deploy a single backend service, type its name at the prompt (e.g. `service-1`) instead of a number.
 
 Production env files live in `infra/env/*.env.prod` (gitignored); the matching `*.env.prod.example` files document the required keys. See [`docs/deployment.md`](docs/deployment.md) and [`docs/infrastructure.md`](docs/infrastructure.md) for details.
 

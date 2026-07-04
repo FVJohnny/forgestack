@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This Nx monorepo is a starter template for NestJS microservices. Backend code lives in `backend/services/<service>/src`; `service-1` illustrates the expected bounded-context layout. Shared domain and infrastructure utilities (events, tracing, logging, outbox helpers) reside in `backend/libs/*`, while the sample frontend sits in `frontend/`. Docker Compose files for local and production workflows are under `infra/compose/`, and each service’s `project.json` wires Nx targets.
+This Nx monorepo is **ForgeStack**, a starter template for NestJS microservices. Backend code lives in `backend/services/<service>/src`; `service-1` illustrates the expected bounded-context layout and `service-2` demonstrates cross-service events. Shared domain and infrastructure utilities (events, tracing, logging, outbox helpers) reside in `backend/libs/*`, while the sample frontend sits in `frontend/`. Docker Compose files for local and production workflows are under `infra/compose/`, and each service’s `project.json` wires Nx targets.
 
 ## Architecture Overview
 

@@ -49,11 +49,11 @@ After it finishes:
 
 1. Point `infra/env/infra.env.prod` at the new box (`SERVER_IP`, `SERVER_USER`).
 2. Verify SSH: `ssh DEPLOY_USER@SERVER_IP 'docker ps'`.
-3. First deploy: `npm run prod:update` → choose **6** (ALL) so proxy + monitoring images get built and pushed too.
+3. First deploy: `npm run prod:update` → choose **5** (ALL) so proxy + monitoring images get built and pushed too.
 
 MongoDB comes up as a single-node replica set (`rs0`); `infra/mongo/` initializes it on first boot — no manual step. Data lives in named Docker volumes, so a fresh box starts with an empty DB (migrate/restore separately if needed).
 
 ## Secrets
 
-All prod secrets live in `infra/env/*.env.prod` (gitignored). The `*.env.prod.example` files in the same directory document the required keys without values. To update a secret, edit the local `.env.prod` file and re-run `npm run prod:update` choosing option **7** (deploy only — rsyncs env files and restarts containers without rebuilding images).
+All prod secrets live in `infra/env/*.env.prod` (gitignored). The `*.env.prod.example` files in the same directory document the required keys without values. To update a secret, edit the local `.env.prod` file and re-run `npm run prod:update` choosing option **6** (deploy only — rsyncs env files and restarts containers without rebuilding images).
 </content>

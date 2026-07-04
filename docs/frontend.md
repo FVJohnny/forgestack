@@ -1,11 +1,13 @@
 # Frontend Architecture (`frontend/public-page/`)
 
-Next.js 16 App Router with React 19, standalone output mode. The shipped app is an auth-only shell you can build on.
+Next.js 16 App Router with React 19, standalone output mode. The shipped app has a landing page, full auth flows, a live dashboard, and an MDX documentation site you can build on.
 
 ## Routing
 
 - `/` (landing / entry page)
 - `/login`, `/register`, `/verify-email`, `/forgot-password`, `/reset-password` (auth flows)
+- `/dashboard` (authenticated console: system health, event throughput, account, and admin)
+- `/docs` (MDX documentation site)
 
 ## State management
 

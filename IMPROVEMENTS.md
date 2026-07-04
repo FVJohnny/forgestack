@@ -467,17 +467,20 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 
 ## H. Docs, identity, positioning
 
-- [ ] **111. Three conflicting identities** (High)
-  Repo dir/remote say `nestjs-microservices-framework`, package.json points at `forgestack.git`, and the brand is ForgeStack. Also: `service-1`/`service-2` as names, the `fmf` i18n prefix, "dev-console" vs `public-page`, AGENTS.md never says ForgeStack, and the SMTP from-name defaults to "NestJS Framework". Decide the identity once and apply it everywhere.
+- [x] **111. Three conflicting identities** (High)
+  Repo dir/remote said `nestjs-microservices-framework`, package.json pointed at `forgestack.git`, and the brand is ForgeStack.
+  **Status: Done in-repo; one manual step left.** Aligned everything code-side on ForgeStack: AGENTS.md now names ForgeStack, the SMTP from-name defaults to `APP_NAME`/"ForgeStack" instead of "NestJS Framework" (this also closes item 17), and README no longer uses the "dev-console" term. The `fmf` i18n prefix is tracked separately as item 75. USER TODO: the GitHub repo is still named `nestjs-microservices-framework` while package.json and the brand say `forgestack` — rename the GitHub repo to `forgestack` (or, if you prefer the other name, update package.json and the README badges). Only you can rename the repo.
 
-- [ ] **112. `service-2` exists but no doc mentions it** (High)
-  README, architecture.md, and AGENTS.md describe a one-service repo while `backend/services/service-2` (analytics), its env files, and a Caddy route all exist. Document it or remove it.
+- [x] **112. `service-2` exists but no doc mentions it** (High)
+  README, architecture.md, and AGENTS.md described a one-service repo while `backend/services/service-2` (analytics) exists.
+  **Status: Done.** The README monorepo tree now shows `service-2` (analytics, "consumes service-1 events over Kafka") as a second service demonstrating cross-service events, and AGENTS.md mentions it. Kept it (it demonstrates the cross-service event flow) rather than removing it.
 
-- [ ] **113. README and deployment docs contradict the scripts** (High)
-  The README tree shows a nonexistent `infra/docker/` and omits `tools/forgestack/`; the deployment menu numbers in README and `docs/deployment.md` do not match `deploy.sh`. Note: the wrong hint inside `setup-server.sh` was already fixed with item 21; `prod-setup.sh` still prints a wrong option number.
+- [x] **113. README and deployment docs contradict the scripts** (High)
+  The README tree showed a nonexistent `infra/docker/` and omitted `tools/forgestack/`; the deploy-menu numbers in the README, `docs/deployment.md`, and `prod-setup.sh` did not match `deploy.sh`.
+  **Status: Done.** Rewrote the README `infra/` tree to the real subdirs (compose, caddy, dockerfiles, env, mongo, scripts, monitoring) and added `tools/forgestack/`. Fixed the README deploy menu to match `deploy.sh` exactly (and noted that a single service is deployed by typing its name). Fixed the two wrong option numbers in `docs/deployment.md` (ALL is 5, deploy-only is 6) and the two in `prod-setup.sh`.
 
 - [ ] **114. Two documentation sites that do not know about each other** (Medium)
-  Root `docs/` and the MDX site under `frontend/public-page/app/docs/` will drift. Cross-link them and declare one canonical. `docs/frontend.md` still calls the app an "auth-only shell", and `commands.md` cites a docs page with no link.
+  Root `docs/` and the MDX site under `frontend/public-page/app/docs/` will drift. Cross-link them and declare one canonical. **Partially done:** `docs/frontend.md` no longer calls the app an "auth-only shell" (it now lists the dashboard and docs routes). Still open: cross-linking the two doc sites and the `commands.md` unlinked reference.
 
 - [ ] **115. Missing adoption docs** (Medium)
   No "make it yours" guide (rename service-1, rebrand, set domain and registry), no "add a bounded context" walkthrough, no troubleshooting section, the one-command `npm run prod:setup` path is undocumented, and pnpm is missing from the prerequisites.

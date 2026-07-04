@@ -1,3 +1,5 @@
+import { DomainValidationException } from '../../../errors';
+
 import { ValueObject } from './base.vo';
 
 export class DateVO extends ValueObject<Date> {
@@ -12,6 +14,15 @@ export class DateVO extends ValueObject<Date> {
 
   validate(): void {
     super.validate();
+    // `new Date('garbage')` yields an Invalid Date (a Date whose time is NaN).
+    // The base check only guards null/undefined, so reject it explicitly.
+    if (Number.isNaN(this.value.getTime())) {
+      throw new DomainValidationException(
+        this.constructor.name,
+        String(this.value),
+        'Invalid date',
+      );
+    }
   }
 
   static none(): DateVO {

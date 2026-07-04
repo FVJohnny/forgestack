@@ -33,7 +33,26 @@ export abstract class ValueObject<T extends Primitives> implements IValueObject<
     if (!(other instanceof ValueObject)) {
       return false;
     }
-    return other.constructor.name === this.constructor.name && other.value === this.value;
+    // Compare prototypes rather than constructor.name: name-based checks break
+    // under minification (two different VOs can share a mangled name), while
+    // prototype identity is stable.
+    if (Object.getPrototypeOf(this) !== Object.getPrototypeOf(other)) {
+      return false;
+    }
+    return ValueObject.valuesEqual(this.value, other.value);
+  }
+
+  // Value equality across the Primitives union: Dates and structural values
+  // (arrays/objects) are not reference-comparable, so compare them by content.
+  // Scalars fall through to strict equality.
+  private static valuesEqual(a: Primitives, b: Primitives): boolean {
+    if (a instanceof Date && b instanceof Date) {
+      return a.getTime() === b.getTime();
+    }
+    if (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null) {
+      return JSON.stringify(a) === JSON.stringify(b);
+    }
+    return a === b;
   }
 
   toString(): string {

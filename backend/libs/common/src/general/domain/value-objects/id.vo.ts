@@ -4,10 +4,9 @@ import { DomainValidationException } from '../../../errors';
 import { StringValueObject } from './string.vo';
 
 export class Id extends StringValueObject {
-  constructor(value: string) {
-    super(value);
-    this.validate();
-  }
+  // No constructor override needed: the base ValueObject constructor already
+  // calls validate() (dispatched to the override below), so it runs exactly
+  // once. The previous explicit this.validate() here ran it a second time.
 
   static random(): Id {
     return new Id(uuid());

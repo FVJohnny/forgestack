@@ -22,7 +22,7 @@ const jetbrainsMono = JetBrains_Mono({
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://localhost';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const title = `${BRAND.name} — ${BRAND.tagline}`;
+  const title = `${BRAND.name}: ${BRAND.tagline}`;
   return {
     metadataBase: new URL(SITE_URL),
     title: {

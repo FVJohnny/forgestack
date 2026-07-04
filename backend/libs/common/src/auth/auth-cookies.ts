@@ -20,16 +20,21 @@ const ACCESS_COOKIE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 1 day
 const REFRESH_COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 function baseCookieOptions() {
-  const isProduction = process.env.NODE_ENV === 'production';
   return {
     httpOnly: true,
-    // Secure everywhere except plain-http local dev, where the browser would
-    // drop a Secure cookie sent over http://localhost.
-    secure: isProduction,
-    // 'lax' lets top-level navigations carry the cookie (e.g. returning from
-    // an OAuth redirect) while still blocking most CSRF vectors. The API is
-    // same-site with the frontend behind Caddy, so 'lax' is sufficient.
-    sameSite: 'lax' as const,
+    // Both dev and prod serve everything over HTTPS through Caddy, so Secure is
+    // always valid. It is also REQUIRED here: SameSite=None cookies are
+    // rejected by browsers unless Secure is set.
+    secure: true,
+    // The frontend (e.g. https://localhost, https://app.example.com) and the
+    // API (https://service1.localhost, https://service1.example.com) are on
+    // DIFFERENT hosts, so a fetch from the app to the API is cross-site. With
+    // SameSite=Lax the browser would not attach these cookies to that fetch
+    // (Lax only covers top-level navigations), which made login succeed but
+    // the follow-up /auth/me get a 401. SameSite=None lets the cookies ride
+    // cross-site requests; CSRF is mitigated because the tokens are httpOnly
+    // and the API also validates them against the token store.
+    sameSite: 'none' as const,
     path: '/',
   };
 }

@@ -7,7 +7,7 @@ import type { IIntegrationEventHandler } from '../integration-events/listener/ba
 import type { ParsedIntegrationMessage } from '../integration-events/types/integration-event.types';
 import { InboxEventName, InboxPayload, InboxTopic } from './domain/value-objects';
 import { normalizeError } from '../utils';
-import { Id } from '../general';
+import { DateVO, Id } from '../general';
 import { WithSpan, TracingService } from '../tracing';
 import { getInboxOutboxMetrics } from '../metrics/metrics.service';
 
@@ -16,6 +16,7 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new CorrelationLogger(InboxService.name);
   private processingInterval?: NodeJS.Timeout;
   private stuckRecoveryInterval?: NodeJS.Timeout;
+  private cleanupInterval?: NodeJS.Timeout;
   private readonly eventHandlers = new Map<string, Map<string, IIntegrationEventHandler[]>>(); // topic -> eventName -> handler
   private trackEvent?: (topic: string, message: ParsedIntegrationMessage, success: boolean) => void;
 
@@ -24,6 +25,8 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     intervalMs: 500,
     stuckRecoveryIntervalMs: 60_000, // Check every minute
     stuckThresholdMs: 5 * 60_000, // PROCESSING longer than 5 min is stuck
+    cleanupIntervalMs: 6 * 60 * 60_000, // Every 6 hours
+    processedRetentionMs: 7 * 24 * 60 * 60_000, // Keep processed events 7 days
   };
 
   constructor(
@@ -48,6 +51,14 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
       });
     }, this.config.stuckRecoveryIntervalMs);
 
+    // Periodically delete old processed events so the collection does not grow
+    // unbounded.
+    this.cleanupInterval = setInterval(() => {
+      this.cleanupProcessedEvents().catch((error) => {
+        this.logger.error('Inbox cleanup tick failed', error as Error);
+      });
+    }, this.config.cleanupIntervalMs);
+
     this.logger.log(`Inbox processor started with ${this.config.intervalMs}ms interval`);
   }
 
@@ -58,6 +69,9 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     if (this.stuckRecoveryInterval) {
       clearInterval(this.stuckRecoveryInterval);
     }
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
     this.logger.log('Inbox processor stopped');
   }
 
@@ -67,6 +81,12 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     if (reclaimed > 0) {
       this.logger.warn(`Reclaimed ${reclaimed} stuck inbox events (processing > 5 min)`);
     }
+  }
+
+  private async cleanupProcessedEvents(): Promise<void> {
+    const olderThan = new DateVO(new Date(Date.now() - this.config.processedRetentionMs));
+    await this.inboxRepository.deleteProcessed(olderThan);
+    this.logger.debug('Cleaned up processed inbox events older than the retention window');
   }
 
   setEventTracker(

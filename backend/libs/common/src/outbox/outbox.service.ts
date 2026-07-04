@@ -15,8 +15,10 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
   private readonly BATCH_SIZE = 100;
   private readonly STUCK_RECOVERY_INTERVAL_MS = 60_000; // Check every minute
   private readonly STUCK_THRESHOLD_MS = 5 * 60_000; // 5 minutes
+  private readonly CLEANUP_INTERVAL_MS = 6 * 60 * 60_000; // Every 6 hours
   private processingInterval?: NodeJS.Timeout;
   private stuckRecoveryInterval?: NodeJS.Timeout;
+  private cleanupInterval?: NodeJS.Timeout;
   private isProcessing = false;
 
   constructor(
@@ -41,6 +43,14 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
       });
     }, this.STUCK_RECOVERY_INTERVAL_MS);
 
+    // Periodically delete old processed events so the collection does not grow
+    // unbounded. Dead-lettered (FAILED) events are retained (see deleteProcessed).
+    this.cleanupInterval = setInterval(() => {
+      this.cleanupProcessedEvents().catch((error) => {
+        this.logger.error('Outbox cleanup tick failed', error as Error);
+      });
+    }, this.CLEANUP_INTERVAL_MS);
+
     this.logger.log(`Outbox processor started with ${this.PROCESSING_INTERVAL_MS}ms interval`);
   }
 
@@ -50,6 +60,9 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
     }
     if (this.stuckRecoveryInterval) {
       clearInterval(this.stuckRecoveryInterval);
+    }
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
     }
     this.logger.log('Outbox processor stopped');
   }

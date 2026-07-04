@@ -101,6 +101,19 @@ describe('OutboxService', () => {
     expect(publisher.calls.length).toBeLessThanOrEqual(3);
   });
 
+  it('cleanupProcessedEvents deletes only old processed events', async () => {
+    const publisher = new FlakyPublisher(0);
+    const service = buildService(publisher);
+    const deleteSpy = jest.spyOn(repository, 'deleteProcessed');
+
+    await service.cleanupProcessedEvents();
+
+    expect(deleteSpy).toHaveBeenCalledTimes(1);
+    const cutoff = deleteSpy.mock.calls[0][0] as Date;
+    // Cutoff should be in the past (retention window applied).
+    expect(cutoff.getTime()).toBeLessThan(Date.now());
+  });
+
   it('processes a batch sequentially (awaits each publish)', async () => {
     // A publisher that records concurrency: if processEvent did not await, the
     // second publish would start before the first resolved.

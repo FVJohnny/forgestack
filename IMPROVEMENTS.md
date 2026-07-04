@@ -165,8 +165,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   Any event on a subscribed topic that this service did not handle became permanent FAILED noise (and, after item 31, would retry then dead-letter — still wrong).
   **Status: Done.** `receiveMessage` now checks `hasHandler(topic, event)` and skips unhandled events entirely: they are not persisted (the Kafka offset is still committed, so they are effectively acked), matching the non-inbox listener's behavior. `findHandlers` no longer throws, and `processEvent` has a defensive fallback that marks a handler-less event processed instead of failing it. Verified live: service-2 skips the `email.verified` event it has no handler for while still processing `user.created`.
 
-- [ ] **35. Nothing ever calls the outbox/inbox cleanup methods** (Medium)
-  `cleanupProcessedEvents` / `deleteProcessed` have no callers, so the collections grow unbounded. Fix: schedule cleanup inside the services.
+- [x] **35. Nothing ever calls the outbox/inbox cleanup methods** (Medium)
+  `cleanupProcessedEvents` / `deleteProcessed` had no callers, so the collections grew unbounded.
+  **Status: Done.** Both services now run a self-managed cleanup interval (every 6 hours) that deletes processed events older than the retention window (7 days), consistent with how they already own their processing and stuck-reclaim intervals (no new `@nestjs/schedule` dependency in the framework lib). Added an inbox `cleanupProcessedEvents` method (only the repo had `deleteProcessed`). FAILED dead-letters are retained. Both intervals are cleared on module destroy. New outbox test asserts the cleanup applies a past cutoff.
 
 - [ ] **36. Kafka consumer readiness is wrong** (Medium)
   Readiness flips true when `consumer.run()` resolves, which happens before partitions are assigned, and a failed `startConsumer` only logs and never retries. Fix: listen for GROUP_JOIN / CRASH events and add retry.

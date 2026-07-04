@@ -62,6 +62,13 @@ export class UserToken_RedisRepository
     // this.logger.debug(`Stored ${token.type.toValue()} token for user ${token.userId.toValue()}`);
   }
 
+  async clear(context?: RepositoryContext): Promise<void> {
+    await super.clear(context);
+    // Also drop the secondary indexes kept next to the items.
+    await this.deleteByPattern(`${this.tokenLookupPrefix}*`, context);
+    await this.deleteByPattern(`${this.userTokensPrefix}*`, context);
+  }
+
   async remove(id: Id, context?: RepositoryContext): Promise<void> {
     // Clean up the secondary indexes (token lookup + user token set) so a
     // removed token cannot be resolved through findByToken/getUserTokens.

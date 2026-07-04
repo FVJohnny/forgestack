@@ -72,13 +72,29 @@ export abstract class Base_RedisRepository<TEnt extends SharedAggregate>
   }
 
   async clear(context?: RepositoryContext): Promise<void> {
+    // Only delete this repository's own keys (derived from itemKey), never
+    // the whole database: Redis is shared by every repository and by other
+    // concerns like sessions and rate limits.
+    await this.deleteByPattern(this.itemKey('*'), context);
+  }
+
+  /**
+   * Deletes all keys matching the pattern using SCAN, which iterates in
+   * batches instead of blocking Redis the way KEYS does.
+   */
+  protected async deleteByPattern(pattern: string, context?: RepositoryContext): Promise<void> {
     this.registerTransactionParticipant(context);
     const client = this.getClient(context);
+    const redis = this.getRedisClient();
 
-    const keys = await this.getRedisClient().keys('*');
-    if (keys.length > 0) {
-      await client.del(...keys);
-    }
+    let cursor = '0';
+    do {
+      const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 500);
+      cursor = nextCursor;
+      if (keys.length > 0) {
+        await client.del(...keys);
+      }
+    } while (cursor !== '0');
   }
 
   protected getClient(context?: RepositoryContext): Redis | ChainableCommander {

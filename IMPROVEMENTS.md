@@ -15,11 +15,11 @@ How to read an item:
 |---|---|---|---|
 | A. Security | 26 | 25 done, 1 partial (item 5) | none (all code done) |
 | B. Backend reliability (outbox/inbox/Kafka) | 19 | 19 (44 deferred) | none |
-| C. Backend code quality | 13 | 6 | 48, 49, 52, 54, 57, 58, 59 |
+| C. Backend code quality | 13 | 7 | 48, 49, 52, 54, 57, 58 |
 | D. Backend testing | 2 | 0 | 61, 62 |
 | E. Frontend | 15 | 14 | 71 |
 | F. Infra and deployment | 15 | 14 done, 1 won't-do (82) | none |
-| G. Tooling, lint, DX | 18 | 6 | 98, 100-110 |
+| G. Tooling, lint, DX | 18 | 14 | 100, 102, 105, 106 |
 | H. Docs, identity, positioning | 8 | 3 | 114-118 |
 
 All of Section A is code-complete. Item 5's remaining work is manual secret rotation by the maintainer (the repo and its history are already clean).

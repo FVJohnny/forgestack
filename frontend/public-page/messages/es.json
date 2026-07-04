@@ -115,7 +115,6 @@
       "account": "Cuenta",
       "admin": "Administración",
       "sectionMain": "Consola",
-      "sectionSystem": "Sistema",
       "logout": "Cerrar sesión",
       "env": "entorno"
     },
@@ -123,7 +122,6 @@
       "title": "Resumen del sistema",
       "subtitle": "Estado en vivo y flujo de eventos del servicio.",
       "live": "en vivo",
-      "paused": "en pausa",
       "refreshedAt": "sincronizado {time}",
       "health": {
         "title": "Estado del sistema",
@@ -160,7 +158,6 @@
         "title": "Tu cuenta",
         "email": "Correo",
         "role": "Rol",
-        "memberSince": "Miembro desde",
         "view": "Gestionar cuenta"
       },
       "motd": {
@@ -174,9 +171,7 @@
         "title": "Perfil",
         "email": "Correo",
         "role": "Rol",
-        "userId": "ID de usuario",
-        "completed": "Completado",
-        "pending": "Pendiente"
+        "userId": "ID de usuario"
       },
       "password": {
         "title": "Cambiar contraseña",

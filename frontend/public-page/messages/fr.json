@@ -115,7 +115,6 @@
       "account": "Compte",
       "admin": "Admin",
       "sectionMain": "Console",
-      "sectionSystem": "Système",
       "logout": "Se déconnecter",
       "env": "env"
     },
@@ -123,7 +122,6 @@
       "title": "Vue d'ensemble du système",
       "subtitle": "Santé en direct et flux d'événements à travers le service.",
       "live": "en direct",
-      "paused": "en pause",
       "refreshedAt": "synchronisé {time}",
       "health": {
         "title": "Santé du système",
@@ -160,7 +158,6 @@
         "title": "Votre compte",
         "email": "Email",
         "role": "Rôle",
-        "memberSince": "Membre depuis",
         "view": "Gérer le compte"
       },
       "motd": {
@@ -174,9 +171,7 @@
         "title": "Profil",
         "email": "Email",
         "role": "Rôle",
-        "userId": "ID utilisateur",
-        "completed": "Terminé",
-        "pending": "En attente"
+        "userId": "ID utilisateur"
       },
       "password": {
         "title": "Changer le mot de passe",

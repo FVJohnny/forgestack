@@ -115,7 +115,6 @@
       "account": "Konto",
       "admin": "Admin",
       "sectionMain": "Konsole",
-      "sectionSystem": "System",
       "logout": "Abmelden",
       "env": "Umg."
     },
@@ -123,7 +122,6 @@
       "title": "Systemübersicht",
       "subtitle": "Live-Zustand und Ereignisfluss über den Dienst hinweg.",
       "live": "live",
-      "paused": "pausiert",
       "refreshedAt": "synchronisiert {time}",
       "health": {
         "title": "Systemzustand",
@@ -160,7 +158,6 @@
         "title": "Dein Konto",
         "email": "E-Mail",
         "role": "Rolle",
-        "memberSince": "Mitglied seit",
         "view": "Konto verwalten"
       },
       "motd": {
@@ -174,9 +171,7 @@
         "title": "Profil",
         "email": "E-Mail",
         "role": "Rolle",
-        "userId": "Benutzer-ID",
-        "completed": "Abgeschlossen",
-        "pending": "Ausstehend"
+        "userId": "Benutzer-ID"
       },
       "password": {
         "title": "Passwort ändern",

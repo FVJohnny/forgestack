@@ -132,7 +132,6 @@
       "account": "บัญชี",
       "admin": "แอดมิน",
       "sectionMain": "คอนโซล",
-      "sectionSystem": "ระบบ",
       "logout": "ออกจากระบบ",
       "env": "env"
     },
@@ -140,7 +139,6 @@
       "title": "ภาพรวมระบบ",
       "subtitle": "สถานะและการไหลของ event แบบเรียลไทม์ทั่วทั้งเซอร์วิส",
       "live": "สด",
-      "paused": "หยุดชั่วคราว",
       "refreshedAt": "ซิงค์เมื่อ {time}",
       "health": {
         "title": "สถานะระบบ",
@@ -177,7 +175,6 @@
         "title": "บัญชีของคุณ",
         "email": "อีเมล",
         "role": "บทบาท",
-        "memberSince": "เป็นสมาชิกตั้งแต่",
         "view": "จัดการบัญชี"
       },
       "motd": {
@@ -191,9 +188,7 @@
         "title": "โปรไฟล์",
         "email": "อีเมล",
         "role": "บทบาท",
-        "userId": "User ID",
-        "completed": "เสร็จสมบูรณ์",
-        "pending": "รอดำเนินการ"
+        "userId": "User ID"
       },
       "password": {
         "title": "เปลี่ยนรหัสผ่าน",

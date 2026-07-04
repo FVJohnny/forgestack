@@ -132,7 +132,6 @@
       "account": "Account",
       "admin": "Admin",
       "sectionMain": "Console",
-      "sectionSystem": "System",
       "logout": "Log out",
       "env": "env"
     },
@@ -140,7 +139,6 @@
       "title": "System Overview",
       "subtitle": "Live health and event flow across the service.",
       "live": "live",
-      "paused": "paused",
       "refreshedAt": "synced {time}",
       "health": {
         "title": "System Health",
@@ -177,7 +175,6 @@
         "title": "Your Account",
         "email": "Email",
         "role": "Role",
-        "memberSince": "Member since",
         "view": "Manage account"
       },
       "motd": {
@@ -191,9 +188,7 @@
         "title": "Profile",
         "email": "Email",
         "role": "Role",
-        "userId": "User ID",
-        "completed": "Completed",
-        "pending": "Pending"
+        "userId": "User ID"
       },
       "password": {
         "title": "Change Password",

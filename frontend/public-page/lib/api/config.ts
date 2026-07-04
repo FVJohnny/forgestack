@@ -33,9 +33,6 @@ export const API_ENDPOINTS = {
   USERS: {
     REGISTER: '/users',
   },
-  IDENTITY: {
-    RECORD: '/identity/record',
-  },
   DASHBOARD: {
     EVENTS: '/dashboard/events',
     HEALTH: '/dashboard/health',

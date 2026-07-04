@@ -115,7 +115,6 @@
       "account": "Account",
       "admin": "Admin",
       "sectionMain": "Console",
-      "sectionSystem": "Systeem",
       "logout": "Uitloggen",
       "env": "omg"
     },
@@ -123,7 +122,6 @@
       "title": "Systeemoverzicht",
       "subtitle": "Live gezondheid en eventstroom door de service heen.",
       "live": "live",
-      "paused": "gepauzeerd",
       "refreshedAt": "gesynchroniseerd {time}",
       "health": {
         "title": "Systeemgezondheid",
@@ -160,7 +158,6 @@
         "title": "Je account",
         "email": "E-mail",
         "role": "Rol",
-        "memberSince": "Lid sinds",
         "view": "Account beheren"
       },
       "motd": {
@@ -174,9 +171,7 @@
         "title": "Profiel",
         "email": "E-mail",
         "role": "Rol",
-        "userId": "Gebruikers-ID",
-        "completed": "Voltooid",
-        "pending": "In behandeling"
+        "userId": "Gebruikers-ID"
       },
       "password": {
         "title": "Wachtwoord wijzigen",

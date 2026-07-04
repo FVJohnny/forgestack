@@ -115,7 +115,6 @@
       "account": "Konto",
       "admin": "Administracja",
       "sectionMain": "Konsola",
-      "sectionSystem": "System",
       "logout": "Wyloguj się",
       "env": "środ."
     },
@@ -123,7 +122,6 @@
       "title": "Przegląd systemu",
       "subtitle": "Stan na żywo i przepływ zdarzeń w usłudze.",
       "live": "na żywo",
-      "paused": "wstrzymane",
       "refreshedAt": "zsynchronizowano {time}",
       "health": {
         "title": "Stan systemu",
@@ -160,7 +158,6 @@
         "title": "Twoje konto",
         "email": "Email",
         "role": "Rola",
-        "memberSince": "Członek od",
         "view": "Zarządzaj kontem"
       },
       "motd": {
@@ -174,9 +171,7 @@
         "title": "Profil",
         "email": "Email",
         "role": "Rola",
-        "userId": "ID użytkownika",
-        "completed": "Ukończone",
-        "pending": "Oczekujące"
+        "userId": "ID użytkownika"
       },
       "password": {
         "title": "Zmień hasło",

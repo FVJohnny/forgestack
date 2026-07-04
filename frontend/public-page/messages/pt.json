@@ -115,7 +115,6 @@
       "account": "Conta",
       "admin": "Admin",
       "sectionMain": "Console",
-      "sectionSystem": "Sistema",
       "logout": "Sair",
       "env": "amb"
     },
@@ -123,7 +122,6 @@
       "title": "Visão Geral do Sistema",
       "subtitle": "Saúde ao vivo e fluxo de eventos em todo o serviço.",
       "live": "ao vivo",
-      "paused": "pausado",
       "refreshedAt": "sincronizado {time}",
       "health": {
         "title": "Saúde do Sistema",
@@ -160,7 +158,6 @@
         "title": "Sua Conta",
         "email": "Email",
         "role": "Papel",
-        "memberSince": "Membro desde",
         "view": "Gerenciar conta"
       },
       "motd": {
@@ -174,9 +171,7 @@
         "title": "Perfil",
         "email": "Email",
         "role": "Papel",
-        "userId": "ID do Usuário",
-        "completed": "Concluído",
-        "pending": "Pendente"
+        "userId": "ID do Usuário"
       },
       "password": {
         "title": "Alterar Senha",

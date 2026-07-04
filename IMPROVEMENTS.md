@@ -297,11 +297,11 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **67. Two parallel auth service implementations** (Medium)
   `lib/contexts/auth-service.ts` and `lib/api/services/auth.service.ts` both implement register/login/verify/refresh/logout, and the former also duplicates the admin service. Consolidate into one service layer.
 
-- [ ] **68. Dead code to delete** (Medium)
-  `notifications.tsx` (~160 lines, zero imports), `login-background.tsx`, the shadcn leftover `styles/globals.css`, unused `logo.png`/`logo-dark.png`, the unused `IDENTITY.RECORD` endpoint, and unused message keys.
+- [x] **68. Dead code to delete** (Medium)
+  **Status: Done.** Deleted `lib/utils/notifications.tsx` (158 lines, zero imports), `app/login/components/login-background.tsx`, the shadcn leftover `styles/globals.css` (removed the now-empty `styles/` dir), the unreferenced `public/logo.png` / `logo-dark.png`, the unused `IDENTITY.RECORD` config endpoint, and 5 unused message keys across all 8 locales. Verified each was truly unreferenced first, then confirmed the frontend still typechecks and builds with no missing-message warnings.
 
-- [ ] **69. Dependencies pinned to `latest`** (Medium)
-  Five `@radix-ui/*` packages and `sonner` float on `latest`, so fresh installs can pick up breaking majors. Pin real versions.
+- [x] **69. Dependencies pinned to `latest`** (Medium)
+  **Status: Done.** Pinned the five `@radix-ui/*` packages and `sonner` to caret ranges of their currently-installed versions (e.g. `^1.1.17`, `^2.0.7`) so a fresh install cannot silently pull a breaking major. Reinstalled, typechecked, and built clean.
 
 - [ ] **70. Docker build depends on a gitignored env file** (Medium)
   `Dockerfile` copies `infra/env/public-page.env.prod`, which only exists locally, so `docker build` fails on a fresh clone. Fall back to the `.example` file or use build args.

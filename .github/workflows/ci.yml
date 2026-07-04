@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Static checks that need no databases: lint, typecheck, build.
+  static:
+    name: Lint · Typecheck · Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+  # The mongodb/redis lib tests hit real datastores, so stand them up first.
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7.0-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # A single-node replica set with auth, matching the URI the tests use:
+      # mongodb://admin:password@localhost:27017/...?replicaSet=rs0&directConnection=true
+      # A keyfile is mandatory when auth is enabled together with --replSet.
+      - name: Start MongoDB (replica set + auth)
+        run: |
+          openssl rand -base64 756 > "$RUNNER_TEMP/mongo-keyfile"
+          chmod 400 "$RUNNER_TEMP/mongo-keyfile"
+          # mongod runs as uid 999 in the image; make the mounted keyfile owned by it.
+          sudo chown 999:999 "$RUNNER_TEMP/mongo-keyfile"
+          docker run -d --name mongo -p 27017:27017 \
+            -e MONGO_INITDB_ROOT_USERNAME=admin \
+            -e MONGO_INITDB_ROOT_PASSWORD=password \
+            -v "$RUNNER_TEMP/mongo-keyfile:/etc/mongo-keyfile:ro" \
+            mongo:7.0 --replSet rs0 --bind_ip_all --keyFile /etc/mongo-keyfile
+          echo "Waiting for mongod to accept connections..."
+          for i in $(seq 1 30); do
+            if docker exec mongo mongosh -u admin -p password --authenticationDatabase admin --quiet --eval 'db.runCommand({ ping: 1 })' >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+          echo "Initiating replica set..."
+          docker exec mongo mongosh -u admin -p password --authenticationDatabase admin --quiet --eval \
+            "rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] })"
+          echo "Waiting for primary..."
+          for i in $(seq 1 30); do
+            if docker exec mongo mongosh -u admin -p password --authenticationDatabase admin --quiet --eval 'rs.status().members[0].stateStr' 2>/dev/null | grep -q PRIMARY; then
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm run test -- --skip-nx-cache
+        env:
+          REDIS_HOST: localhost
+          REDIS_PORT: '6379'

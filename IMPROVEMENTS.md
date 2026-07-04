@@ -393,8 +393,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 
 ## G. Tooling, lint, DX
 
-- [ ] **93. No CI at all** (High)
-  No `.github/` directory: no workflows, badges, issue/PR templates, or dependabot. Flagged independently by three audit passes; the single highest-leverage addition. Add a workflow running lint, typecheck, test, and build.
+- [x] **93. No CI at all** (High)
+  No `.github/` directory: no workflows, badges, or issue/PR templates.
+  **Status: Done.** Added `.github/workflows/ci.yml` with two jobs: a `static` job (lint, typecheck, build — no DBs) and a `test` job that stands up real Redis (service container) and MongoDB (single-node replica set + auth + keyfile, matching the test URI) and runs the full suite. Verified the tricky part locally: reproduced the CI Mongo container and ran the mongodb lib tests (62) green against it. Added PR and issue (bug/feature) templates, and CI/license/node badges to the README. Runner concurrency cancels superseded runs.
 
 - [x] **94. The `no-direct-entity-mutation` ESLint rule never fires** (High)
   It looked for a base class named `SharedAggregateRoot`, but the real class is `SharedAggregate`, so the headline architectural guardrail was dead.

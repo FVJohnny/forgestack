@@ -1,5 +1,9 @@
 # ForgeStack
 
+[![CI](https://github.com/FVJohnny/forgestack/actions/workflows/ci.yml/badge.svg)](https://github.com/FVJohnny/forgestack/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Node](https://img.shields.io/badge/node-22-brightgreen.svg)
+
 **A solid foundation for production-ready apps.**
 
 ForgeStack is an opinionated, batteries-included starting point for building real applications — not just a backend framework. It ships a hexagonal architecture with Domain-Driven Design (DDD) and CQRS, an outbox/inbox pattern for reliable integration events over Kafka, a Next.js dev-console frontend, full observability (metrics, logs, traces), TLS-terminated deploys, and a set of custom ESLint rules that enforce the architectural boundaries so the design stays intact as the codebase grows.

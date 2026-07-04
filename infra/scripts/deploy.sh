@@ -259,12 +259,19 @@ deploy() {
     # Extend the existing EXIT trap (timing-file cleanup) instead of replacing it.
     trap "cleanup_timing_file; rm -rf $STAGING" EXIT
 
-    mkdir -p "$STAGING/compose" "$STAGING/env" "$STAGING/mongo"
+    mkdir -p "$STAGING/compose" "$STAGING/env" "$STAGING/mongo" "$STAGING/monitoring/prometheus"
 
     cp "$COMPOSE_FILE" "$STAGING/compose/docker-compose.yml"
     cp "$INFRA_DIR/env/"*.env.prod "$STAGING/env/"
     cp "$INFRA_DIR/env/infra.env.prod" "$STAGING/compose/.env"
     cp "$INFRA_DIR/mongo/mongo-startup.sh" "$STAGING/mongo/"
+    # Runtime secret for Prometheus scrape auth; mounted by the compose file
+    # instead of being baked into the pushed image.
+    if [ ! -f "$INFRA_DIR/monitoring/prometheus/internal-api-key" ]; then
+        log_error "Missing $INFRA_DIR/monitoring/prometheus/internal-api-key (copy the .example and set a real key)"
+        exit 1
+    fi
+    cp "$INFRA_DIR/monitoring/prometheus/internal-api-key" "$STAGING/monitoring/prometheus/"
 
     log "Transferring files..."
     local transfer_start=$(date +%s)

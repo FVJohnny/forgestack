@@ -198,6 +198,9 @@ services:
     user: root
     volumes:
       - prometheus_data:/prometheus
+      # Secret mounted at runtime instead of baked into the pushed image.
+      # deploy.sh stages it to <remote>/monitoring/prometheus/.
+      - ../monitoring/prometheus/internal-api-key:/etc/prometheus/internal-api-key:ro
       # Read-only Docker socket for docker_sd_configs: services are discovered
       # by their prometheus.scrape=true container label.
       - /var/run/docker.sock:/var/run/docker.sock:ro

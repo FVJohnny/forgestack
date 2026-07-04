@@ -1,7 +1,8 @@
 FROM prom/prometheus:v2.54.1
 
-# Copy Prometheus configuration
+# Copy Prometheus configuration. The internal-api-key secret is NOT baked
+# into the image (it gets pushed to a registry); the compose file mounts it
+# at /etc/prometheus/internal-api-key at runtime.
 COPY ./infra/monitoring/prometheus/prometheus.yml /etc/prometheus/prometheus.yml
-COPY ./infra/monitoring/prometheus/internal-api-key /etc/prometheus/internal-api-key
 
 # Use default Prometheus entrypoint

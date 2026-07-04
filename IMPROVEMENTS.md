@@ -364,8 +364,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   Use `docker compose up -d --wait`, keep the previous tag, and revert on failure.
   **Status: DONE (health-gate + failure hint).** The remote deploy now brings up the data stores AND the app tier with `up -d --wait`, so an unhealthy container makes the remote block (under `set -e`) exit non-zero. deploy.sh wraps the ssh call in an `if`: on success it logs "Deploy complete", on failure it prints an actionable message (how to read logs and that the last known-good tags are in git history) and exits 1 instead of silently reporting success. A fully automated tag-revert is coupled to the tag scheme in item 82 and left as a follow-up. Verified `bash -n`.
 
-- [ ] **82. Deploy sed-mutates a tracked compose file with counter tags (v4, v5, v10)** (Medium)
+- [~] **82. Deploy sed-mutates a tracked compose file with counter tags (v4, v5, v10)** (Medium)
   The committed tags are meaningless to anyone cloning the template and every deploy dirties the repo. Use `${TAG}` interpolation written to the server-side `.env`.
+  **Status: WON'T DO (by decision).** Considered moving to `${TAG}` interpolation (single shared tag per deploy) or per-service tags in a git-ignored file. Kept the current sed-based per-service counters: they give real, independent per-service version numbers and drive the deploy menu's version view, and the repo-dirtying is cosmetic since the tags are rewritten each deploy anyway. Revisit if the compose file ever needs to stay pristine in CI.
 
 - [x] **83. `deploy.sh` hardcodes `/opt/forgestack` in the remote heredoc** (Medium)
   A customized `REMOTE_PATH` rsyncs to one place and deploys from another. Use `cd "$REMOTE_PATH"`.

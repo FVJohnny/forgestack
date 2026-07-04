@@ -17,11 +17,7 @@ import {
   StrictRateLimit,
 } from '@libs/nestjs-common';
 import { ChangePassword_Command } from '@bc/auth/application/commands/change-password/change-password.command';
-
-export interface ChangePasswordParams {
-  oldPassword: string;
-  newPassword: string;
-}
+import { ChangePassword_ControllerParams } from './change-password.params';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -44,7 +40,7 @@ export class ChangePassword_Controller {
   })
   async changePassword(
     @Req() req: AuthenticatedRequest,
-    @Body() body: ChangePasswordParams,
+    @Body() body: ChangePassword_ControllerParams,
   ): Promise<void> {
     const command = new ChangePassword_Command(
       req.tokenData.userId,

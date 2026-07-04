@@ -1,5 +1,7 @@
 # Service-1 Architecture
 
+> This is a quick in-repo reference. The canonical docs live on the docs site at `/docs/architecture` (served by the frontend at `/docs`). See the [README Documentation section](../README.md#documentation).
+
 ## Hexagonal + DDD + CQRS
 
 Service-1 is organized into **bounded contexts** under `src/bounded-contexts/`:

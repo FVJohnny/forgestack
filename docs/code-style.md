@@ -1,5 +1,7 @@
 # Code Style
 
+> This is a quick in-repo reference. The canonical docs live on the docs site at `/docs/backend/eslint-rules` (served by the frontend at `/docs`). See the [README Documentation section](../README.md#documentation).
+
 ## Formatting
 
 - TypeScript, 2-space indentation, single quotes, trailing commas, print width 100 (`.prettierrc`)
@@ -19,7 +21,7 @@
 ## Domain modelling
 
 - **Value objects compare with themselves**: do not reach inside a VO to do string manipulation for comparison. If two VOs need to be compared, use `.toValue()` equality or make methods in the VOs to do that comparison.
-- **Always use VOs inside the domain**: domain methods (aggregate methods, domain services) take and return value objects like `Id`, `Email`, etc., never raw `string` / `number`. Call `.toValue()` only when crossing to a DTO, integration event payload, or external boundary. If a method signature accepts `userId: string`, that's a bug: change it to `userId: Id`. This applies to new code AND to passing values *through* existing methods (e.g. don't pass a raw `command.userId` string into a domain method, lift it to `new Id(command.userId)` at the application-layer boundary first).
+- **Always use VOs inside the domain**: domain methods (aggregate methods, domain services) take and return value objects like `Id`, `Email`, etc., never raw `string` / `number`. Call `.toValue()` only when crossing to a DTO, integration event payload, or external boundary. If a method signature accepts `userId: string`, that's a bug: change it to `userId: Id`. This applies to new code AND to passing values _through_ existing methods (e.g. don't pass a raw `command.userId` string into a domain method, lift it to `new Id(command.userId)` at the application-layer boundary first).
 
 ## i18n
 

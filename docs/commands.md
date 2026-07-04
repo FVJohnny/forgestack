@@ -1,5 +1,7 @@
 # Commands
 
+> This is a quick in-repo reference. The canonical docs live on the docs site at `/docs/project-structure` (served by the frontend at `/docs`). See the [README Documentation section](../README.md#documentation).
+
 Standard scripts live in `package.json`. Read it directly for the full list (`dev:start`, `dev:down`, `dev:restart`, `lint`, `lint:fix`, `typecheck`, `test`, `test:nocache`, `prod:update`, etc.).
 
 ## Not obvious from `package.json`

@@ -217,7 +217,12 @@ The rules in `eslint/rules/` are what keep the architecture from eroding. They r
 
 ## Documentation
 
-More detailed guides live in [`docs/`](docs/): architecture, code style, commands, frontend, infrastructure, and deployment.
+There are two sets of docs:
+
+- The **docs site** under `frontend/public-page/app/docs/` (served at `/docs` when the frontend is running) is the canonical, most complete reference. It covers architecture, the backend patterns (DDD, CQRS, hexagonal, events, repositories, testing, ESLint rules), databases, the frontend, monitoring, deployment, and step-by-step guides.
+- The Markdown files in [`docs/`](docs/) are a lighter, in-repo quick reference for the same topics (architecture, code style, commands, frontend, infrastructure, deployment). Each links to the canonical page on the docs site.
+
+When the two disagree, the docs site wins.
 
 ## License
 

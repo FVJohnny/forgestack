@@ -1,5 +1,7 @@
 # Frontend Architecture (`frontend/public-page/`)
 
+> This is a quick in-repo reference. The canonical docs live on the docs site at `/docs/frontend` (served by the frontend at `/docs`). See the [README Documentation section](../README.md#documentation).
+
 Next.js 16 App Router with React 19, standalone output mode. The shipped app has a landing page, full auth flows, a live dashboard, and an MDX documentation site you can build on.
 
 ## Routing

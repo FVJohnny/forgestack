@@ -1,5 +1,7 @@
 # Production Deployment
 
+> This is a quick in-repo reference. The canonical docs live on the docs site at `/docs/deployment` (served by the frontend at `/docs`). See the [README Documentation section](../README.md#documentation).
+
 `npm run prod:update` runs `infra/scripts/deploy.sh`, an interactive menu-driven script that builds Docker images, pushes them to your container registry, and deploys to a production server via SSH/rsync.
 
 ## How it works

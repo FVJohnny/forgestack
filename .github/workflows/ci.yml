@@ -102,7 +102,9 @@ jobs:
         run: npm ci
 
       - name: Test
-        run: npm run test -- --skip-nx-cache
+        # --coverage so the per-project coverageThreshold (the item-61 floor)
+        # is enforced in CI, not just locally.
+        run: npm run test -- --skip-nx-cache --coverage
         env:
           REDIS_HOST: localhost
           REDIS_PORT: '6379'

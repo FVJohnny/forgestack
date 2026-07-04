@@ -31,10 +31,26 @@ module.exports = {
   },
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: '../coverage',
+  // Coverage floor (item 61). Set just below the current numbers so it acts as
+  // a regression ratchet: coverage can only go up. Raise these as tests are
+  // added. Only enforced when run with --coverage (CI / npm run test:cov).
+  coverageThreshold: {
+    global: {
+      statements: 60,
+      branches: 45,
+      functions: 65,
+      lines: 60,
+    },
+  },
   moduleFileExtensions: ['js', 'json', 'ts'],
   moduleNameMapper: {
     ...pathsToModuleNameMapper(paths, { prefix: '<rootDir>/../../../../' }),
-    '^express$': '<rootDir>/../node_modules/express/index.js',
+    // Pin express to the single hoisted copy at the workspace root (npm
+    // hoists it there, not into the service's own node_modules). The old
+    // '<rootDir>/../node_modules/...' path pointed at a directory that does
+    // not exist under a hoisted install, which broke any test that loads
+    // @nestjs/platform-express (e.g. controller e2e tests).
+    '^express$': require.resolve('express'),
   },
   testTimeout: 20000,
   globalTeardown: '<rootDir>/../jest.teardown.js',

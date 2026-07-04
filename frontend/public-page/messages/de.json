@@ -29,6 +29,23 @@
       "backToSignIn": "Zurück zur Anmeldung",
       "error": "Fehler beim Anfordern der Passwortzurücksetzung. Bitte versuchen Sie es erneut."
     },
+    "resetPassword": {
+      "title": "Passwort zurücksetzen",
+      "description": "Gib unten dein neues Passwort ein.",
+      "password": "Neues Passwort",
+      "passwordPlaceholder": "Neues Passwort eingeben",
+      "confirmPassword": "Passwort bestätigen",
+      "confirmPasswordPlaceholder": "Neues Passwort bestätigen",
+      "submit": "Passwort zurücksetzen",
+      "submitting": "Wird zurückgesetzt...",
+      "success": "Dein Passwort wurde erfolgreich zurückgesetzt. Weiterleitung zur Anmeldung...",
+      "errors": {
+        "mismatch": "Passwörter stimmen nicht überein",
+        "invalid": "Ungültiger oder abgelaufener Link",
+        "failed": "Passwort konnte nicht zurückgesetzt werden. Bitte versuche es erneut.",
+        "tooShort": "Das Passwort muss mindestens 8 Zeichen lang sein und einen Buchstaben und eine Zahl enthalten"
+      }
+    },
     "register": {
       "title": "Konto Erstellen",
       "email": "E-Mail",

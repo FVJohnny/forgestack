@@ -309,8 +309,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **71. Zero frontend tests** (Medium)
   The landing page sells "Tests that run in seconds" and the app has none. Add Vitest plus Testing Library with a few examples (api client, auth service, one form).
 
-- [ ] **72. `auth.resetPassword` missing from 6 of 8 locales** (Medium)
-  Those locales silently fall back to English. Translate the section and add a CI check that locale key sets match.
+- [x] **72. `auth.resetPassword` missing from 6 of 8 locales** (Medium)
+  6 locales (de, es, fr, nl, pl, pt) were missing the whole `auth.resetPassword` section and silently fell back to English.
+  **Status: Done.** Added translated `resetPassword` blocks to all 6 (title, description, field labels, submit/submitting, success, and the four error messages). All 8 locales now have identical key sets. Also added a `check:locales` script that fails if any locale's key set diverges from `en`, wired into the CI static job so this cannot silently regress.
 
 - [ ] **73. Register / verify-email flow contradiction** (Medium)
   A comment says verification is disabled with auto-login, yet a full verify-email flow and "check your email" copy exist, plus a dead `?registered=true` handler. Pick one story or make it a documented toggle.

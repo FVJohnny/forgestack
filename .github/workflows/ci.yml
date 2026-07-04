@@ -33,6 +33,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Check locale key parity
+        run: npm --prefix frontend/public-page run check:locales
+
       - name: Build
         run: npm run build
 

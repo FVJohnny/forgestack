@@ -29,6 +29,23 @@
       "backToSignIn": "Voltar para Login",
       "error": "Falha ao solicitar redefinição de senha. Tente novamente."
     },
+    "resetPassword": {
+      "title": "Redefinir senha",
+      "description": "Digite sua nova senha abaixo.",
+      "password": "Nova senha",
+      "passwordPlaceholder": "Digite sua nova senha",
+      "confirmPassword": "Confirmar senha",
+      "confirmPasswordPlaceholder": "Confirme sua nova senha",
+      "submit": "Redefinir senha",
+      "submitting": "Redefinindo...",
+      "success": "Sua senha foi redefinida com sucesso. Redirecionando para o login...",
+      "errors": {
+        "mismatch": "As senhas não coincidem",
+        "invalid": "Link de redefinição inválido ou expirado",
+        "failed": "Falha ao redefinir a senha. Tente novamente.",
+        "tooShort": "A senha deve ter pelo menos 8 caracteres e incluir uma letra e um número"
+      }
+    },
     "register": {
       "title": "Criar Conta",
       "email": "Email",

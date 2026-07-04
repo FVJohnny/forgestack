@@ -29,6 +29,23 @@
       "backToSignIn": "Terug naar Inloggen",
       "error": "Aanvraag voor wachtwoordherstel mislukt. Probeer het opnieuw."
     },
+    "resetPassword": {
+      "title": "Wachtwoord opnieuw instellen",
+      "description": "Voer hieronder je nieuwe wachtwoord in.",
+      "password": "Nieuw wachtwoord",
+      "passwordPlaceholder": "Voer je nieuwe wachtwoord in",
+      "confirmPassword": "Bevestig wachtwoord",
+      "confirmPasswordPlaceholder": "Bevestig je nieuwe wachtwoord",
+      "submit": "Wachtwoord opnieuw instellen",
+      "submitting": "Bezig met opnieuw instellen...",
+      "success": "Je wachtwoord is opnieuw ingesteld. Je wordt doorgestuurd naar de inlogpagina...",
+      "errors": {
+        "mismatch": "Wachtwoorden komen niet overeen",
+        "invalid": "Ongeldige of verlopen resetlink",
+        "failed": "Wachtwoord opnieuw instellen mislukt. Probeer het opnieuw.",
+        "tooShort": "Het wachtwoord moet minimaal 8 tekens lang zijn en een letter en een cijfer bevatten"
+      }
+    },
     "register": {
       "title": "Account Aanmaken",
       "email": "E-mail",

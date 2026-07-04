@@ -29,6 +29,23 @@
       "backToSignIn": "Volver a Iniciar Sesión",
       "error": "Error al solicitar el restablecimiento de contraseña. Por favor, inténtalo de nuevo."
     },
+    "resetPassword": {
+      "title": "Restablecer contraseña",
+      "description": "Introduce tu nueva contraseña a continuación.",
+      "password": "Nueva contraseña",
+      "passwordPlaceholder": "Introduce tu nueva contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "confirmPasswordPlaceholder": "Confirma tu nueva contraseña",
+      "submit": "Restablecer contraseña",
+      "submitting": "Restableciendo...",
+      "success": "Tu contraseña se ha restablecido correctamente. Redirigiendo al inicio de sesión...",
+      "errors": {
+        "mismatch": "Las contraseñas no coinciden",
+        "invalid": "Enlace de restablecimiento inválido o caducado",
+        "failed": "No se pudo restablecer la contraseña. Inténtalo de nuevo.",
+        "tooShort": "La contraseña debe tener al menos 8 caracteres e incluir una letra y un número"
+      }
+    },
     "register": {
       "title": "Crear Cuenta",
       "email": "Correo Electrónico",

@@ -29,6 +29,23 @@
       "backToSignIn": "Retour à la Connexion",
       "error": "Échec de la demande de réinitialisation du mot de passe. Veuillez réessayer."
     },
+    "resetPassword": {
+      "title": "Réinitialiser le mot de passe",
+      "description": "Saisissez votre nouveau mot de passe ci-dessous.",
+      "password": "Nouveau mot de passe",
+      "passwordPlaceholder": "Saisissez votre nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "confirmPasswordPlaceholder": "Confirmez votre nouveau mot de passe",
+      "submit": "Réinitialiser le mot de passe",
+      "submitting": "Réinitialisation...",
+      "success": "Votre mot de passe a été réinitialisé avec succès. Redirection vers la connexion...",
+      "errors": {
+        "mismatch": "Les mots de passe ne correspondent pas",
+        "invalid": "Lien de réinitialisation invalide ou expiré",
+        "failed": "Échec de la réinitialisation du mot de passe. Veuillez réessayer.",
+        "tooShort": "Le mot de passe doit contenir au moins 8 caractères, dont une lettre et un chiffre"
+      }
+    },
     "register": {
       "title": "Créer un Compte",
       "email": "Email",

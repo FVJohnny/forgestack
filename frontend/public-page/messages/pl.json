@@ -29,6 +29,23 @@
       "backToSignIn": "Powrót do Logowania",
       "error": "Nie udało się zażądać resetowania hasła. Spróbuj ponownie."
     },
+    "resetPassword": {
+      "title": "Zresetuj hasło",
+      "description": "Wprowadź poniżej nowe hasło.",
+      "password": "Nowe hasło",
+      "passwordPlaceholder": "Wprowadź nowe hasło",
+      "confirmPassword": "Potwierdź hasło",
+      "confirmPasswordPlaceholder": "Potwierdź nowe hasło",
+      "submit": "Zresetuj hasło",
+      "submitting": "Resetowanie...",
+      "success": "Twoje hasło zostało zresetowane. Przekierowywanie do logowania...",
+      "errors": {
+        "mismatch": "Hasła nie są zgodne",
+        "invalid": "Nieprawidłowy lub wygasły link resetujący",
+        "failed": "Nie udało się zresetować hasła. Spróbuj ponownie.",
+        "tooShort": "Hasło musi mieć co najmniej 8 znaków oraz zawierać literę i cyfrę"
+      }
+    },
     "register": {
       "title": "Utwórz Konto",
       "email": "Email",

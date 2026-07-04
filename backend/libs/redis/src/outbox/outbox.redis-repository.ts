@@ -212,7 +212,7 @@ export class Outbox_RedisRepository
     if (!json) return;
 
     const event = this.toEntity(json);
-    event.processedAt = OutboxProcessedAt.never();
+    event.markAsUnprocessed();
 
     // Save and add back to unprocessed index
     await client.set(key, JSON.stringify(event.toValue()));

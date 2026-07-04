@@ -152,11 +152,14 @@ export default [
     },
   },
 
-  // Tests — allow importing in-memory repos (infrastructure) from application test files
+  // Tests — allow importing in-memory repos (infrastructure) from application
+  // test files, and allow directly mutating aggregate state to set up
+  // scenarios (tests are not production domain logic).
   {
     files: ['**/*.spec.ts', '**/*.test.ts', '**/*.e2e-spec.ts', '**/test/**/*.ts'],
     rules: {
       'no-restricted-imports': 'off',
+      'entity-domain/no-direct-entity-mutation': 'off',
     },
   },
 

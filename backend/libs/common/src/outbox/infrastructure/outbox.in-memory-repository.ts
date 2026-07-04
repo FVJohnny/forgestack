@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { OutboxEvent, OutboxEventDTO } from '../domain/outbox.aggregate';
 import { Outbox_Repository } from '../domain/outbox.repository';
 import { Base_InMemoryRepository } from '../../general/infrastructure/base.in-memory-repository';
-import { OutboxProcessedAt } from '../domain/value-objects';
 import type { Id } from '../../general';
 
 @Injectable()
@@ -32,7 +31,7 @@ export class Outbox_InMemoryRepository
 
     // Mark as processing (simulate atomic claim)
     for (const event of unprocessed) {
-      event.processedAt = OutboxProcessedAt.processing();
+      event.markAsProcessing();
       await this.save(event);
     }
 
@@ -48,7 +47,7 @@ export class Outbox_InMemoryRepository
     this.validate('resetClaimedEvent');
     const event = await this.findById(eventId);
     if (event) {
-      event.processedAt = OutboxProcessedAt.never();
+      event.markAsUnprocessed();
       await this.save(event);
     }
   }
@@ -63,7 +62,7 @@ export class Outbox_InMemoryRepository
         event.processedAt.isProcessing() &&
         event.timestamps.updatedAt.getTime() < stuckSince.getTime()
       ) {
-        event.processedAt = OutboxProcessedAt.never();
+        event.markAsUnprocessed();
         await this.save(event);
         reclaimed++;
       }

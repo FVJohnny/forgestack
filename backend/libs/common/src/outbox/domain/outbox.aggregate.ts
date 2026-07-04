@@ -150,6 +150,16 @@ export class OutboxEvent extends SharedAggregate implements OutboxEventAttribute
     this.processedAt = OutboxProcessedAt.now();
   }
 
+  /** Claim transition: mark the event as being processed (repository use). */
+  markAsProcessing(): void {
+    this.processedAt = OutboxProcessedAt.processing();
+  }
+
+  /** Release a claim back to the unprocessed state (repository reclaim/reset). */
+  markAsUnprocessed(): void {
+    this.processedAt = OutboxProcessedAt.never();
+  }
+
   /**
    * Terminal state for a poison event whose retries are exhausted. Both claim
    * and stuck-reclaim skip failed events, so it no longer loops forever.

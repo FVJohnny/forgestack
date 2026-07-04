@@ -2,7 +2,7 @@ import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 import ts from 'typescript';
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/nestjs-microservices-template/eslint-rules/${name}`,
+  (name) => `https://github.com/FVJohnny/forgestack/tree/main/eslint/rules/${name}`,
 );
 
 function getDisplayName(node, sourceCode) {
@@ -33,14 +33,14 @@ export default createRule({
     const checker = services.program.getTypeChecker();
     const sourceCode = context.sourceCode;
 
-    function symbolExtendsSharedAggregateRoot(symbol, seen = new Set()) {
+    function symbolExtendsSharedAggregate(symbol, seen = new Set()) {
       if (!symbol || seen.has(symbol)) {
         return false;
       }
 
       seen.add(symbol);
 
-      if (symbol.getName() === 'SharedAggregateRoot') {
+      if (symbol.getName() === 'SharedAggregate') {
         return true;
       }
 
@@ -54,7 +54,7 @@ export default createRule({
             for (const baseType of heritage.types) {
               const baseSymbol = checker.getTypeAtLocation(baseType.expression).getSymbol();
 
-              if (baseSymbol && symbolExtendsSharedAggregateRoot(baseSymbol, seen)) {
+              if (baseSymbol && symbolExtendsSharedAggregate(baseSymbol, seen)) {
                 return true;
               }
             }
@@ -65,7 +65,7 @@ export default createRule({
       return false;
     }
 
-    function typeExtendsSharedAggregateRoot(type, seen = new Set()) {
+    function typeExtendsSharedAggregate(type, seen = new Set()) {
       if (!type || seen.has(type)) {
         return false;
       }
@@ -73,19 +73,19 @@ export default createRule({
       seen.add(type);
 
       if (type.isUnion() || type.isIntersection()) {
-        return type.types.some((member) => typeExtendsSharedAggregateRoot(member, seen));
+        return type.types.some((member) => typeExtendsSharedAggregate(member, seen));
       }
 
       const symbol = type.getSymbol() ?? type.aliasSymbol;
 
-      if (symbol && symbolExtendsSharedAggregateRoot(symbol)) {
+      if (symbol && symbolExtendsSharedAggregate(symbol)) {
         return true;
       }
 
       if ('getBaseTypes' in type) {
         const baseTypes = type.getBaseTypes?.() ?? [];
 
-        if (baseTypes.some((base) => typeExtendsSharedAggregateRoot(base, seen))) {
+        if (baseTypes.some((base) => typeExtendsSharedAggregate(base, seen))) {
           return true;
         }
       }
@@ -93,7 +93,7 @@ export default createRule({
       const apparent = checker.getApparentType(type);
 
       if (apparent !== type) {
-        return typeExtendsSharedAggregateRoot(apparent, seen);
+        return typeExtendsSharedAggregate(apparent, seen);
       }
 
       return false;
@@ -107,7 +107,7 @@ export default createRule({
       const tsNode = services.esTreeNodeToTSNodeMap.get(object);
       const type = checker.getTypeAtLocation(tsNode);
 
-      if (!typeExtendsSharedAggregateRoot(type)) {
+      if (!typeExtendsSharedAggregate(type)) {
         return;
       }
 

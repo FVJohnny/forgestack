@@ -396,8 +396,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **93. No CI at all** (High)
   No `.github/` directory: no workflows, badges, issue/PR templates, or dependabot. Flagged independently by three audit passes; the single highest-leverage addition. Add a workflow running lint, typecheck, test, and build.
 
-- [ ] **94. The `no-direct-entity-mutation` ESLint rule never fires** (High)
-  It looks for a base class named `SharedAggregateRoot`, but the real class is `SharedAggregate`. Empirically verified dead, and it is a headline feature of the template. Fix the name and add a regression test.
+- [x] **94. The `no-direct-entity-mutation` ESLint rule never fires** (High)
+  It looked for a base class named `SharedAggregateRoot`, but the real class is `SharedAggregate`, so the headline architectural guardrail was dead.
+  **Status: Done.** Fixed the class name (and the stale doc URL). Empirically verified with a probe that the rule now flags `user.googleId = 'x'`. Turning it on surfaced real violations: the outbox repositories poked `event.processedAt` directly, so I added `markAsProcessing()` / `markAsUnprocessed()` behaviors to the outbox aggregate and the Redis/in-memory repos now call those; and spec files (which legitimately mutate aggregates for setup) are now exempted in the spec-file override. Full lint and all suites pass. A RuleTester unit test is folded into item 98.
 
 - [ ] **95. The pre-commit hook stages everything** (High)
   After `lint:fix` it runs `git add` on all modified files, destroying intentionally scoped commits. Use lint-staged (already a devDependency, unused).
@@ -411,8 +412,8 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **98. Zero tests for the 14 custom ESLint rules** (Medium)
   Which is exactly how item 94 shipped broken. Add RuleTester suites.
 
-- [ ] **99. The Nx lint cache ignores `eslint/rules/**`** (Medium)
-  Editing a rule serves stale cached lint results. Add the rules directory to the lint target inputs.
+- [x] **99. The Nx lint cache ignores `eslint/rules/**`** (Medium)
+  **Status: Done.** Added `{workspaceRoot}/eslint/rules/**/*` to the `sharedGlobals` named input, so editing any custom rule invalidates the lint (and default) cache. Also removed the stale `{workspaceRoot}/jest.preset.js` from the test inputs (item 110), since that file does not exist.
 
 - [ ] **100. Boundary rules are bypassable** (Medium)
   `no-cross-bc-imports` misses relative paths, `export from`, and dynamic `import()`; `handler-collocation` is bypassed by alias imports.

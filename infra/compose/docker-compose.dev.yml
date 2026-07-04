@@ -112,7 +112,10 @@ services:
     networks:
       - backend
     ports:
-      - '27017:27017'
+      # Bind to localhost only: the DB is published for local tools/tests, not
+      # for the whole network. On a shared or remote dev box, 0.0.0.0 would
+      # expose Mongo (default creds admin/password) to anyone who can reach it.
+      - '127.0.0.1:27017:27017'
     healthcheck:
       test: ['CMD-SHELL', "mongosh -u admin -p password --authenticationDatabase admin --eval 'rs.status().ok' | grep -q 1"]
       interval: 30s
@@ -125,8 +128,8 @@ services:
     restart: unless-stopped
     environment:
       - ME_CONFIG_MONGODB_URL=mongodb://admin:password@mongodb:27017/?replicaSet=rs0&authSource=admin
-      - ME_CONFIG_BASICAUTH_USERNAME=admin
-      - ME_CONFIG_BASICAUTH_PASSWORD=admin
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-admin}
       - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
       - ME_CONFIG_SITE_BASEURL=/
     networks:
@@ -139,7 +142,8 @@ services:
     image: redis:7.0-alpine
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      # Localhost only (see the mongodb note): dev Redis has no password.
+      - '127.0.0.1:6379:6379'
     command: redis-server --appendonly yes
     volumes:
       - redis_data_dev:/data

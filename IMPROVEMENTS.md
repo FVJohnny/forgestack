@@ -123,8 +123,9 @@ Item 5 needs manual secret rotation by the maintainer. Item 8 is intentionally s
   The compose file interpolated the real Redis password into the container command and healthcheck, and stored user tokens were keyed by the raw JWT with no expiry, so they accumulated forever.
   **Status: Done.** (1) The prod Redis service now passes the password through the container's own `environment` and reads it inside an `sh -c` entrypoint (`--requirepass "$$REDIS_PASSWORD"`), so compose no longer bakes it into the command args; the healthcheck uses `REDISCLI_AUTH` and needs no `-a` flag. Verified with a real container that `docker inspect .Args` shows the literal `$REDIS_PASSWORD` (not the value) and that auth is enforced. (2) `UserToken_RedisRepository.save` now sets a TTL on all three keys (item, lookup, user-set), derived from the JWT's own `exp` claim plus a 60s grace, with a bounded 7-day fallback for tokens without a usable exp, so expired tokens self-clean. Covered by a new spec (3 tests against real Redis). Not addressed: hashing the token value used as a lookup key (deferred; it would change the key layout and is lower value than the TTL). Full suite passes.
 
-- [ ] **26. Dev Mongo/Redis published on all interfaces with default credentials** (Low)
-  Fine on a laptop, risky on a shared or remote dev box; mongo-express also hardcodes admin/admin. Fix: bind dev port mappings to 127.0.0.1.
+- [x] **26. Dev Mongo/Redis published on all interfaces with default credentials** (Low)
+  Fine on a laptop, risky on a shared or remote dev box; mongo-express also hardcoded admin/admin.
+  **Status: Done.** Both dev port mappings are now bound to `127.0.0.1` (`127.0.0.1:27017:27017`, `127.0.0.1:6379:6379`), so the datastores are reachable by local tools but not over the network. App services are unaffected: they connect over the internal compose network by service name (`mongodb`, `redis`), verified via the env examples and `docker compose config`. mongo-express basic-auth creds are now `${MONGO_EXPRESS_USER:-admin}` / `${MONGO_EXPRESS_PASSWORD:-admin}`, overridable via env with the previous values as defaults (mongo-express is dev-only and has no host port, so it was never network-exposed, but the hardcoded creds are gone). Compose-only change; `docker compose config` validates.
 
 ## B. Backend reliability (outbox, inbox, Kafka)
 

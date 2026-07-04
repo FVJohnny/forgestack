@@ -63,6 +63,15 @@ Because the structure is consistent and the boundaries are enforced, the codebas
 - **Node.js 22**
 - **Docker** (Docker Desktop on macOS/Windows)
 
+### Package managers
+
+This repo uses two package managers on purpose, each pinned via `packageManager`:
+
+- **npm** at the root, for the backend Nx workspace (`backend/libs/*`, `backend/services/*`, `tools/*`).
+- **pnpm** inside `frontend/public-page`, which is a standalone Next.js app excluded from the npm workspaces.
+
+Install backend dependencies with `npm install` at the root. The frontend installs its own dependencies with `pnpm install` (the dev stack and its Docker image handle this automatically), so you only need pnpm if you work on the frontend outside Docker.
+
 ### Install
 
 ```bash

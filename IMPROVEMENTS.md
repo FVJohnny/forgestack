@@ -479,8 +479,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   `backend/libs/*` are never directly typechecked, and success is determined by grepping for "error TS" instead of exit codes. Convert to cached Nx typecheck targets.
   **Status: Done.** Added a cached `typecheck` target (`tsc --noEmit -p tsconfig.json`) to all 6 backend project.json files plus a `typecheck` targetDefault in nx.json (cache + inputs). Rewrote `check-typescript.sh` to `exec npx nx run-many -t typecheck`, so it now covers the libs (previously skipped), keys off tsc's exit code (not a stdout grep), and is Nx-cached. `npm run typecheck` (used by CI and pre-commit) now runs all 7 projects (6 backend + public-page). Updated the pre-commit hook to `nx affected -t typecheck`. Verified: full run is green across 7 projects, a probe type error makes the target exit 1, and CI needs no change since it already calls `npm run typecheck`.
 
-- [ ] **105. Two package managers in one repo** (Medium)
+- [x] **105. Two package managers in one repo** (Medium)
   npm at the root, pnpm in `frontend/public-page` (excluded from workspaces, no `packageManager` field). Pick one or pin and document the split.
+  **Status: DONE (pinned and documented the split).** Kept the intentional split (forcing the Next.js app into the npm workspace, or the backend onto pnpm, is a large change with no functional gain). Pinned both sides via `packageManager`: root `npm@10.9.0` (item 103) and `frontend/public-page` now `pnpm@10.17.1`. Documented the split in the README (which manager owns which part, and that the frontend installs its own deps via pnpm/Docker). Verified the frontend pin with a clean `pnpm install --frozen-lockfile`.
 
 - [ ] **106. No bounded-context generator** (Medium)
   The forgestack CLI scaffolds whole services well, but the day-to-day unit of growth is the bounded context (and commands/queries inside it), which is fully manual. Extend the CLI.

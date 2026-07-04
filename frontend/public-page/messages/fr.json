@@ -9,6 +9,7 @@
       "passwordPlaceholder": "Entrez votre mot de passe",
       "submit": "Se Connecter",
       "submitting": "Connexion...",
+      "loading": "Connexion...",
       "noAccount": "Pas encore de compte ?",
       "createAccount": "Créer un Compte",
       "errorDefault": "Échec de connexion. Veuillez vérifier vos identifiants.",

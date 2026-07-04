@@ -9,6 +9,7 @@
       "passwordPlaceholder": "Digite sua senha",
       "submit": "Entrar",
       "submitting": "Entrando...",
+      "loading": "Conectando...",
       "noAccount": "Não tem uma conta?",
       "createAccount": "Criar Conta",
       "errorDefault": "Falha no login. Por favor verifique suas credenciais.",

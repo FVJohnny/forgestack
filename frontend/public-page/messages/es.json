@@ -9,6 +9,7 @@
       "passwordPlaceholder": "Ingresa tu contraseña",
       "submit": "Iniciar Sesión",
       "submitting": "Iniciando sesión...",
+      "loading": "Conectando...",
       "noAccount": "¿No tienes una cuenta?",
       "createAccount": "Crear Cuenta",
       "errorDefault": "Error de inicio de sesión. Por favor verifica tus credenciales.",

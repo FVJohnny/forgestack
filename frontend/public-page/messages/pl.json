@@ -9,6 +9,7 @@
       "passwordPlaceholder": "Wprowadź hasło",
       "submit": "Zaloguj się",
       "submitting": "Logowanie...",
+      "loading": "Łączenie...",
       "noAccount": "Nie masz konta?",
       "createAccount": "Utwórz Konto",
       "errorDefault": "Logowanie nie powiodło się. Sprawdź dane logowania.",

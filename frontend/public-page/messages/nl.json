@@ -9,6 +9,7 @@
       "passwordPlaceholder": "Voer je wachtwoord in",
       "submit": "Inloggen",
       "submitting": "Inloggen...",
+      "loading": "Verbinden...",
       "noAccount": "Nog geen account?",
       "createAccount": "Account Aanmaken",
       "errorDefault": "Inloggen mislukt. Controleer je inloggegevens.",

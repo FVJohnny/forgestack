@@ -9,6 +9,7 @@
       "passwordPlaceholder": "Gib dein Passwort ein",
       "submit": "Anmelden",
       "submitting": "Anmelden...",
+      "loading": "Verbinden...",
       "noAccount": "Noch kein Konto?",
       "createAccount": "Konto Erstellen",
       "errorDefault": "Anmeldung fehlgeschlagen. Bitte überprüfe deine Anmeldedaten.",

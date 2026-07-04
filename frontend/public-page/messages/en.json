@@ -9,6 +9,7 @@
       "passwordPlaceholder": "Enter your password",
       "submit": "Sign In",
       "submitting": "Signing in...",
+      "loading": "Connecting...",
       "noAccount": "Don't have an account?",
       "createAccount": "Create Account",
       "errorDefault": "Login failed. Please check your credentials.",

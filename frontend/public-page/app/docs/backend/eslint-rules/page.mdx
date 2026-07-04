@@ -1,7 +1,7 @@
 # Enforced Boundaries
 
 The patterns in the rest of the backend docs are only useful if they're actually
-followed. ForgeStack doesn't rely on discipline or code review for that — it
+followed. ForgeStack doesn't rely on discipline or code review for that. It
 ships a set of **custom ESLint rules** (in `eslint/rules/`) that fail the build
 when an architectural rule is broken. The architecture is executable.
 
@@ -32,10 +32,10 @@ const BC_ALIAS_REGEX = /^@bc\/([^/]+)/;
 
 ### CQRS collocation & naming
 
-- `cqrs-handler-collocation` — a `*.command-handler.ts` must import its command
+- `cqrs-handler-collocation`: a `*.command-handler.ts` must import its command
   from the **same directory** (likewise queries; domain-event handlers import the
   event from `domain/.../events`). Keeps each use case self-contained.
-- `handler-naming` — handler classes must end with the right suffix:
+- `handler-naming`: handler classes must end with the right suffix:
   `_CommandHandler`, `_QueryHandler`, `_DomainEventHandler`,
   `_IntegrationEventHandler`.
 
@@ -70,7 +70,7 @@ Three reasons:
 - **Boundaries erode silently.** A single "just this once" import from domain
   into infrastructure is how layered architectures rot. A rule turns that into a
   red build, not a future refactor.
-- **It's the best documentation.** New contributors — and AI agents — learn the
+- **It's the best documentation.** New contributors (and AI agents) learn the
   rules by hitting them, with a precise message pointing at the fix.
 - **It keeps the promises true.** Other docs say "the domain is pure" and
   "contexts talk only through events". These rules are what make those
@@ -78,7 +78,7 @@ Three reasons:
 
 <Callout type="tip" title="Extending the rules">
   The rules live in <code>eslint/rules/</code> as small, standalone <code>.mjs</code>
-  files. When you add a new convention to your fork, add a rule for it — that's how the architecture
+  files. When you add a new convention to your fork, add a rule for it. That's how the architecture
   stays enforceable as it grows.
 </Callout>
 

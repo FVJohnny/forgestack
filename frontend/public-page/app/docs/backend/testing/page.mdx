@@ -1,6 +1,6 @@
 # Testing
 
-Tests live next to the code they cover — every `*.spec.ts` file sits in the
+Tests live next to the code they cover: every `*.spec.ts` file sits in the
 same folder as its subject, and each service and lib runs its own Jest suite
 as an Nx target, so results are cached and only affected projects re-run.
 
@@ -16,13 +16,13 @@ failing test blocks the commit.
 
 ## Unit tests: no Nest, no mocks of your own code
 
-Handlers are plain classes, so tests construct them directly — no `Test.createTestingModule`, no DI container, no framework boot. What varies is
+Handlers are plain classes, so tests construct them directly: no `Test.createTestingModule`, no DI container, no framework boot. What varies is
 what you hand the constructor:
 
-- **In-memory repositories** — every aggregate ships two repository
+- **In-memory repositories**: every aggregate ships two repository
   implementations behind the same port. Tests use the in-memory one, which
   also takes a `shouldFail` flag so failure paths are one line to set up.
-- **Mock buses** — `MockCommandBus`, `MockQueryBus` and `MockEventBus` from
+- **Mock buses**: `MockCommandBus`, `MockQueryBus` and `MockEventBus` from
   `@libs/nestjs-common` record what was dispatched (and can be told to fail),
   so a test asserts *which command* an event handler produced without
   executing it.
@@ -46,7 +46,7 @@ of each kind.
 
 ## Repository tests: one contract, every implementation
 
-A repository's two implementations must behave identically — that's the whole
+A repository's two implementations must behave identically. That's the whole
 point of the port. So the repositories aren't tested twice: a **shared
 contract suite** (exported from `@libs/nestjs-common/test-exports`) defines
 the behavior once, and each implementation runs it with its own setup:
@@ -69,7 +69,7 @@ describe('Outbox_MongodbRepository', () => {
 });
 ```
 
-The Mongo variants run against the **real MongoDB from the dev stack** — no
+The Mongo variants run against the **real MongoDB from the dev stack**. No
 in-process fake. `jest.env.js` sets `NODE_ENV=test` and clears `MONGODB_URI`,
 which routes connections to `localhost:27017` (the dev compose exposes the
 port) and into a separate `<service>-tests` database, so tests never touch

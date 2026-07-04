@@ -39,9 +39,9 @@ Each command has exactly one **handler**, in the same folder. A handler
 implements three methods, and the framework always runs them in the same
 order:
 
-1. `authorize` — is the requester allowed to do this?
-2. `validate` — are the command's preconditions met?
-3. `handle` — do the work.
+1. `authorize`: is the requester allowed to do this?
+2. `validate`: are the command's preconditions met?
+3. `handle`: do the work.
 
 `handle` orchestrates but does not decide: a typical command handler  builds value objects, calls the
 aggregate (where the business rules run), persists inside a transaction, and
@@ -172,7 +172,7 @@ The conventions:
 
 - **One controller per operation**, named after it
   (`CreateGreeting_Controller`), in `interfaces/controllers/<resource>/`.
-- **Input validation at the edge** — a `…_ControllerParams` class with
+- **Input validation at the edge**: a `…_ControllerParams` class with
   `class-validator` decorators, enforced by the global validation pipe.
   Domain rules still live in value objects; the params class only guards
   shape.
@@ -190,17 +190,17 @@ authorize → validate → handle sequence, and it wraps every execution with:
 
 - a **tracing span** (`command.execute` / `query.execute`) named after the
   handler class;
-- **metrics** — a duration histogram and success/error counters, visible on
+- **metrics**: a duration histogram and success/error counters, visible on
   the CQRS Grafana dashboard;
 - **structured logs** with correlation IDs.
 
 
 ## Further reading
 
-- [CQRS](https://martinfowler.com/bliki/CQRS.html) — Martin Fowler. A short,
+- [CQRS](https://martinfowler.com/bliki/CQRS.html). Martin Fowler. A short,
   balanced overview, including when not to use it.
 - [CQRS Documents](https://cqrs.files.wordpress.com/2010/11/cqrs_documents.pdf)
-  — Greg Young. The original, deeper treatment by the person who coined the
+  Greg Young. The original, deeper treatment by the person who coined the
   term.
 
 Next: **[Repositories](/docs/backend/repositories)**.

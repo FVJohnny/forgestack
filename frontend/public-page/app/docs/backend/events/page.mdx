@@ -2,7 +2,7 @@
 
 ## What's an event?
 
-An **event** is a record that *something happened* — "a user registered", "a
+An **event** is a record that *something happened*: "a user registered", "a
 password was reset". Instead of one piece of code directly calling another to
 make the next thing happen, it just announces the event, and whoever cares
 reacts.
@@ -14,7 +14,7 @@ touching the code that emitted the event. Things stay decoupled.
 
 This matters most at the seams between [bounded
 contexts](/docs/architecture#bounded-contexts-are-separate-systems). Each context
-is its own little system — several may share a process today, but any of them
+is its own little system. Several may share a process today, but any of them
 should be splittable into its own microservice later. They collaborate **only
 through events**, never by importing each other or sharing a database, so that
 split is always possible.
@@ -25,12 +25,12 @@ There are two, and they exist for different reasons. Getting the distinction rig
 is the key to everything else on this page: one kind stays **inside** a context,
 the other is how contexts talk **across** the boundary.
 
-### Domain events — internal to one context
+### Domain events: internal to one context
 
 A **domain event** is emitted by an aggregate when something meaningful happens in
 the business. It's handled **in the same context, in the same process**, and it
-never leaves. Because it stays internal, it can carry rich domain objects — value
-objects, entities, whatever the handlers need:
+never leaves. Because it stays internal, it can carry rich domain objects (value
+objects, entities, whatever the handlers need):
 
 ```ts
 // auth context — in-process only, never serialized over the wire
@@ -48,9 +48,9 @@ export class UserRegistered_DomainEvent extends Base_DomainEvent {
 Use them to keep a single context's own logic decoupled: an aggregate records
 *what happened*, and one or more handlers in that same context react to it.
 
-### Integration events — the contract between contexts
+### Integration events: the contract between contexts
 
-An **integration event** is the **public contract** that crosses a boundary —
+An **integration event** is the **public contract** that crosses a boundary,
 between bounded contexts, and between services. It travels over Kafka, so it must
 be **easily serializable**: plain, primitive fields only, no domain objects. It's
 also **versioned**, because other systems depend on its shape and you need to be
@@ -82,8 +82,8 @@ shape they can rely on."*
   Keeping domain objects out of integration events is what keeps contexts truly
   independent. If one context could hand its aggregates to another, they'd be
   coupled to each other's internals and you could never split them apart. Plain,
-  versioned messages are the contract that lets each context evolve — and
-  relocate into its own service — on its own schedule.
+  versioned messages are the contract that lets each context evolve (and
+  relocate into its own service) on its own schedule.
 </Callout>
 
 ## The handlers
@@ -96,7 +96,7 @@ layers because they answer to different sides of the boundary.
 A **domain-event handler** reacts to a domain event **in the same context, in
 the same process**. It lives in `application/domain-event-handlers/<event>/`,
 extends `Base_DomainEventHandler(SomeEvent)`, and is named
-`<Event>_<Action>_DomainEventHandler` — one handler per reaction, so an event
+`<Event>_<Action>_DomainEventHandler`, one handler per reaction, so an event
 with three consequences has three small handlers instead of one big one:
 
 ```ts
@@ -124,7 +124,7 @@ export class GreetingCreated_PublishIntegrationEvent_DomainEventHandler extends 
 
 Handlers run when the command handler that mutated the aggregate calls
 `sendDomainEvents()`. The one above shows the most important reaction:
-**building the integration event and writing it to the outbox** — the
+**building the integration event and writing it to the outbox**. The
 domain-event handler is the bridge between the internal event and the public
 contract. Dispatching a follow-up command through the command bus is the other
 common shape.
@@ -149,7 +149,7 @@ export class UserCreated_IntegrationEventHandler {
 }
 ```
 
-The decorator is all the registration there is — the Kafka listener subscribes
+The decorator is all the registration there is. The Kafka listener subscribes
 to the topics that have handlers, and the inbox delivers each event to
 `handleEvent` exactly once (see [the inbox](#the-inbox-consume-side)). Keep the
 handler thin: translate the event into one of the context's own commands and
@@ -214,8 +214,8 @@ export class UserDeleted_PublishIntegrationEvent_DomainEventHandler
 }
 ```
 
-The `OutboxEvent` aggregate owns its lifecycle — retry counting, max retries,
-and the processed flag — as behaviour, not setters:
+The `OutboxEvent` aggregate owns its lifecycle (retry counting, max retries,
+and the processed flag) as behaviour, not setters:
 
 ```ts
 // libs/common/src/outbox/domain/outbox.aggregate.ts
@@ -235,7 +235,7 @@ export class OutboxEvent extends SharedAggregate {
 
 When a command needs to publish *as part of* its own transaction, the base
 command handler exposes `sendIntegrationEvent(event, context)`, which writes the
-outbox row using the command's transaction context — keeping state and event
+outbox row using the command's transaction context, keeping state and event
 atomic.
 
 ## Kafka (transport)
@@ -297,7 +297,7 @@ an inbox service, the listener dispatches directly (useful in tests).
 <Callout type="tip" title="Why outbox + inbox together">
   The outbox stops you from *losing or phantom-publishing* events. The inbox
   stops you from *processing the same event twice*. Together they turn Kafka's
-  at-least-once delivery into effectively exactly-once business processing —
+  at-least-once delivery into effectively exactly-once business processing,
   without distributed transactions.
 </Callout>
 
@@ -331,7 +331,7 @@ export abstract class Base_IntegrationEvent {
 }
 ```
 
-A concrete event defines its payload and how to (de)serialise it — `toEventJSON`
+A concrete event defines its payload and how to (de)serialise it: `toEventJSON`
 to send, `fromJSON` to reconstruct on the other side:
 
 ```ts

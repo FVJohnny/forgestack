@@ -17,18 +17,18 @@ that explains it in depth.
 
 ## The pieces
 
-- **Caddy** — the reverse proxy and only public entry point. It routes each hostname to the service behind it. Covered in
+- **Caddy**: the reverse proxy and only public entry point. It routes each hostname to the service behind it. Covered in
   [Deployment](/docs/deployment).
-- **Frontend** — a Next.js application with the landing page, documentation,
+- **Frontend**: a Next.js application with the landing page, documentation,
   auth flows and a small dashboard. See [Frontend](/docs/frontend).
-- **Backend** — one or more NestJS services containing the business logic. See
+- **Backend**: one or more NestJS services containing the business logic. See
   [Backend](/docs/backend).
-- **Kafka** — the event bus. Services communicate by publishing and consuming
+- **Kafka**: the event bus. Services communicate by publishing and consuming
   events rather than calling each other directly. See
   [Events](/docs/backend/events).
-- **Databases** — **MongoDB** for persistence and **Redis** for caching, with
+- **Databases**: **MongoDB** for persistence and **Redis** for caching, with
   **PostgreSQL** support planned. Mongo Express is included for inspecting the
   data; PGAdmin will arrive with PostgreSQL. See [Databases](/docs/databases).
-- **Observability** — Prometheus, Loki and Tempo collect metrics, logs and
+- **Observability**: Prometheus, Loki and Tempo collect metrics, logs and
   traces from every deployed component; **Grafana** is preconfigured to display
   them. See [Monitoring](/docs/monitoring).

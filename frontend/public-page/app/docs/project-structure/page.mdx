@@ -37,7 +37,7 @@ independent Nx project with its own build, test and lint targets.
 
 ## Inside a service
 
-A service is organised by **bounded context** — a self-contained slice of the
+A service is organised by **bounded context**, a self-contained slice of the
 domain. Each context owns its full hexagonal stack, from domain model to HTTP
 controller:
 
@@ -68,7 +68,7 @@ backend/services/service-1/src/
 └── otel-instrumentation.ts          OpenTelemetry setup, loaded before the app
 ```
 
-Every command or query lives in its own folder together with its handler —
+Every command or query lives in its own folder together with its handler.
 `commands/register-user/` holds `register-user.command.ts` and
 `register-user.command-handler.ts`. The layout isn't a suggestion: layer
 boundaries, context isolation and handler collocation are all checked at lint
@@ -110,7 +110,7 @@ relative to the tsconfig of the project being compiled, so in every service it
 points at **that service's own** `src/bounded-contexts/`. `@bc/auth/...` always
 means "the auth context of *this* service", the import shape is identical in
 every service, and importing another service's contexts is impossible by
-construction — no per-service tsconfig overrides needed. Usage:
+construction. No per-service tsconfig overrides needed. Usage:
 
 ```ts
 import { Base_CommandHandler } from '@libs/nestjs-common';
@@ -138,7 +138,7 @@ frontend/public-page/
 └── lib/                      brand config, utils
 ```
 
-The frontend is a standalone pnpm workspace — it keeps its own lockfile and
+The frontend is a standalone pnpm workspace. It keeps its own lockfile and
 `node_modules`, so it stays decoupled from the backend toolchain. See
 [Frontend](/docs/frontend) for the conventions.
 

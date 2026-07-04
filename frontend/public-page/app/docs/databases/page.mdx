@@ -10,15 +10,15 @@ so the datastore is an implementation detail the domain never sees.
 The primary store. Configured by `MongoDbConfigService`; the app uses the
 **native MongoDB driver** (not Mongoose) through `Base_MongoRepository`.
 
-- **Connection** — `MONGODB_URI`, defaulting (dev) to
+- **Connection**: `MONGODB_URI`, defaulting (dev) to
   `mongodb://mongodb:27017/<service>?replicaSet=rs0&directConnection=true`.
-- **Replica set** — Mongo runs as a single-member replica set `rs0`. This isn't
+- **Replica set**: Mongo runs as a single-member replica set `rs0`. This isn't
   for redundancy in dev; it's because **multi-document transactions require a
   replica set**, and the outbox pattern relies on them (state + outbox row commit
   atomically).
-- **Connection pool** — max 20 by default (`MONGO_MAX_POOL_SIZE`), with 5s
+- **Connection pool**: max 20 by default (`MONGO_MAX_POOL_SIZE`), with 5s
   server-selection / socket / connect timeouts.
-- **Auth** — enabled in production via a keyfile and admin user, created on first
+- **Auth**: enabled in production via a keyfile and admin user, created on first
   boot by `infra/mongo/mongo-startup.sh`.
 
 ```env
@@ -30,7 +30,7 @@ MONGO_MAX_POOL_SIZE=20
 
 Each repository declares its indexes in `defineIndexes()`, created idempotently
 on startup. Queries are expressed with the database-agnostic **Criteria** object
-and translated by `MongoCriteriaConverter` — so query logic doesn't hard-code
+and translated by `MongoCriteriaConverter`, so query logic doesn't hard-code
 Mongo syntax.
 
 ### Mongo Express
@@ -42,8 +42,8 @@ it, and the prod Caddy image does not serve the `mongo.` hostname.
 
 ## Redis
 
-Used for caching and publish/subscribe. `RedisService` manages **three clients**
-— a database client, a publisher, and a subscriber (pub/sub needs dedicated
+Used for caching and publish/subscribe. `RedisService` manages **three clients**:
+a database client, a publisher, and a subscriber (pub/sub needs dedicated
 connections).
 
 ```env
@@ -76,7 +76,7 @@ KAFKA_CONSUMER_HEARTBEAT_INTERVAL=10000
 
 Because the domain depends on a repository **interface**, adding PostgreSQL,
 MySQL, or anything else is a matter of writing a new adapter that implements that
-interface — no handler or domain code changes. The auth context already ships an
+interface. No handler or domain code changes. The auth context already ships an
 **in-memory** repository implementation used in tests, which is the simplest
 demonstration of the same port backed by a different store.
 

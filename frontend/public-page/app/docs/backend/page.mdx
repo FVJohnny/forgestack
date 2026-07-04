@@ -9,22 +9,22 @@ How the code inside a bounded context is organized is what this section covers.
 
 The pages build on each other, so first time through, read them in order:
 
-1. **[Hexagonal Architecture](/docs/backend/hexagonal)** — the layers inside a
+1. **[Hexagonal Architecture](/docs/backend/hexagonal)**: the layers inside a
    context, and how ports and adapters keep business logic uncoupled from how
    it is exposed to users, how data is stored, or how events are shared
    between services.
-2. **[Domain-Driven Design](/docs/backend/ddd)** — how business logic is
+2. **[Domain-Driven Design](/docs/backend/ddd)**: how business logic is
    modeled. The vocabulary used everywhere else (aggregates, value objects,
    domain events) is introduced here.
-3. **[CQRS](/docs/backend/cqrs)** — how reads and writes flow through the
+3. **[CQRS](/docs/backend/cqrs)**: how reads and writes flow through the
    system.
-4. **[Repositories](/docs/backend/repositories)** — how aggregates are
+4. **[Repositories](/docs/backend/repositories)**: how aggregates are
    persisted: the Mongo adapter, database-agnostic queries, transactions and
    error translation.
-5. **[Event-Driven Architecture](/docs/backend/events)** — how bounded contexts
+5. **[Event-Driven Architecture](/docs/backend/events)**: how bounded contexts
    coordinate with each other in an uncoupled way.
-6. **[Testing](/docs/backend/testing)** — how all of the above is tested.
-7. **[Enforced Boundaries](/docs/backend/eslint-rules)** — the lint rules that
+6. **[Testing](/docs/backend/testing)**: how all of the above is tested.
+7. **[Enforced Boundaries](/docs/backend/eslint-rules)**: the lint rules that
    fail the build when the structure is violated.
 
 ## Why this much structure?

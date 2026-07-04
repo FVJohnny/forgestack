@@ -1,7 +1,7 @@
 # Monitoring
 
-ForgeStack is observable on day one. The three pillars — **metrics**, **logs**
-and **traces** — are collected automatically and correlated in **Grafana**.
+ForgeStack is observable on day one. The three pillars (**metrics**, **logs**
+and **traces**) are collected automatically and correlated in **Grafana**.
 Instrumentation comes from the base handler classes and OpenTelemetry
 auto-instrumentation, so you don't wire it per feature.
 
@@ -11,7 +11,7 @@ service-1 ──metrics──▶ Prometheus ──┐
           ──logs─────▶ Loki ◀─Promtail┘
 ```
 
-## Traces — OpenTelemetry → Tempo
+## Traces: OpenTelemetry → Tempo
 
 OpenTelemetry is initialised before the app bootstraps. Auto-instrumentation
 covers HTTP, Express, NestJS, MongoDB, PostgreSQL and Kafka, and the CQRS bases
@@ -26,13 +26,13 @@ SERVICE_NAME=service-1
 ```
 
 Because integration events carry trace metadata in their envelope (see
-[Events](/docs/backend/events)), a trace **follows an event across Kafka** — a
+[Events](/docs/backend/events)), a trace **follows an event across Kafka**: a
 consumer's spans link back to the producer's request.
 
-## Metrics — Prometheus
+## Metrics: Prometheus
 
 Every service exposes metrics at `/api/v1/metrics` (behind an internal API
-key). Prometheus discovers the services from Docker — any container labeled
+key). Prometheus discovers the services from Docker. Any container labeled
 `prometheus.scrape=true` (part of the compose service template) is scraped
 every 5s under its compose service name, plus container metrics from cAdvisor:
 
@@ -60,14 +60,14 @@ scrape_configs:
       - targets: ['cadvisor:8080']
 ```
 
-New services are picked up automatically — the scrape config never changes.
+New services are picked up automatically. The scrape config never changes.
 
 The CQRS bases emit per-command/query/event **duration histograms** and
 **success/error counters**, so throughput and latency are available without
 custom code. Tempo's metrics-generator also writes span-derived metrics back to
 Prometheus for service-map and RED metrics.
 
-## Logs — Loki + Promtail
+## Logs: Loki + Promtail
 
 The app logs **structured JSON** including the active `traceId`. **Promtail**
 discovers containers via the Docker socket, parses the JSON, and ships logs to
@@ -86,26 +86,26 @@ straight to its trace and vice-versa.
 
 ## Grafana
 
-Grafana is provisioned automatically — datasources and dashboards are committed
+Grafana is provisioned automatically. Datasources and dashboards are committed
 to the repo, not clicked in by hand.
 
 **Datasources** (`infra/monitoring/grafana/provisioning/datasources`): Prometheus
-(default), Loki, and Tempo — wired together so traces link to logs
+(default), Loki, and Tempo, wired together so traces link to logs
 (`tracesToLogs`), traces link to metrics (`tracesToMetrics`), and a service map
 is generated.
 
 **Pre-built dashboards:**
 
-- `nestjs-metrics` — HTTP requests/sec by route, p95 latency, status codes.
-- `cqrs-metrics` — command/query/handler performance.
-- `inbox-outbox-metrics` — outbox publish and inbox processing counts & latency.
-- `docker-containers` — per-container CPU, memory, network (from cAdvisor).
+- `nestjs-metrics`: HTTP requests/sec by route, p95 latency, status codes.
+- `cqrs-metrics`: command/query/handler performance.
+- `inbox-outbox-metrics`: outbox publish and inbox processing counts & latency.
+- `docker-containers`: per-container CPU, memory, network (from cAdvisor).
 
 In dev, Grafana is at `https://grafana.localhost` (admin/admin by default).
 
 <Callout type="tip" title="One pane of glass">
   Start from a slow request in the NestJS dashboard, jump to its trace in Tempo,
-  and from a span jump straight to the matching logs in Loki — all without
+  and from a span jump straight to the matching logs in Loki, all without
   leaving Grafana. That correlation is the payoff of instrumenting once, at the
   base classes.
 </Callout>

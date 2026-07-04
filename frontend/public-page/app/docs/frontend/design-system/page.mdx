@@ -4,7 +4,7 @@
 
 Styling is driven entirely by **CSS custom properties** defined in
 `app/globals.css` and exposed to Tailwind v4 via `@theme`. The palette is the
-"Molten Forge" identity — dark forged-steel surfaces with a molten-orange accent:
+"Molten Forge" identity: dark forged-steel surfaces with a molten-orange accent:
 
 ```css
 --base: #0c0a09;          /* forged-steel background */
@@ -15,8 +15,8 @@ Styling is driven entirely by **CSS custom properties** defined in
 --amber: #ffb429;         /* spark / warning */
 ```
 
-Because everything reads from these tokens, **re-theming is a token change** —
-adjust `--phosphor` and the accent cascades across buttons, links, charts,
+Because everything reads from these tokens, **re-theming is a token change**.
+Adjust `--phosphor` and the accent cascades across buttons, links, charts,
 diagram connectors and the docs. Components reference Tailwind classes mapped to
 the tokens (`text-ink`, `border-line`, `text-primary`, …), never hard-coded
 colours.

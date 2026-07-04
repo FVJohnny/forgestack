@@ -1,7 +1,7 @@
 # Internationalisation
 
-Localisation uses **next-intl**. Locale is **cookie-based** (`NEXT_LOCALE`) —
-there's no `[locale]` segment in the URL — with the browser's `Accept-Language`
+Localisation uses **next-intl**. Locale is **cookie-based** (`NEXT_LOCALE`),
+with no `[locale]` segment in the URL, using the browser's `Accept-Language`
 as a fallback and `en` as the default. Eight locales ship: `en`, `es`, `pt`,
 `de`, `fr`, `nl`, `pl`, `th`.
 
@@ -16,7 +16,7 @@ return <h1>{t('headline')}</h1>;
 The `LanguageSwitcher` in the header sets the cookie and refreshes the route,
 so no reload or URL change is involved in switching languages.
 
-Keep all locale files in sync when you add a key. (These docs are an exception —
-they're authored in English MDX rather than the translation catalogues.)
+Keep all locale files in sync when you add a key. (These docs are an exception.
+They're authored in English MDX rather than the translation catalogues.)
 
 Next: **[The Console](/docs/frontend/console)**.

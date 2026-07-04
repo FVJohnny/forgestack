@@ -65,7 +65,7 @@ examples, and brings the stack up.
 
 <Callout type="warning" title="env_file isn't hot-reloaded">
   Editing a service's <code>.env</code> requires recreating that container
-  (<code>up -d --force-recreate</code>), not just a restart — Compose only reads
+  (<code>up -d --force-recreate</code>), not just a restart. Compose only reads
   <code>env_file</code> at container creation. Source/code changes hot-reload
   fine; env changes don't.
 </Callout>
@@ -109,7 +109,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
 
 <Callout type="warning" title="Secrets stay out of git">
   Real <code>.env.prod</code> files (JWT secrets, DB and registry credentials)
-  are gitignored. Only the <code>*.example</code> templates are committed — fill
+  are gitignored. Only the <code>*.example</code> templates are committed. Fill
   them in on the server, never commit the populated versions.
 </Callout>
 
@@ -119,8 +119,8 @@ To turn ForgeStack into your product:
 
 1. Rename the service(s) and set your `DOMAIN`, registry and secrets in the env
    files.
-2. Build your bounded contexts following the [Backend](/docs/backend) patterns —
-   the lint rules will keep you on the rails.
+2. Build your bounded contexts following the [Backend](/docs/backend) patterns.
+   The lint rules will keep you on the rails.
 3. Add datastores or external adapters behind ports as needed.
 4. `npm run prod:update` to ship.
 

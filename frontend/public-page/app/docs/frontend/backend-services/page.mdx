@@ -3,15 +3,15 @@
 The frontend reaches every backend service through its own hostname, with one
 API-client instance per service:
 
-1. **CORS** — the frontend origin must be in the service's `CORS_ORIGINS`.
-2. **Base URL** — a `NEXT_PUBLIC_<NAME>_API_URL` env var in `.env.local`
+1. **CORS**: the frontend origin must be in the service's `CORS_ORIGINS`.
+2. **Base URL**: a `NEXT_PUBLIC_<NAME>_API_URL` env var in `.env.local`
    (+ `.example`) and `infra/env/public-page.env.prod` (+ `.example`).
    `NEXT_PUBLIC_*` values are baked in at build time: restart the dev
    container / rebuild the prod image to pick them up.
-3. **API client** — add the base URL to `lib/api/config.ts` and export a
+3. **API client**: add the base URL to `lib/api/config.ts` and export a
    client instance for it in `lib/api/client.ts`, then wrap the endpoints in
    a `lib/api/services/<name>.service.ts` with types in `lib/api/types.ts`.
-4. **UI** — fetch through the service module. Any user-facing text needs keys
+4. **UI**: fetch through the service module. Any user-facing text needs keys
    in **all locale catalogues** under `messages/`.
 
 The dashboard's activity panel (fed by the second example service) is the

@@ -11,7 +11,6 @@
       "submitting": "Connexion...",
       "noAccount": "Pas encore de compte ?",
       "createAccount": "Créer un Compte",
-      "successMessage": "Compte créé avec succès ! Veuillez vérifier votre email ({email}) pour un lien de vérification avant de vous connecter.",
       "errorDefault": "Échec de connexion. Veuillez vérifier vos identifiants.",
       "orContinueWith": "ou continuer avec",
       "googleButton": "Continuer avec Google",

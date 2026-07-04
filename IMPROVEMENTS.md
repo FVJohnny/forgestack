@@ -314,8 +314,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   6 locales (de, es, fr, nl, pl, pt) were missing the whole `auth.resetPassword` section and silently fell back to English.
   **Status: Done.** Added translated `resetPassword` blocks to all 6 (title, description, field labels, submit/submitting, success, and the four error messages). All 8 locales now have identical key sets. Also added a `check:locales` script that fails if any locale's key set diverges from `en`, wired into the CI static job so this cannot silently regress.
 
-- [ ] **73. Register / verify-email flow contradiction** (Medium)
-  A comment says verification is disabled with auto-login, yet a full verify-email flow and "check your email" copy exist, plus a dead `?registered=true` handler. Pick one story or make it a documented toggle.
+- [x] **73. Register / verify-email flow contradiction** (Medium)
+  Register auto-logged-in (verification disabled), yet the login form had a `?registered=true` handler showing a "check your email for verification" message that nothing ever linked to.
+  **Status: Done.** Committed to the auto-login story (which matches the backend, where users are created active). Removed the dead `?registered=true` handler and its now-unused success-alert state from the login form, deleted the misleading `auth.login.successMessage` key from all 8 locales, and clarified the register-form comment (documenting how to switch to verification instead). Also fixed the register-then-login failure mode from item 77 (redirect to /login instead of showing "registration failed" when the account was actually created). Build clean, locales in parity.
 
 - [ ] **74. SEO essentials missing** (Medium)
   Per-page metadata, `not-found.tsx`, robots.txt, a sitemap, and Open Graph / Twitter cards.

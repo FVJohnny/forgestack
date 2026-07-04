@@ -58,10 +58,19 @@ export function RegisterForm() {
 
     setIsLoading(true);
     try {
-      // Email verification is disabled — register then auto-login straight to the console.
+      // This template ships with email verification disabled: register, then
+      // auto-login straight to the console. To require verification instead,
+      // flip the backend flag and route to a "check your email" screen here.
       await register(email, password);
-      await login(email, password);
-      router.push('/dashboard');
+      try {
+        await login(email, password);
+        router.push('/dashboard');
+      } catch {
+        // The account WAS created; only the auto-login failed. Send the user
+        // to login rather than showing a misleading "registration failed"
+        // (which would then fail with "already exists" on retry).
+        router.push('/login');
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('errors.default'));
     } finally {

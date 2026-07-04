@@ -1,8 +1,8 @@
 'use client';
 
 import type React from 'react';
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/app/shared/ui/button';
@@ -19,12 +19,10 @@ const GOOGLE_OAUTH_ENABLED = !!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 export function LoginForm() {
   const t = useTranslations('auth.login');
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { login, loginWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -40,15 +38,6 @@ export function LoginForm() {
       setIsGoogleLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (searchParams.get('registered') === 'true') {
-      const emailParam = searchParams.get('email');
-      setSuccessMessage(
-        t('successMessage', { email: emailParam ? decodeURIComponent(emailParam) : '' }),
-      );
-    }
-  }, [searchParams, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,11 +57,6 @@ export function LoginForm() {
     <div>
       <AuthHeading title={t('title')} subtitle={t('subtitle')} />
 
-      {successMessage && (
-        <FormAlert kind="success" className="mb-4">
-          {successMessage}
-        </FormAlert>
-      )}
       {error && (
         <FormAlert kind="error" className="mb-4">
           {error}

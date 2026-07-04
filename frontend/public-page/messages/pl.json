@@ -11,7 +11,6 @@
       "submitting": "Logowanie...",
       "noAccount": "Nie masz konta?",
       "createAccount": "Utwórz Konto",
-      "successMessage": "Konto utworzone pomyślnie! Sprawdź swój email ({email}), aby potwierdzić konto przed zalogowaniem.",
       "errorDefault": "Logowanie nie powiodło się. Sprawdź dane logowania.",
       "orContinueWith": "lub kontynuuj przez",
       "googleButton": "Kontynuuj przez Google",

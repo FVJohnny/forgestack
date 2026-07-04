@@ -11,7 +11,6 @@
       "submitting": "Signing in...",
       "noAccount": "Don't have an account?",
       "createAccount": "Create Account",
-      "successMessage": "Account created successfully! Please check your email ({email}) for a verification link before signing in.",
       "errorDefault": "Login failed. Please check your credentials.",
       "orContinueWith": "or continue with",
       "googleButton": "Continue with Google",

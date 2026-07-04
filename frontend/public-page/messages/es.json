@@ -11,7 +11,6 @@
       "submitting": "Iniciando sesión...",
       "noAccount": "¿No tienes una cuenta?",
       "createAccount": "Crear Cuenta",
-      "successMessage": "¡Cuenta creada exitosamente! Por favor revisa tu correo ({email}) para un enlace de verificación antes de iniciar sesión.",
       "errorDefault": "Error de inicio de sesión. Por favor verifica tus credenciales.",
       "orContinueWith": "o continuar con",
       "googleButton": "Continuar con Google",

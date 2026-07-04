@@ -11,7 +11,6 @@
       "submitting": "Anmelden...",
       "noAccount": "Noch kein Konto?",
       "createAccount": "Konto Erstellen",
-      "successMessage": "Konto erfolgreich erstellt! Bitte überprüfe deine E-Mail ({email}) für einen Bestätigungslink vor der Anmeldung.",
       "errorDefault": "Anmeldung fehlgeschlagen. Bitte überprüfe deine Anmeldedaten.",
       "orContinueWith": "oder fortfahren mit",
       "googleButton": "Weiter mit Google",

@@ -3,24 +3,20 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtTokenService } from './jwt-token.service';
 import { InternalApiKeyGuard } from './internal-api-key.guard';
-
-function resolveJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (secret) return secret;
-
-  // Never let the app boot in production without an explicit secret — a known
-  // default would let anyone forge tokens.
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET must be set in production');
-  }
-  return 'dev-jwt-secret-change-in-production';
-}
+import { requiredEnv } from './env.util';
 
 @Global()
 @Module({
   imports: [
-    JwtModule.register({
-      secret: resolveJwtSecret(),
+    // registerAsync so the secret is read lazily, after ConfigModule has
+    // loaded .env. A static register() would run at import time, before env
+    // loading, and could register the guard with a different secret than the
+    // one JwtTokenService signs with. No fallback in any environment: a
+    // published default would let anyone forge tokens.
+    JwtModule.registerAsync({
+      useFactory: () => ({
+        secret: requiredEnv('JWT_SECRET'),
+      }),
     }),
   ],
   providers: [JwtAuthGuard, JwtTokenService, InternalApiKeyGuard],

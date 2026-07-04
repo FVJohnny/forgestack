@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { JwtTokenPayload, TokenPayload } from './jwt-auth.types';
 import { v4 as uuid } from 'uuid';
 import type { StringValue } from 'ms';
+import { requiredEnv } from './env.util';
 
 @Injectable()
 export class JwtTokenService {
@@ -12,13 +13,9 @@ export class JwtTokenService {
   private readonly refreshTokenExpiry: StringValue | number;
 
   constructor(private readonly jwtService: JwtService) {
-    if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET environment variable is required');
-    if (!process.env.JWT_REFRESH_SECRET)
-      throw new Error('JWT_REFRESH_SECRET environment variable is required');
-
-    this.accessTokenSecret = process.env.JWT_SECRET;
+    this.accessTokenSecret = requiredEnv('JWT_SECRET');
     this.accessTokenExpiry = (process.env.JWT_EXPIRES_IN ?? '5m') as StringValue;
-    this.refreshTokenSecret = process.env.JWT_REFRESH_SECRET;
+    this.refreshTokenSecret = requiredEnv('JWT_REFRESH_SECRET');
     this.refreshTokenExpiry = (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as StringValue;
   }
 

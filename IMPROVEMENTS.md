@@ -15,7 +15,7 @@ How to read an item:
 |---|---|---|---|
 | A. Security | 26 | 25 done, 1 partial (item 5) | none (all code done) |
 | B. Backend reliability (outbox/inbox/Kafka) | 19 | 19 (44 deferred) | none |
-| C. Backend code quality | 13 | 10 | 48, 49, 52 |
+| C. Backend code quality | 13 | 13 | none |
 | D. Backend testing | 2 | 0 | 61, 62 |
 | E. Frontend | 15 | 14 | 71 |
 | F. Infra and deployment | 15 | 14 done, 1 won't-do (82) | none |
@@ -234,8 +234,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   The OTel bootstrap installed its own `SIGTERM` handler that called `process.exit(0)`, which could kill the process before Nest's `enableShutdownHooks` ran `onModuleDestroy` (Kafka/Mongo/Redis disconnect, outbox drain).
   **Status: Done.** Replaced the SIGTERM+exit handler with a `beforeExit` flush that shuts the SDK down without terminating the process. Nest now owns the SIGTERM → graceful-shutdown flow (shutdown hooks were already enabled in `configureApp`), and the SDK still flushes spans on exit. Verified the service starts and stops cleanly against the running stack.
 
-- [ ] **52. Product features live inside the shared framework lib** (Medium)
+- [x] **52. Product features live inside the shared framework lib** (Medium)
   The user-token auth context, app-specific Kafka topics, and example events sit in `libs/common`. Separate "framework" from "example app" or mark them clearly as examples.
+  **Status: DONE (documented the boundary; no code moved).** Physically separating the example code would churn many import paths across both services for no functional gain, so the boundary was made explicit instead. Added `backend/libs/common/README.md` with a "Framework vs example" section listing exactly which top-level areas are reusable framework (bootstrap, cqrs, inbox/outbox, transactions, errors, logger, metrics, tracing, ...) versus example/product to replace (`auth/` user-token context, `integration-events/events/*.integration-event.ts`, `topics.ts`). Added header comments marking the example-only files: a note on `topics.ts`, a marker on each of the 7 concrete integration-event files, and a split annotation in `auth/index.ts` separating the framework guards/JWT from the example user-token model. Typecheck/lint/format clean.
 
 - [x] **53. `Data.parseFromString('')` returns 0** (Medium)
   `Number('')` / `Number('   ')` coerce to 0, so an empty filter value matched the number 0 in EQUAL/IN conditions.

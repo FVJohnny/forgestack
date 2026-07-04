@@ -1,3 +1,6 @@
+// EXAMPLE / PRODUCT CODE (not framework). This is the demo app's Kafka
+// topic/event-name registry. Replace it with your own topics when you build
+// on the template. See backend/libs/common/README.md ("Framework vs example").
 export class Topics {
   static readonly USERS = {
     topic: 'users',

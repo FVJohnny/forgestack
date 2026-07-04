@@ -1,3 +1,6 @@
+// EXAMPLE / PRODUCT CODE (not framework): a concrete integration-event
+// contract for the demo app. Replace with your own events. See
+// backend/libs/common/README.md.
 import { ApplicationException } from '../../errors';
 import { Id } from '../../general';
 import { Base_IntegrationEvent, type Base_IntegrationEventProps } from './base.integration-event';

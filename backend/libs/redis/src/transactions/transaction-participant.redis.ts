@@ -17,12 +17,24 @@ export class TransactionParticipant_Redis implements TransactionParticipant {
   }
 
   async commit() {
-    await this.pipeline.exec();
+    const results = await this.pipeline.exec();
+    // ioredis returns [[err, res], ...] per queued command. exec() itself does
+    // not reject on a per-command error, so surface the first one instead of
+    // silently committing a partial pipeline.
+    if (results) {
+      for (const [err] of results) {
+        if (err) {
+          throw err;
+        }
+      }
+    }
   }
   async rollback() {
-    await this.pipeline.discard();
+    this.pipeline.discard();
   }
   async dispose() {
-    await this.pipeline.quit();
+    // Intentionally a no-op. The MULTI pipeline holds no resources of its own,
+    // and the Redis connection is SHARED (owned by RedisService) — calling
+    // quit() here would close the connection for every other repository.
   }
 }

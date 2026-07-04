@@ -1,5 +1,13 @@
 import type { TransactionParticipant } from './transaction-participant';
 
+/**
+ * Coordinates one transaction per participating store (e.g. Mongo session,
+ * Redis MULTI). It is NOT a two-phase commit: participants are committed in
+ * sequence, so if store A commits and store B then fails, A is already
+ * durable and is not rolled back. In practice each Transaction.run touches a
+ * single store, which IS atomic; mixing stores (e.g. Mongo + Redis) in one
+ * run is best-effort and should be avoided when true atomicity is required.
+ */
 export class DistributedTransactionContext {
   private readonly participants = new Map<string, TransactionParticipant>();
 
@@ -47,8 +55,19 @@ export class DistributedTransactionContext {
   }
 
   async dispose(): Promise<void> {
+    // Dispose every participant even if one throws, so a single failing
+    // cleanup cannot leak the remaining participants' resources. Surface the
+    // first error after all have been attempted.
+    let firstError: unknown;
     for (const participant of this.participants.values()) {
-      await participant.dispose();
+      try {
+        await participant.dispose();
+      } catch (error) {
+        firstError ??= error;
+      }
+    }
+    if (firstError) {
+      throw firstError;
     }
   }
 }

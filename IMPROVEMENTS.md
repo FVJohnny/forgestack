@@ -17,7 +17,7 @@ How to read an item:
 | B. Backend reliability (outbox/inbox/Kafka) | 19 | 19 (44 deferred) | none |
 | C. Backend code quality | 13 | 13 | none |
 | D. Backend testing | 2 | 2 | none |
-| E. Frontend | 15 | 14 | 71 |
+| E. Frontend | 15 | 15 | none |
 | F. Infra and deployment | 15 | 14 done, 1 won't-do (82) | none |
 | G. Tooling, lint, DX | 18 | 18 | none |
 | H. Docs, identity, positioning | 8 | 3 | 114-118 |
@@ -317,8 +317,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   `Dockerfile` copied `infra/env/public-page.env.prod`, which is gitignored, so `docker build` failed on a fresh clone with a cryptic COPY error.
   **Status: Done.** The Dockerfile now copies the whole `public-page.env.prod*` set (the trailing `.example` makes the glob match even when the real file is absent, so the build context requirement is satisfied) and then **requires the real file**, failing with an actionable message ("Create it from ...example and set the NEXT_PUBLIC_* values") if it is missing. It deliberately does NOT fall back to the `.example` defaults, since that would bake placeholder NEXT_PUBLIC_* values into a production image. Verified both paths: builds with the real file, fails clearly without it.
 
-- [ ] **71. Zero frontend tests** (Medium)
+- [x] **71. Zero frontend tests** (Medium)
   The landing page sells "Tests that run in seconds" and the app has none. Add Vitest plus Testing Library with a few examples (api client, auth service, one form).
+  **Status: DONE (Vitest + pure-logic examples).** Added Vitest to the frontend with `test`/`test:watch` scripts and two example suites (9 tests): `lib/utils/password.test.ts` for the client password policy (which must mirror the backend `Password` value object) and `i18n/config.test.ts` guarding the locale registry (every locale has a name + flag, default is in the list, no dupes — so adding a locale without wiring it up fails a test instead of shipping a broken switcher). Wired into the Nx `public-page:test` target, so `nx run-many test --all` now runs 8 projects and CI picks the frontend tests up. Full-component/Testing-Library tests (a form render) are a natural next step on this harness; started with fast pure-logic coverage. Frontend lint + all tests green.
 
 - [x] **72. `auth.resetPassword` missing from 6 of 8 locales** (Medium)
   6 locales (de, es, fr, nl, pl, pt) were missing the whole `auth.resetPassword` section and silently fell back to English.

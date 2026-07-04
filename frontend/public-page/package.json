@@ -10,7 +10,9 @@
     "check:locales": "node scripts/check-locales.mjs",
     "lint": "eslint \"app/**/*.{ts,tsx}\" \"lib/**/*.{ts,tsx}\" \"i18n/**/*.{ts,tsx}\" && prettier --config ../../.prettierrc --check \"app/**/*.{ts,tsx,json}\" \"lib/**/*.{ts,tsx,json}\" \"messages/*.json\" \"i18n/**/*.{ts,tsx}\"",
     "lint:fix": "prettier --config ../../.prettierrc --write \"app/**/*.{ts,tsx,json}\" \"lib/**/*.{ts,tsx,json}\" \"messages/*.json\" \"i18n/**/*.{ts,tsx}\"",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -53,6 +55,7 @@
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
     "typescript": "^5",
-    "typescript-eslint": "^8.62.1"
+    "typescript-eslint": "^8.62.1",
+    "vitest": "^4.1.9"
   }
 }

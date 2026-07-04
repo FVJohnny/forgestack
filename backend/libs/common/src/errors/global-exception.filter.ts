@@ -21,7 +21,6 @@ export interface ErrorResponse {
     cause?: string;
     timestamp: string;
     path: string;
-    stack?: string;
     retryAfterSeconds?: number;
   };
 }
@@ -56,7 +55,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logException(exception, true);
     }
 
-    response.set('Content-Type', 'application/problem+json');
+    // The body is a custom { success, error } shape, not RFC 7807, so label it
+    // application/json rather than application/problem+json.
+    response.set('Content-Type', 'application/json');
     response.status(this.getHttpStatus(exception)).json(errorResponse);
   }
 

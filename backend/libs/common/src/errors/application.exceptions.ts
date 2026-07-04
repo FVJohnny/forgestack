@@ -10,7 +10,9 @@ export class UnauthorizedException extends BaseException {
 
 export class NotFoundException extends BaseException {
   constructor(entityName?: string, details?: string) {
-    super(`Entity ${entityName} not found. ${details}`, 'ENTITY_NOT_FOUND', HttpStatus.NOT_FOUND);
+    const subject = entityName ? `Entity ${entityName}` : 'Entity';
+    const message = details ? `${subject} not found. ${details}` : `${subject} not found.`;
+    super(message, 'ENTITY_NOT_FOUND', HttpStatus.NOT_FOUND);
   }
 }
 

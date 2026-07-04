@@ -91,8 +91,12 @@ export abstract class Base_MongoRepository<
 
   async exists(id: Id): Promise<boolean> {
     try {
-      const dto = await this.collection.findOne({ id: id.toValue() } as Filter<TDto>);
-      return !!dto;
+      // countDocuments with limit 1 avoids fetching and deserializing the full
+      // document just to test presence.
+      const count = await this.collection.countDocuments({ id: id.toValue() } as Filter<TDto>, {
+        limit: 1,
+      });
+      return count > 0;
     } catch (error: unknown) {
       this.handleDatabaseError('exists', id.toValue(), error);
     }
@@ -210,6 +214,11 @@ export abstract class Base_MongoRepository<
         `Error initializing ${this.collectionName} collection indexes:`,
         error instanceof Error ? error : String(error),
       );
+      // Re-throw: swallowing this left the code relying on a unique `id` index
+      // that might not exist (silent duplicate keys). ensureIndexes() awaits
+      // this promise before every operation, so the failure surfaces loudly
+      // instead of running without the guarantee.
+      throw error;
     }
   }
 

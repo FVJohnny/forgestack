@@ -15,10 +15,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     const redisHost = process.env.REDIS_HOST;
 
     if (!redisHost) {
-      this.logger.warn(
-        'Redis is not configured. Event publishing/listening and storage on Redis will not be available.',
-      );
-      throw new InfrastructureException('Redis is not configured');
+      // Redis is required (sessions, rate limiting, token storage), so this is
+      // a fatal misconfiguration rather than graceful degradation.
+      this.logger.error('REDIS_HOST is not set; Redis is required. Aborting startup.');
+      throw new InfrastructureException('Redis is not configured (REDIS_HOST is required)');
     }
 
     const config = {

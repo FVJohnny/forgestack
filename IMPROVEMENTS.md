@@ -258,14 +258,15 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **59. `Password.random()` is predictable outside tests** (Low)
   It generates sequential `passwordN` values, used as placeholder passwords for Google-signup users. Use a cryptographically random value.
 
-- [ ] **60. Small backend cleanups** (Low)
-  - `initializeIndexes` swallows errors, so the unique id index may silently not exist.
-  - `exists()` fetches the whole document instead of a count.
-  - `NotFoundException` with no args prints "Entity undefined not found. undefined".
-  - The error response is labeled `application/problem+json` but is not RFC 7807; `error.stack` is declared and never populated.
-  - `console.*` is used instead of the structured logger in main.ts, the OTel bootstrap, and the discovery utils.
-  - `RedisService` logs "will not be available" then throws anyway. Pick one behavior.
-  - `RedisTestService` db selection `(pid + counter) % 16` can collide between Jest workers.
+- [x] **60. Small backend cleanups** (Low)
+  **Status: Done (6 of 7).**
+  - [x] `initializeIndexes` now re-throws instead of swallowing, so a failed unique-`id` index surfaces (ensureIndexes awaits it before every op) rather than running without the guarantee. Verified the service still boots.
+  - [x] `exists()` uses `countDocuments(..., { limit: 1 })` instead of fetching the whole document.
+  - [x] `NotFoundException` builds its message conditionally, so no-arg / no-details cases no longer print "Entity undefined not found. undefined".
+  - [x] The error response is now labeled `application/json` (the body is a custom `{ success, error }` shape, not RFC 7807), and the dead `stack?` field was removed from `ErrorResponse`.
+  - [x] `RedisService` now logs an honest fatal error (Redis is required) instead of "will not be available" before throwing.
+  - [x] `RedisTestService` keys its DB off `JEST_WORKER_ID` (stable, unique per worker) instead of `process.pid % 16`, which could collide.
+  - Not done: `console.*` in `main.ts` is left as-is — it runs in the process-level unhandled-rejection/exception net where the Nest logger may not be initialized yet, so `console.error` is the safer choice there.
 
 ## D. Backend testing
 

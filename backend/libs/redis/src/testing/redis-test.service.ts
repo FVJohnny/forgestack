@@ -5,10 +5,13 @@ export class RedisTestService<T extends SharedAggregateDTO> extends RedisService
   private static instanceCounter = 0;
 
   constructor(private readonly keyPrefix: string = 'test') {
-    // Generate unique database number using process ID and instance counter
-    // This ensures parallel test workers use different databases
-    // Redis supports databases 0-15 by default
-    const dbNumber = (process.pid + RedisTestService.instanceCounter++) % 16;
+    // Isolate each Jest worker on its own Redis database (0-15). JEST_WORKER_ID
+    // is stable and unique per worker (1-based), unlike process.pid which could
+    // collide under `% 16`. The instance counter separates multiple services
+    // within a worker; each instance also `flushdb`s on setup so overlap within
+    // a worker is harmless.
+    const workerId = Number(process.env.JEST_WORKER_ID ?? 1);
+    const dbNumber = (workerId + RedisTestService.instanceCounter++) % 16;
 
     // Pass database number to parent to avoid process.env race conditions
     super(dbNumber);

@@ -49,17 +49,51 @@ export class UserToken_RedisRepository
     this.registerTransactionParticipant(context);
     const client = this.getClient(context);
 
+    // Expire the stored token when the JWT itself expires, so revoked/expired
+    // tokens do not accumulate in Redis forever. A small grace period keeps
+    // the record around slightly past `exp` to cover clock skew. If the token
+    // carries no usable `exp`, fall back to a bounded default rather than
+    // persisting forever.
+    const ttlSeconds = this.resolveTtlSeconds(token.token.toValue());
+
     // Add token to user's token set
     const userTokensKey = this.getUserTokensKey(token.userId.toValue());
     await client.sadd(userTokensKey, token.id.toValue());
+    await client.expire(userTokensKey, ttlSeconds);
 
     // Create token lookup index for O(1) lookups by token value
     const tokenLookupKey = this.getTokenLookupKey(token.token.toValue());
-    await client.set(tokenLookupKey, token.id.toValue());
+    await client.set(tokenLookupKey, token.id.toValue(), 'EX', ttlSeconds);
 
     await super.save(token, context);
+    await client.expire(this.itemKey(token.id.toValue()), ttlSeconds);
+  }
 
-    // this.logger.debug(`Stored ${token.type.toValue()} token for user ${token.userId.toValue()}`);
+  private static readonly TTL_GRACE_SECONDS = 60;
+  private static readonly TTL_FALLBACK_SECONDS = 7 * 24 * 60 * 60; // 7 days
+
+  /**
+   * Derives the Redis TTL from the JWT's `exp` claim (seconds since epoch)
+   * plus a small grace window. Decoding without verifying is fine here: we
+   * only read the expiry to bound the key's lifetime, not to trust the token.
+   */
+  private resolveTtlSeconds(jwt: string): number {
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    try {
+      const [, payloadB64] = jwt.split('.');
+      if (payloadB64) {
+        const payload = JSON.parse(Buffer.from(payloadB64, 'base64').toString('utf8'));
+        if (typeof payload.exp === 'number') {
+          const remaining = payload.exp - nowSeconds + UserToken_RedisRepository.TTL_GRACE_SECONDS;
+          if (remaining > 0) {
+            return remaining;
+          }
+        }
+      }
+    } catch {
+      // Malformed token: fall through to the bounded default.
+    }
+    return UserToken_RedisRepository.TTL_FALLBACK_SECONDS;
   }
 
   async clear(context?: RepositoryContext): Promise<void> {

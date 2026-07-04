@@ -125,13 +125,21 @@ services:
   redis:
     image: redis:7.0-alpine
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    # Pass the password through the container's own environment and read it
+    # inside a shell so compose does not interpolate it into the container's
+    # command/args, where `docker inspect` would expose it in plaintext.
+    # REDISCLI_AUTH is the auth env var redis-cli reads, so the healthcheck
+    # needs no -a flag either.
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDISCLI_AUTH=${REDIS_PASSWORD}
+    entrypoint: [ 'sh', '-c', 'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"' ]
     volumes:
       - redis_data:/data
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping' ]
+      test: [ 'CMD-SHELL', 'redis-cli ping | grep -q PONG' ]
       interval: 10s
       timeout: 5s
       retries: 5

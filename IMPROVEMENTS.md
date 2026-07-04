@@ -119,8 +119,9 @@ Item 5 needs manual secret rotation by the maintainer. Item 8 is intentionally s
   Clients could spoof the IP recorded by the identity/audit feature.
   **Status: Done.** `configureApp` sets Express `trust proxy` to `TRUSTED_PROXY_HOPS` (default 1, matching the single Caddy hop; with no proxy the socket address wins) and the controller uses `req.ip`. This also improves the throttler's per-IP keys, which use the same resolution.
 
-- [ ] **25. Redis password visible in `docker inspect`; user tokens stored without TTL** (Low)
-  The compose file interpolates the real Redis password into the container command and healthcheck, and stored user tokens are keyed by the raw JWT with no expiry, so they accumulate forever. Fix: use `REDISCLI_AUTH` for the healthcheck and a config file or secret for `requirepass`; set TTLs matching token expiry and consider hashing the token used as a key.
+- [x] **25. Redis password visible in `docker inspect`; user tokens stored without TTL** (Low)
+  The compose file interpolated the real Redis password into the container command and healthcheck, and stored user tokens were keyed by the raw JWT with no expiry, so they accumulated forever.
+  **Status: Done.** (1) The prod Redis service now passes the password through the container's own `environment` and reads it inside an `sh -c` entrypoint (`--requirepass "$$REDIS_PASSWORD"`), so compose no longer bakes it into the command args; the healthcheck uses `REDISCLI_AUTH` and needs no `-a` flag. Verified with a real container that `docker inspect .Args` shows the literal `$REDIS_PASSWORD` (not the value) and that auth is enforced. (2) `UserToken_RedisRepository.save` now sets a TTL on all three keys (item, lookup, user-set), derived from the JWT's own `exp` claim plus a 60s grace, with a bounded 7-day fallback for tokens without a usable exp, so expired tokens self-clean. Covered by a new spec (3 tests against real Redis). Not addressed: hashing the token value used as a lookup key (deferred; it would change the key layout and is lower value than the TTL). Full suite passes.
 
 - [ ] **26. Dev Mongo/Redis published on all interfaces with default credentials** (Low)
   Fine on a laptop, risky on a shared or remote dev box; mongo-express also hardcodes admin/admin. Fix: bind dev port mappings to 127.0.0.1.

@@ -8,12 +8,11 @@ import {
   ErrorHandlingModule,
   EventTrackerModule,
   SharedCqrsModule,
-  InboxModule,
   ApiRateLimitModule,
 } from '@libs/nestjs-common';
 import { MetricsModule, JwtAuthModule } from '@libs/nestjs-common';
-import { OutboxModule } from '@libs/nestjs-common';
-import { Outbox_MongodbRepository } from '@libs/nestjs-mongodb';
+import { InboxModule, OutboxModule } from '@libs/nestjs-common';
+import { Outbox_MongodbRepository, Inbox_MongodbRepository } from '@libs/nestjs-mongodb';
 import {
   RedisDBModule,
   RedisThrottlerStorageModule,
@@ -38,7 +37,7 @@ import { KafkaIntegrationEventsModule } from '@libs/nestjs-kafka';
     MongoDBModule,
 
     // INTEGRATION EVENT MODULES!
-    InboxModule,
+    InboxModule.forRoot({ repository: Inbox_MongodbRepository }),
     OutboxModule.forRoot({ repository: Outbox_MongodbRepository }),
     // Transport for integration events. Swap KafkaIntegrationEventsModule for
     // RedisIntegrationEventsModule (from @libs/nestjs-redis) to use Redis instead.

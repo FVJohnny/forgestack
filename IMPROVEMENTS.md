@@ -134,8 +134,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 
 ## B. Backend reliability (outbox, inbox, Kafka)
 
-- [ ] **27. Inbox is in-memory only and cannot be swapped** (High)
-  `InboxModule` hardcodes the in-memory repository, the Mongo inbox repository exists but is never wired, and Kafka offsets are committed after the in-memory save. A restart loses accepted-but-unprocessed events, which defeats the advertised inbox pattern. Fix: add `forRoot({ repository })` like the outbox has.
+- [x] **27. Inbox is in-memory only and cannot be swapped** (High)
+  `InboxModule` hardcoded the in-memory repository, the Mongo inbox repository existed but was never wired, and Kafka offsets commit after the inbox save. A restart lost accepted-but-unprocessed events, defeating the inbox pattern.
+  **Status: Done.** `InboxModule.forRoot({ repository })` now mirrors the outbox module, and both services pass `Inbox_MongodbRepository`. In-memory remains the default for anyone not wiring a durable store. Verified live: inbox events now persist in `inbox_events` in Mongo (with the retryCount field) and process end to end, so an accepted-but-unprocessed event survives a restart. All suites pass.
 
 - [x] **28. Poison outbox events retry forever** (High)
   Events that exhaust their retries sat in the PROCESSING state, and the 5-minute stuck-reclaim reset them endlessly.

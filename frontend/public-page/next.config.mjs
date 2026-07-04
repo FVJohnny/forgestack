@@ -42,18 +42,36 @@ const nextConfig = {
   },
   output: 'standalone',
   async headers() {
+    // Baseline security headers. The CSP is deliberately pragmatic rather
+    // than nonce-strict: Next.js inline runtime scripts need 'unsafe-inline',
+    // Google Sign-In loads from accounts.google.com, language flags come from
+    // flagcdn.com, and the API lives on another origin (https in docker/prod,
+    // http://localhost in bare dev). Tighten connect-src to your API hosts
+    // when you fork this template.
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https://flagcdn.com",
+      "font-src 'self' data:",
+      "connect-src 'self' https: http://localhost:* http://127.0.0.1:*",
+      'frame-src https://accounts.google.com',
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+    ].join('; ');
+
     return [
       {
-        source: '/:path*.mp4',
+        source: '/(.*)',
         headers: [
-          {
-            key: 'Content-Type',
-            value: 'video/mp4',
-          },
-          {
-            key: 'Accept-Ranges',
-            value: 'bytes',
-          },
+          { key: 'Content-Security-Policy', value: csp },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Strict-Transport-Security', value: 'max-age=15552000; includeSubDomains' },
         ],
       },
     ];

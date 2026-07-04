@@ -59,8 +59,6 @@ export const API_ENDPOINTS = {
       if (options?.filterValue) params.append('filterValue', options.filterValue);
       return `/admin/users${params.toString() ? `?${params.toString()}` : ''}`;
     },
-    IMPERSONATE: (userId: string) => `/admin/impersonate/${userId}`,
-    STOP_IMPERSONATION: '/admin/stop-impersonation',
     DELETE_USER: (userId: string) => `/admin/users/${userId}`,
     SUSPEND_USER: (userId: string) => `/admin/users/${userId}/suspend`,
     UNSUSPEND_USER: (userId: string) => `/admin/users/${userId}/unsuspend`,

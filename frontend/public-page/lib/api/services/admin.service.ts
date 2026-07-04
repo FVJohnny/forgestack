@@ -5,7 +5,7 @@
 
 import { apiClient } from '../client';
 import { API_ENDPOINTS, type UserFilterField } from '../config';
-import type { ImpersonateResponse, ListUsersResponse, SearchUsersResponse } from '../types';
+import type { ListUsersResponse, SearchUsersResponse } from '../types';
 
 export interface ListUsersOptions {
   page?: number;
@@ -33,10 +33,6 @@ export const adminService = {
 
   async unsuspendUser(id: string): Promise<void> {
     await apiClient.post<void>(API_ENDPOINTS.ADMIN.UNSUSPEND_USER(id));
-  },
-
-  async impersonate(id: string): Promise<ImpersonateResponse> {
-    return apiClient.post<ImpersonateResponse>(API_ENDPOINTS.ADMIN.IMPERSONATE(id));
   },
 
   async setMotd(content: string): Promise<void> {

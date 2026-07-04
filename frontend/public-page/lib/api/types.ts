@@ -26,8 +26,6 @@ export interface GetMeResponse {
   userId: string;
   email: string;
   role: string;
-  isImpersonating?: boolean;
-  originalEmail?: string;
 }
 
 export interface SearchUserResult {
@@ -50,11 +48,6 @@ export interface ListUsersResponse {
   page: number;
   limit: number;
   totalPages: number;
-}
-
-export interface ImpersonateResponse {
-  userId: string;
-  impersonatedEmail: string;
 }
 
 // MOTD types

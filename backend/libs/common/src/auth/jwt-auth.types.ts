@@ -2,10 +2,6 @@ export class TokenPayload {
   userId: string;
   email: string;
   role: string;
-  // Impersonation fields
-  isImpersonating?: boolean;
-  originalUserId?: string;
-  originalEmail?: string;
 }
 
 class JwtPayload {

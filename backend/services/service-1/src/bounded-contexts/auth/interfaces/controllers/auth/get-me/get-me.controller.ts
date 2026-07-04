@@ -23,8 +23,6 @@ export class GetMe_Controller {
       userId: req.tokenData.userId,
       email: req.tokenData.email,
       role: req.tokenData.role,
-      isImpersonating: req.tokenData.isImpersonating ?? false,
-      originalEmail: req.tokenData.originalEmail,
     };
   }
 }

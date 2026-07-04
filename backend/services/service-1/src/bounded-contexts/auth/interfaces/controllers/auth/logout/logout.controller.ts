@@ -10,7 +10,6 @@ import {
   type AuthenticatedRequest,
   StrictRateLimit,
   clearAuthCookies,
-  clearAdminCookies,
 } from '@libs/nestjs-common';
 
 @ApiTags('auth')
@@ -36,9 +35,7 @@ export class Logout_Controller {
     const command = new Logout_Command(req.tokenData.userId);
     await this.commandBus.execute(command);
 
-    // Clear the auth cookies (and any stashed admin cookies) so the browser
-    // stops sending them.
+    // Clear the auth cookies so the browser stops sending them.
     clearAuthCookies(res);
-    clearAdminCookies(res);
   }
 }

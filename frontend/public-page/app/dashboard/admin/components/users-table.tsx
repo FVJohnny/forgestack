@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Ban, CircleCheck, Trash2, UserRoundCog, Search } from 'lucide-react';
+import { Ban, CircleCheck, Trash2, Search } from 'lucide-react';
 import { Card } from '@/app/shared/ui/card';
 import { Badge } from '@/app/shared/ui/badge';
 import { Button } from '@/app/shared/ui/button';
@@ -27,7 +27,6 @@ import {
   DialogFooter,
 } from '@/app/shared/ui/dialog';
 import { adminService } from '@/lib/api/services/admin.service';
-import { authService } from '@/lib/contexts/auth-service';
 import type { UserFilterField } from '@/lib/api/config';
 import type { ListUsersResponse, SearchUserResult } from '@/lib/api/types';
 
@@ -97,17 +96,6 @@ export function UsersTable() {
     } catch {
       toast.error(t('toast.actionFailed'));
     } finally {
-      setBusyId(null);
-    }
-  };
-
-  const impersonate = async (id: string) => {
-    setBusyId(id);
-    try {
-      await authService.impersonate(id);
-      window.location.href = '/dashboard';
-    } catch {
-      toast.error(t('toast.actionFailed'));
       setBusyId(null);
     }
   };
@@ -217,15 +205,6 @@ export function UsersTable() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          title={t('impersonate')}
-                          disabled={busy || deleted}
-                          onClick={() => impersonate(u.id)}
-                        >
-                          <UserRoundCog className="size-4" />
-                        </Button>
                         {suspended ? (
                           <Button
                             size="icon-sm"

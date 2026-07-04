@@ -6,7 +6,6 @@ import type {
   RegisterRequest,
   GetMeResponse,
   SearchUsersResponse,
-  ImpersonateResponse,
   ListUsersResponse,
   GetMotdResponse,
 } from '@/lib/api/types';
@@ -15,8 +14,7 @@ import type {
  * Auth is cookie-based: the backend sets httpOnly cookies for the access and
  * refresh tokens, so this service never touches tokens or localStorage. The
  * session is established by calling the API (the cookies ride along) and read
- * back via getMe(). Impersonation is handled entirely server-side through a
- * stacked admin cookie; the client only calls the endpoints.
+ * back via getMe().
  */
 class AuthService {
   async register(email: string, password: string): Promise<void> {
@@ -68,16 +66,6 @@ class AuthService {
     await apiClient
       .post<void>(API_ENDPOINTS.AUTH.LOGOUT, undefined, { showErrorToast: false })
       .catch(() => {});
-  }
-
-  // Admin: impersonation. The backend stashes the admin's cookies and sets the
-  // impersonated user's cookies; stopImpersonation restores the admin cookies.
-  async impersonate(userId: string): Promise<ImpersonateResponse> {
-    return apiClient.post<ImpersonateResponse>(API_ENDPOINTS.ADMIN.IMPERSONATE(userId));
-  }
-
-  async stopImpersonation(): Promise<{ userId: string }> {
-    return apiClient.post<{ userId: string }>(API_ENDPOINTS.ADMIN.STOP_IMPERSONATION);
   }
 
   async listUsers(options?: {

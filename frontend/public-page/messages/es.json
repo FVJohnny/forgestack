@@ -91,7 +91,7 @@
         },
         "auth": {
           "title": "La autenticación ya está resuelta",
-          "desc": "Inicio de sesión con email y Google, verificación de correo, reseteo de contraseña, roles e impersonación. Un sistema de cuentas completo antes de escribir código."
+          "desc": "Inicio de sesión con email y Google, verificación de correo, reseteo de contraseña y roles. Un sistema de cuentas completo antes de escribir código."
         },
         "agents": {
           "title": "Un código que los agentes de IA pueden navegar",
@@ -117,9 +117,7 @@
       "sectionMain": "Consola",
       "sectionSystem": "Sistema",
       "logout": "Cerrar sesión",
-      "env": "entorno",
-      "impersonating": "Suplantando",
-      "exitImpersonation": "Salir"
+      "env": "entorno"
     },
     "dashboard": {
       "title": "Resumen del sistema",
@@ -223,7 +221,6 @@
         "suspend": "Suspender",
         "unsuspend": "Reactivar",
         "delete": "Eliminar",
-        "impersonate": "Suplantar",
         "page": "Página {current} / {total}",
         "total": "{count} usuarios",
         "prev": "Anterior",

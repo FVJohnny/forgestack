@@ -91,7 +91,7 @@
         },
         "auth": {
           "title": "L'authentification est déjà faite",
-          "desc": "Connexion par e-mail et Google, vérification d'e-mail, réinitialisation de mot de passe, rôles et impersonation. Un système de comptes complet avant d'écrire du code."
+          "desc": "Connexion par e-mail et Google, vérification d'e-mail, réinitialisation de mot de passe et rôles. Un système de comptes complet avant d'écrire du code."
         },
         "agents": {
           "title": "Un code que les agents IA savent parcourir",
@@ -117,9 +117,7 @@
       "sectionMain": "Console",
       "sectionSystem": "Système",
       "logout": "Se déconnecter",
-      "env": "env",
-      "impersonating": "Usurpation",
-      "exitImpersonation": "Quitter"
+      "env": "env"
     },
     "dashboard": {
       "title": "Vue d'ensemble du système",
@@ -223,7 +221,6 @@
         "suspend": "Suspendre",
         "unsuspend": "Réactiver",
         "delete": "Supprimer",
-        "impersonate": "Usurper",
         "page": "Page {current} / {total}",
         "total": "{count} utilisateurs",
         "prev": "Préc.",

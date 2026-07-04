@@ -91,7 +91,7 @@
         },
         "auth": {
           "title": "Uwierzytelnianie już gotowe",
-          "desc": "Logowanie e-mailem i przez Google, weryfikacja adresu, reset hasła, role i impersonacja. Kompletny system kont, zanim napiszesz kod."
+          "desc": "Logowanie e-mailem i przez Google, weryfikacja adresu, reset hasła i role. Kompletny system kont, zanim napiszesz kod."
         },
         "agents": {
           "title": "Kod, po którym agenci AI się poruszają",
@@ -117,9 +117,7 @@
       "sectionMain": "Konsola",
       "sectionSystem": "System",
       "logout": "Wyloguj się",
-      "env": "środ.",
-      "impersonating": "Personifikacja",
-      "exitImpersonation": "Zakończ"
+      "env": "środ."
     },
     "dashboard": {
       "title": "Przegląd systemu",
@@ -223,7 +221,6 @@
         "suspend": "Zawieś",
         "unsuspend": "Przywróć",
         "delete": "Usuń",
-        "impersonate": "Personifikuj",
         "page": "Strona {current} / {total}",
         "total": "{count} użytkowników",
         "prev": "Poprzednia",

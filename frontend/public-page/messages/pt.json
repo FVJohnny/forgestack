@@ -91,7 +91,7 @@
         },
         "auth": {
           "title": "A autenticação já está pronta",
-          "desc": "Login com e-mail e Google, verificação de e-mail, redefinição de senha, papéis e impersonação. Um sistema de contas completo antes de você escrever código."
+          "desc": "Login com e-mail e Google, verificação de e-mail, redefinição de senha e papéis. Um sistema de contas completo antes de você escrever código."
         },
         "agents": {
           "title": "Um código que agentes de IA sabem navegar",
@@ -117,9 +117,7 @@
       "sectionMain": "Console",
       "sectionSystem": "Sistema",
       "logout": "Sair",
-      "env": "amb",
-      "impersonating": "Personificando",
-      "exitImpersonation": "Sair"
+      "env": "amb"
     },
     "dashboard": {
       "title": "Visão Geral do Sistema",
@@ -223,7 +221,6 @@
         "suspend": "Suspender",
         "unsuspend": "Reativar",
         "delete": "Excluir",
-        "impersonate": "Personificar",
         "page": "Página {current} / {total}",
         "total": "{count} usuários",
         "prev": "Anterior",

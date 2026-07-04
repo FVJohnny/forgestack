@@ -50,30 +50,4 @@ export class JwtTokenService {
       secret: this.refreshTokenSecret,
     });
   }
-
-  /**
-   * Generate an impersonation access token with shorter expiry (1h)
-   */
-  generateImpersonationAccessToken(payload: TokenPayload): string {
-    return this.jwtService.sign(
-      { ...payload, uniqueId: uuid() },
-      {
-        secret: this.accessTokenSecret,
-        expiresIn: '1h',
-      },
-    );
-  }
-
-  /**
-   * Generate an impersonation refresh token with shorter expiry (4h)
-   */
-  generateImpersonationRefreshToken(payload: TokenPayload): string {
-    return this.jwtService.sign(
-      { ...payload, uniqueId: uuid() },
-      {
-        secret: this.refreshTokenSecret,
-        expiresIn: '4h',
-      },
-    );
-  }
 }

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { ProtectedRoute } from '@/app/shared/auth/protected-route';
 import { Sidebar } from './components/sidebar';
 import { Topbar } from './components/topbar';
-import { ImpersonationBanner } from './components/impersonation-banner';
 import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -52,7 +51,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* content column */}
         <div className="relative lg:pl-64">
           <Topbar onOpenMenu={() => setMobileOpen(true)} />
-          <ImpersonationBanner />
           <main className="mx-auto w-full max-w-6xl px-4 py-6 lg:px-8 lg:py-8">{children}</main>
         </div>
       </div>

@@ -91,7 +91,7 @@
         },
         "auth": {
           "title": "Auth is al geregeld",
-          "desc": "Inloggen met e-mail en Google, e-mailverificatie, wachtwoordreset, rollen en impersonatie. Een compleet accountsysteem voordat je code schrijft."
+          "desc": "Inloggen met e-mail en Google, e-mailverificatie, wachtwoordreset en rollen. Een compleet accountsysteem voordat je code schrijft."
         },
         "agents": {
           "title": "Een codebase waar AI-agents de weg kennen",
@@ -117,9 +117,7 @@
       "sectionMain": "Console",
       "sectionSystem": "Systeem",
       "logout": "Uitloggen",
-      "env": "omg",
-      "impersonating": "Imiteren",
-      "exitImpersonation": "Stoppen"
+      "env": "omg"
     },
     "dashboard": {
       "title": "Systeemoverzicht",
@@ -223,7 +221,6 @@
         "suspend": "Schorsen",
         "unsuspend": "Schorsing opheffen",
         "delete": "Verwijderen",
-        "impersonate": "Imiteren",
         "page": "Pagina {current} / {total}",
         "total": "{count} gebruikers",
         "prev": "Vorige",

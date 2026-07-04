@@ -108,7 +108,7 @@
         },
         "auth": {
           "title": "Auth is already done",
-          "desc": "Email and Google sign-in, email verification, password resets, roles and impersonation. A complete account system before you write any code."
+          "desc": "Email and Google sign-in, email verification, password resets and roles. A complete account system before you write any code."
         },
         "agents": {
           "title": "A codebase AI agents can navigate",
@@ -134,9 +134,7 @@
       "sectionMain": "Console",
       "sectionSystem": "System",
       "logout": "Log out",
-      "env": "env",
-      "impersonating": "Impersonating",
-      "exitImpersonation": "Exit"
+      "env": "env"
     },
     "dashboard": {
       "title": "System Overview",
@@ -240,7 +238,6 @@
         "suspend": "Suspend",
         "unsuspend": "Unsuspend",
         "delete": "Delete",
-        "impersonate": "Impersonate",
         "page": "Page {current} / {total}",
         "total": "{count} users",
         "prev": "Prev",

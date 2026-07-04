@@ -91,7 +91,7 @@
         },
         "auth": {
           "title": "Auth ist schon fertig",
-          "desc": "Anmeldung per E-Mail und Google, E-Mail-Verifizierung, Passwort-Reset, Rollen und Impersonation. Ein komplettes Account-System, bevor du Code schreibst."
+          "desc": "Anmeldung per E-Mail und Google, E-Mail-Verifizierung, Passwort-Reset und Rollen. Ein komplettes Account-System, bevor du Code schreibst."
         },
         "agents": {
           "title": "Eine Codebasis, in der sich KI-Agenten zurechtfinden",
@@ -117,9 +117,7 @@
       "sectionMain": "Konsole",
       "sectionSystem": "System",
       "logout": "Abmelden",
-      "env": "Umg.",
-      "impersonating": "Identität von",
-      "exitImpersonation": "Beenden"
+      "env": "Umg."
     },
     "dashboard": {
       "title": "Systemübersicht",
@@ -223,7 +221,6 @@
         "suspend": "Sperren",
         "unsuspend": "Entsperren",
         "delete": "Löschen",
-        "impersonate": "Identität annehmen",
         "page": "Seite {current} / {total}",
         "total": "{count} Benutzer",
         "prev": "Zurück",

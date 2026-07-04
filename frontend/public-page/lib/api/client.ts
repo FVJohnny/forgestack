@@ -2,10 +2,15 @@
 
 /**
  * API Client
- * Generic HTTP client for making API requests with error handling
+ * Generic HTTP client for making API requests with error handling.
+ *
+ * Auth uses httpOnly cookies: the browser cannot read the tokens, so there is
+ * no Authorization header and no token storage here. Every request is sent
+ * with `credentials: 'include'` so the cookies ride along. On a 401 the client
+ * tries a one-shot cookie-based refresh and retries the original request.
  */
 
-import { API_CONFIG, SERVICE2_API_CONFIG } from './config';
+import { API_CONFIG, SERVICE2_API_CONFIG, API_ENDPOINTS } from './config';
 import { handleAPIError } from './error-handler';
 
 export class APIError extends Error {
@@ -22,34 +27,66 @@ export class APIError extends Error {
 export interface RequestOptions extends RequestInit {
   timeout?: number;
   showErrorToast?: boolean;
+  // Internal: prevents infinite refresh loops.
+  _isRetry?: boolean;
 }
+
+// Endpoints that must never trigger the refresh-and-retry flow (they are the
+// auth flow itself, so a 401 there is terminal).
+const NO_REFRESH_PATHS = [
+  API_ENDPOINTS.AUTH.LOGIN,
+  API_ENDPOINTS.AUTH.REFRESH,
+  API_ENDPOINTS.AUTH.LOGOUT,
+  API_ENDPOINTS.AUTH.GOOGLE,
+];
 
 class APIClient {
   private baseURL: string;
   private defaultTimeout: number;
+  // Shared in-flight refresh so concurrent 401s trigger a single refresh call.
+  private refreshPromise: Promise<boolean> | null = null;
 
   constructor(baseURL: string, timeout: number) {
     this.baseURL = baseURL;
     this.defaultTimeout = timeout;
   }
 
+  private async attemptRefresh(): Promise<boolean> {
+    if (!this.refreshPromise) {
+      this.refreshPromise = fetch(`${this.baseURL}${API_ENDPOINTS.AUTH.REFRESH}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+        .then((res) => res.ok)
+        .catch(() => false)
+        .finally(() => {
+          this.refreshPromise = null;
+        });
+    }
+    return this.refreshPromise;
+  }
+
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const { timeout = this.defaultTimeout, showErrorToast = false, ...fetchOptions } = options;
+    const {
+      timeout = this.defaultTimeout,
+      showErrorToast = false,
+      _isRetry = false,
+      ...fetchOptions
+    } = options;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    // Get access token from localStorage
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, {
         ...fetchOptions,
+        // Send and receive the httpOnly auth cookies.
+        credentials: 'include',
         signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
-          ...(token && { Authorization: `Bearer ${token}` }),
           ...fetchOptions.headers,
         },
       });
@@ -57,28 +94,25 @@ class APIClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
+        // On a 401, try a one-shot cookie refresh then retry once. Skip for
+        // the auth endpoints themselves and for an already-retried request.
+        const canRefresh = !_isRetry && !NO_REFRESH_PATHS.some((p) => endpoint.startsWith(p));
+        if (response.status === 401 && canRefresh) {
+          const refreshed = await this.attemptRefresh();
+          if (refreshed) {
+            return this.request<T>(endpoint, { ...options, _isRetry: true });
+          }
+          // Refresh failed: notify the app so it can send the user to /login.
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:unauthenticated'));
+          }
+        }
+
         const errorData = await response.json().catch(() => ({}));
-        // Extract error message from nested structure (error.message) or top-level (message)
-        let errorMessage =
+        const errorMessage =
           errorData.error?.message ||
           errorData.message ||
           `Request failed with status ${response.status}`;
-
-        // Clean up domain validation error messages to show only the rule
-        if (errorMessage.includes('Rule: ')) {
-          errorMessage = errorMessage.split('Rule: ')[1] || errorMessage;
-        }
-
-        // Handle 401 globally - redirect to login (except for auth endpoints)
-        if (response.status === 401 && !endpoint.includes('/auth/')) {
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('user_id');
-            window.location.href = '/login';
-            return {} as T; // Return empty to prevent further processing
-          }
-        }
 
         const apiError = new APIError(errorMessage, response.status, errorData);
 
@@ -127,7 +161,7 @@ class APIClient {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(data ?? {}),
     });
   }
 

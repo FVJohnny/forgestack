@@ -10,6 +10,7 @@ import { type IQueryBus } from '@nestjs/cqrs';
 import { AuthenticatedRequest, JwtTokenPayload } from './jwt-auth.types';
 import { GetUserTokenByToken_Query } from './application/queries/get-user-token-by-token/get-user-token-by-token.query';
 import { QUERY_BUS } from '../cqrs';
+import { ACCESS_TOKEN_COOKIE } from './auth-cookies';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -20,7 +21,7 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const token = this.extractTokenFromHeader(request);
+    const token = this.extractToken(request);
 
     if (!token) {
       throw new UnauthorizedException();
@@ -41,7 +42,14 @@ export class JwtAuthGuard implements CanActivate {
     }
   }
 
-  private extractTokenFromHeader(request: AuthenticatedRequest): string | undefined {
+  private extractToken(request: AuthenticatedRequest): string | undefined {
+    // Browser clients authenticate via the httpOnly access-token cookie.
+    const cookieToken = request.cookies?.[ACCESS_TOKEN_COOKIE];
+    if (cookieToken) {
+      return cookieToken;
+    }
+    // Fall back to the Authorization header for non-browser callers
+    // (Swagger "Authorize", service-to-service, scripts).
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }

@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Eye } from 'lucide-react';
 import { authService } from '@/lib/contexts/auth-service';
@@ -9,17 +8,19 @@ import { useUser } from '@/lib/contexts/user-context';
 export function ImpersonationBanner() {
   const t = useTranslations('fmf.nav');
   const { user } = useUser();
-  const [active, setActive] = useState(false);
 
-  useEffect(() => {
-    setActive(authService.isImpersonating());
-  }, [user]);
+  // Impersonation state is authoritative from the current token (via /auth/me),
+  // not client storage: the backend sets isImpersonating on the token payload.
+  if (!user?.isImpersonating) return null;
 
-  if (!active) return null;
-
-  const exit = () => {
-    if (authService.stopImpersonation()) {
+  const exit = async () => {
+    try {
+      await authService.stopImpersonation();
+      // Full reload so every context re-reads the restored admin session.
       window.location.href = '/dashboard';
+    } catch {
+      // If restore failed, fall back to a clean login.
+      window.location.href = '/login';
     }
   };
 

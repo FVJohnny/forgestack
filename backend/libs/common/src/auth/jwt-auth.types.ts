@@ -29,4 +29,6 @@ export interface AuthenticatedRequest {
     'x-forwarded-for'?: string | string[];
     'x-real-ip'?: string | string[];
   };
+  // Populated by cookie-parser (enabled in configureApp).
+  cookies?: Record<string, string | undefined>;
 }

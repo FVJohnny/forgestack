@@ -1,13 +1,17 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Res } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
+import type { Response } from 'express';
 import { type ICommandBus, type IQueryBus } from '@nestjs/cqrs';
-import { COMMAND_BUS, QUERY_BUS, StrictRateLimit, PublicApi } from '@libs/nestjs-common';
+import {
+  COMMAND_BUS,
+  QUERY_BUS,
+  StrictRateLimit,
+  PublicApi,
+  setAuthCookies,
+} from '@libs/nestjs-common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RecordUserLogin_Command } from '@bc/auth/application/commands';
-import {
-  GetNewTokensFromUserCredentials_Query,
-  GetNewTokensFromUserCredentials_QueryResponse,
-} from '@bc/auth/application/queries';
+import { GetNewTokensFromUserCredentials_Query } from '@bc/auth/application/queries';
 import { LoginUser_ControllerParams } from './login-user.params';
 import { LoginUser_ResponseDto } from './login-user.controller-response';
 import { StoreTokens_Command } from '@libs/nestjs-common';
@@ -36,7 +40,8 @@ export class LoginUser_Controller {
   })
   async loginUser(
     @Body() body: LoginUser_ControllerParams,
-  ): Promise<GetNewTokensFromUserCredentials_QueryResponse> {
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LoginUser_ResponseDto> {
     // Get tokens using query
     const tokensQuery = new GetNewTokensFromUserCredentials_Query({
       email: body.email,
@@ -52,10 +57,9 @@ export class LoginUser_Controller {
     const recordLoginCommand = new RecordUserLogin_Command({ userId });
     this.commandBus.execute(recordLoginCommand);
 
-    return {
-      accessToken,
-      refreshToken,
-      userId,
-    };
+    // Deliver tokens as httpOnly cookies; the body carries only the user id.
+    setAuthCookies(res, { accessToken, refreshToken });
+
+    return { userId };
   }
 }

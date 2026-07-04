@@ -1,6 +1,7 @@
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { SwaggerUtility } from '../swagger';
 
 export interface AppConfigOptions {
@@ -35,6 +36,10 @@ export function configureApp(app: NestExpressApplication, options: AppConfigOpti
   // Nest's raw-body capture).
   app.useBodyParser('json', { limit: requestSizeLimit });
   app.useBodyParser('urlencoded', { limit: requestSizeLimit, extended: true });
+
+  // Parse cookies so the JWT guard can read the httpOnly access-token cookie
+  // and auth controllers can set/clear the token cookies.
+  app.use(cookieParser());
 
   // Trust exactly the proxy hops in front of the service (Caddy = 1) so
   // req.ip resolves to the real client address instead of a spoofable

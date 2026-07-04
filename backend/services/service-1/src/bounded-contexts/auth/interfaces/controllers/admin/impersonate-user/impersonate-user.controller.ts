@@ -6,9 +6,11 @@ import {
   UseGuards,
   Param,
   Req,
+  Res,
   Inject,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import type { Request, Response } from 'express';
 import { type IQueryBus } from '@nestjs/cqrs';
 import {
   JwtAuthGuard,
@@ -16,9 +18,15 @@ import {
   QUERY_BUS,
   StrictRateLimit,
   type AuthenticatedRequest,
+  setAuthCookies,
+  stashAdminCookies,
 } from '@libs/nestjs-common';
 import { ImpersonateUser_Query } from '@bc/auth/application/queries/impersonate-user/impersonate-user.query';
-import type { ImpersonateUser_QueryResponse } from '@bc/auth/application/queries/impersonate-user/impersonate-user.query-response';
+
+class ImpersonateUser_ResponseDto {
+  userId: string;
+  impersonatedEmail: string;
+}
 
 @ApiTags('admin')
 @Controller('admin')
@@ -46,14 +54,27 @@ export class ImpersonateUser_Controller {
   })
   async impersonateUser(
     @Param('userId') userId: string,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<ImpersonateUser_QueryResponse> {
+    @Req() req: AuthenticatedRequest & Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ImpersonateUser_ResponseDto> {
     const query = new ImpersonateUser_Query({
       adminUserId: req.tokenData.userId,
       adminEmail: req.tokenData.email,
       targetUserId: userId,
     } as ImpersonateUser_Query);
 
-    return this.queryBus.execute(query);
+    const {
+      accessToken,
+      refreshToken,
+      userId: impersonatedUserId,
+      impersonatedEmail,
+    } = await this.queryBus.execute(query);
+
+    // Stash the admin's current cookies so "stop impersonating" can restore
+    // them, then set the impersonation tokens as the active cookies.
+    stashAdminCookies(req, res);
+    setAuthCookies(res, { accessToken, refreshToken });
+
+    return { userId: impersonatedUserId, impersonatedEmail };
   }
 }

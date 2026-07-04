@@ -27,17 +27,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const { isAuthenticated, logout } = useAuth();
 
-  // Fetch user profile
+  // Fetch user profile. Auth is cookie-based, so we just call the API; a 401
+  // that survives the client's cookie refresh means the session is gone.
   const fetchUser = useCallback(async () => {
     try {
-      const token = authService.getAccessToken();
-      if (!token) {
-        setUser(null);
-        setIsLoading(false);
-        await logout();
-        return;
-      }
-
       const userData = await authService.getMe();
       setUser(userData);
     } catch (error) {

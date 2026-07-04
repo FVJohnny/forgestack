@@ -17,9 +17,8 @@ export interface VerifyEmailRequest {
   emailVerificationId: string;
 }
 
+// Tokens are delivered as httpOnly cookies, so the body only carries the id.
 export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
   userId: string;
 }
 
@@ -54,8 +53,6 @@ export interface ListUsersResponse {
 }
 
 export interface ImpersonateResponse {
-  accessToken: string;
-  refreshToken: string;
   userId: string;
   impersonatedEmail: string;
 }

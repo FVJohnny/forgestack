@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+// Auto-login tokens are delivered as httpOnly cookies, not in the body.
 export class VerifyEmail_ResponseDto {
   @ApiProperty({
     description: 'The ID of the user whose email was verified',
@@ -7,18 +8,4 @@ export class VerifyEmail_ResponseDto {
     type: String,
   })
   userId: string;
-
-  @ApiProperty({
-    description: 'JWT access token for auto-login',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    type: String,
-  })
-  accessToken: string;
-
-  @ApiProperty({
-    description: 'JWT refresh token for auto-login',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    type: String,
-  })
-  refreshToken: string;
 }

@@ -1,4 +1,5 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Inject } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Inject, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { type ICommandBus, type IQueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
@@ -7,6 +8,7 @@ import {
   PublicApi,
   StrictRateLimit,
   StoreTokens_Command,
+  setAuthCookies,
 } from '@libs/nestjs-common';
 import { VerifyEmail_Command } from '@bc/auth/application/commands';
 import { GetNewTokensFromEmailVerification_Query } from '@bc/auth/application/queries';
@@ -47,7 +49,10 @@ export class VerifyEmailVerification_Controller {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid request parameters',
   })
-  async verifyEmail(@Body() body: VerifyEmailRequestDto): Promise<VerifyEmail_ResponseDto> {
+  async verifyEmail(
+    @Body() body: VerifyEmailRequestDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<VerifyEmail_ResponseDto> {
     // Verify the email (404s if the verification doesn't exist)
     const command = new VerifyEmail_Command({
       emailVerificationId: body.emailVerificationId,
@@ -64,10 +69,9 @@ export class VerifyEmailVerification_Controller {
     const storeTokensCommand = new StoreTokens_Command({ userId, accessToken, refreshToken });
     await this.commandBus.execute(storeTokensCommand);
 
-    return {
-      userId,
-      accessToken,
-      refreshToken,
-    };
+    // Deliver tokens as httpOnly cookies for auto-login; body carries userId.
+    setAuthCookies(res, { accessToken, refreshToken });
+
+    return { userId };
   }
 }

@@ -13,7 +13,7 @@ How to read an item:
 
 | Section | Items | Done | Open |
 |---|---|---|---|
-| A. Security | 26 | 22 done, 1 partial | 8, 25, 26 |
+| A. Security | 26 | 25 done, 1 partial (item 5) | none (all code done) |
 | B. Backend reliability (outbox/inbox/Kafka) | 19 | 0 | all |
 | C. Backend code quality | 15 | 0 | all |
 | D. Backend testing | 2 | 0 | all |
@@ -22,7 +22,7 @@ How to read an item:
 | G. Tooling, lint, DX | 18 | 0 | all |
 | H. Docs, identity, positioning | 8 | 0 | all |
 
-Item 5 needs manual secret rotation by the maintainer. Item 8 is intentionally saved for last because it is the largest change and needs the running dev stack to verify.
+All of Section A is code-complete. Item 5's remaining work is manual secret rotation by the maintainer (the repo and its history are already clean).
 
 ## A. Security
 
@@ -54,9 +54,13 @@ Item 5 needs manual secret rotation by the maintainer. Item 8 is intentionally s
   Portainer was reverse-proxied at `portainer.<domain>` with no auth, so the first visitor after a fresh deploy could claim its admin account.
   **Status: Done (gated, not removed).** The previously dead `CADDY_BASIC_AUTH_HASH` is now wired to the Portainer site through `admin-auth-<TLS_ENV>` snippets: prod requires basic auth and Caddy refuses to start without the hash, dev stays open on localhost. Added `CADDY_BASIC_AUTH_USER` and clearer guidance to the env example. Validated with `caddy validate` in dev mode, prod mode with a hash, and prod mode without one. Takes effect after the next caddy image build and deploy. This also resolves most of item 91.
 
-- [ ] **8. Frontend stores access, refresh, and admin-impersonation tokens in localStorage** (High)
-  Any XSS can exfiltrate full sessions, including admin credentials saved during impersonation. Fix: move refresh tokens to httpOnly cookies (or at minimum keep them in memory and document the tradeoff).
-  **Status: Open, saved for last on purpose.** The real fix is a cookie/BFF rework that touches auth flows across both frontend and backend (login, Google, verify-email, refresh, logout, impersonation), and it should be verified against the running dev stack in one go.
+- [x] **8. Frontend stores access, refresh, and admin-impersonation tokens in localStorage** (High)
+  Any XSS could exfiltrate full sessions, including admin credentials saved during impersonation.
+  **Status: Done (full httpOnly, both tokens).** The browser no longer sees a token at all.
+  - Backend: a shared `auth-cookies.ts` helper sets/clears Secure httpOnly SameSite=lax cookies. Login, Google, verify-email, and refresh set them; logout clears them. `JwtAuthGuard` reads the access-token cookie first and falls back to the `Authorization` header (so Swagger and service-to-service still work). `configureApp` enables `cookie-parser`. The refresh endpoint dropped `JwtAuthGuard` (it must work once the access token has expired) and is now authenticated purely by the refresh cookie, with rotation preserved. Response bodies carry only `userId`.
+  - Impersonation reworked server-side: the impersonate endpoint stashes the admin's cookies into `admin_*` slots and sets the impersonated user's cookies; a new `POST /admin/stop-impersonation` restores them. The frontend no longer holds any admin token.
+  - Frontend: the API client sends `credentials: 'include'`, adds one-shot cookie-based refresh-and-retry on 401 (also fixes item 64), and emits an `auth:unauthenticated` event when refresh fails. Auth state now comes from calling `/auth/me` at mount instead of reading a token. All token/localStorage code removed from both auth services; the only remaining localStorage use is the UI locale.
+  - Verified end to end against the running dev stack with curl through Caddy: login sets `#HttpOnly` cookies with a userId-only body; `/me` authenticates by cookie alone; cookie-only refresh works and rotates; logout returns 204 and clears cookies; post-logout `/me` and refresh both 401; impersonate as non-admin is 403 and stop-impersonation with no admin cookie is 401. Confirmed at the source that no token is written to localStorage. Full monorepo typecheck and all 7 test suites pass. Not exercised live: the impersonate→stop happy path needs an admin user, which the seed does not create (open item 47); the guard/cookie logic is covered by code and the boundary tests. Deferred: CSRF hardening beyond SameSite=lax (a token/double-submit) if the API is ever hosted cross-site from the frontend.
 
 - [x] **9. Refresh tokens never rotated or revoked on use** (Medium)
   A leaked refresh token stayed valid until natural expiry.

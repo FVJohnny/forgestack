@@ -1,5 +1,6 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Res } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
+import type { Response } from 'express';
 import { type ICommandBus, type IQueryBus } from '@nestjs/cqrs';
 import {
   COMMAND_BUS,
@@ -7,6 +8,7 @@ import {
   StrictRateLimit,
   PublicApi,
   StoreTokens_Command,
+  setAuthCookies,
 } from '@libs/nestjs-common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RecordUserLogin_Command } from '@bc/auth/application/commands';
@@ -37,7 +39,10 @@ export class GoogleOAuth_Controller {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid Google token or email not verified',
   })
-  async authenticateWithGoogle(@Body() body: GoogleOAuth_ControllerParams) {
+  async authenticateWithGoogle(
+    @Body() body: GoogleOAuth_ControllerParams,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     // 1. Register or link Google user (write side)
     const registerCommand = new RegisterOrLinkGoogleUser_Command({
       accessToken: body.accessToken,
@@ -56,10 +61,9 @@ export class GoogleOAuth_Controller {
     const recordLoginCommand = new RecordUserLogin_Command({ userId });
     this.commandBus.execute(recordLoginCommand);
 
-    return {
-      accessToken,
-      refreshToken,
-      userId,
-    };
+    // Deliver tokens as httpOnly cookies; the body carries only the user id.
+    setAuthCookies(res, { accessToken, refreshToken });
+
+    return { userId };
   }
 }

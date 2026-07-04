@@ -11,17 +11,14 @@ import type {
   GetMotdResponse,
 } from '@/lib/api/types';
 
+/**
+ * Auth is cookie-based: the backend sets httpOnly cookies for the access and
+ * refresh tokens, so this service never touches tokens or localStorage. The
+ * session is established by calling the API (the cookies ride along) and read
+ * back via getMe(). Impersonation is handled entirely server-side through a
+ * stacked admin cookie; the client only calls the endpoints.
+ */
 class AuthService {
-  private accessTokenKey = 'access_token';
-  private refreshTokenKey = 'refresh_token';
-  private userIdKey = 'user_id';
-  // Keys for storing original admin tokens during impersonation
-  private originalAccessTokenKey = 'original_admin_access_token';
-  private originalRefreshTokenKey = 'original_admin_refresh_token';
-  private originalUserIdKey = 'original_admin_user_id';
-  // Deduplication lock for concurrent refresh calls
-  private refreshPromise: Promise<AuthResponse | null | 'network_error'> | null = null;
-
   async register(email: string, password: string): Promise<void> {
     await apiClient.post<void>(API_ENDPOINTS.USERS.REGISTER, {
       email,
@@ -30,41 +27,33 @@ class AuthService {
   }
 
   async login(email: string, password: string): Promise<AuthResponse> {
-    const data = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, {
+    return apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, {
       email,
       password,
     } as LoginRequest);
-
-    // Store tokens and userId
-    this.setAccessToken(data.accessToken);
-    this.setRefreshToken(data.refreshToken);
-    this.setUserId(data.userId);
-
-    return data;
   }
 
   async loginWithGoogle(accessToken: string): Promise<AuthResponse> {
-    const data = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.GOOGLE, { accessToken });
-
-    // Store tokens and userId
-    this.setAccessToken(data.accessToken);
-    this.setRefreshToken(data.refreshToken);
-    this.setUserId(data.userId);
-
-    return data;
+    return apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.GOOGLE, { accessToken });
   }
 
   async verifyEmailAndLogin(emailVerificationId: string): Promise<AuthResponse> {
-    const data = await apiClient.post<AuthResponse>(API_ENDPOINTS.EMAIL_VERIFICATION.VERIFY, {
+    return apiClient.post<AuthResponse>(API_ENDPOINTS.EMAIL_VERIFICATION.VERIFY, {
       emailVerificationId,
     });
+  }
 
-    // Store tokens and userId for auto-login
-    this.setAccessToken(data.accessToken);
-    this.setRefreshToken(data.refreshToken);
-    this.setUserId(data.userId);
-
-    return data;
+  /**
+   * Returns the current user, or null if there is no valid session. The API
+   * client transparently attempts a cookie refresh on a 401, so this only
+   * returns null when both the access and refresh cookies are gone/expired.
+   */
+  async getSession(): Promise<GetMeResponse | null> {
+    try {
+      return await this.getMe();
+    } catch {
+      return null;
+    }
   }
 
   async getMe(): Promise<GetMeResponse> {
@@ -73,119 +62,22 @@ class AuthService {
     });
   }
 
-  async refreshToken(): Promise<AuthResponse | null | 'network_error'> {
-    // Deduplicate concurrent refresh calls — share the same in-flight promise
-    if (this.refreshPromise) return this.refreshPromise;
-
-    this.refreshPromise = this.executeRefreshToken();
-    try {
-      return await this.refreshPromise;
-    } finally {
-      this.refreshPromise = null;
-    }
-  }
-
-  private async executeRefreshToken(): Promise<AuthResponse | null | 'network_error'> {
-    try {
-      const refreshToken = this.getRefreshToken();
-      if (!refreshToken) {
-        return null;
-      }
-
-      const data = await apiClient.post<AuthResponse>(
-        API_ENDPOINTS.AUTH.REFRESH,
-        { refreshToken },
-        { showErrorToast: false },
-      );
-
-      // Update tokens
-      this.setAccessToken(data.accessToken);
-      this.setRefreshToken(data.refreshToken);
-      this.setUserId(data.userId);
-
-      return data;
-    } catch (error: unknown) {
-      // Only return null (triggering logout) for actual auth failures (401)
-      // Network errors during service restart should not log users out
-      const status =
-        typeof error === 'object' && error !== null && 'status' in error
-          ? (error as Record<string, unknown>).status
-          : undefined;
-      if (status === 401) {
-        console.error('Token refresh failed - unauthorized:', error);
-        return null;
-      }
-
-      // For network errors, timeouts, 5xx errors - don't logout, just log and continue
-      const message = error instanceof Error ? error.message : String(error);
-      console.warn('Token refresh failed (transient error, not logging out):', message);
-      return 'network_error';
-    }
-  }
-
   async logout(): Promise<void> {
-    try {
-      const token = this.getAccessToken();
-      if (token) {
-        // Don't show error toast if logout fails (token might already be invalid)
-        await apiClient.post<void>(API_ENDPOINTS.AUTH.LOGOUT, undefined, {
-          showErrorToast: false,
-        });
-      }
-    } finally {
-      // Always clear local storage, even if API call fails
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(this.accessTokenKey);
-        localStorage.removeItem(this.refreshTokenKey);
-        localStorage.removeItem(this.userIdKey);
-        // Redirect to login page
-        window.location.href = '/login';
-      }
-    }
+    // Best-effort: the backend clears the cookies. Ignore errors (the token
+    // might already be invalid).
+    await apiClient
+      .post<void>(API_ENDPOINTS.AUTH.LOGOUT, undefined, { showErrorToast: false })
+      .catch(() => {});
   }
 
-  getAccessToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(this.accessTokenKey);
-    }
-    return null;
+  // Admin: impersonation. The backend stashes the admin's cookies and sets the
+  // impersonated user's cookies; stopImpersonation restores the admin cookies.
+  async impersonate(userId: string): Promise<ImpersonateResponse> {
+    return apiClient.post<ImpersonateResponse>(API_ENDPOINTS.ADMIN.IMPERSONATE(userId));
   }
 
-  setAccessToken(token: string) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(this.accessTokenKey, token);
-    }
-  }
-
-  getRefreshToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(this.refreshTokenKey);
-    }
-    return null;
-  }
-
-  setRefreshToken(token: string) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(this.refreshTokenKey, token);
-    }
-  }
-
-  getUserId(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(this.userIdKey);
-    }
-    return null;
-  }
-
-  setUserId(userId: string) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(this.userIdKey, userId);
-    }
-  }
-
-  // Admin impersonation methods
-  async searchUsers(email: string, limit: number = 10): Promise<SearchUsersResponse> {
-    return apiClient.get<SearchUsersResponse>(API_ENDPOINTS.ADMIN.SEARCH_USERS(email, limit));
+  async stopImpersonation(): Promise<{ userId: string }> {
+    return apiClient.post<{ userId: string }>(API_ENDPOINTS.ADMIN.STOP_IMPERSONATION);
   }
 
   async listUsers(options?: {
@@ -197,63 +89,8 @@ class AuthService {
     return apiClient.get<ListUsersResponse>(API_ENDPOINTS.ADMIN.LIST_USERS(options));
   }
 
-  async impersonate(userId: string): Promise<ImpersonateResponse> {
-    // Save current admin tokens before impersonating
-    const currentAccessToken = this.getAccessToken();
-    const currentRefreshToken = this.getRefreshToken();
-    const currentUserId = this.getUserId();
-
-    if (currentAccessToken && currentRefreshToken && currentUserId) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(this.originalAccessTokenKey, currentAccessToken);
-        localStorage.setItem(this.originalRefreshTokenKey, currentRefreshToken);
-        localStorage.setItem(this.originalUserIdKey, currentUserId);
-      }
-    }
-
-    // Get impersonation tokens
-    const data = await apiClient.post<ImpersonateResponse>(API_ENDPOINTS.ADMIN.IMPERSONATE(userId));
-
-    // Store impersonation tokens
-    this.setAccessToken(data.accessToken);
-    this.setRefreshToken(data.refreshToken);
-    this.setUserId(data.userId);
-
-    return data;
-  }
-
-  stopImpersonation(): boolean {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-
-    // Restore original admin tokens
-    const originalAccessToken = localStorage.getItem(this.originalAccessTokenKey);
-    const originalRefreshToken = localStorage.getItem(this.originalRefreshTokenKey);
-    const originalUserId = localStorage.getItem(this.originalUserIdKey);
-
-    if (!originalAccessToken || !originalRefreshToken || !originalUserId) {
-      return false;
-    }
-
-    // Restore admin tokens
-    this.setAccessToken(originalAccessToken);
-    this.setRefreshToken(originalRefreshToken);
-    this.setUserId(originalUserId);
-
-    // Clear original tokens storage
-    localStorage.removeItem(this.originalAccessTokenKey);
-    localStorage.removeItem(this.originalRefreshTokenKey);
-    localStorage.removeItem(this.originalUserIdKey);
-
-    return true;
-  }
-
-  isImpersonating(): boolean {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    return localStorage.getItem(this.originalAccessTokenKey) !== null;
+  async searchUsers(email: string, limit: number = 10): Promise<SearchUsersResponse> {
+    return apiClient.get<SearchUsersResponse>(API_ENDPOINTS.ADMIN.SEARCH_USERS(email, limit));
   }
 
   async deleteUser(userId: string): Promise<void> {
@@ -268,7 +105,6 @@ class AuthService {
     await apiClient.post<void>(API_ENDPOINTS.ADMIN.UNSUSPEND_USER(userId));
   }
 
-  // MOTD methods
   async getMotd(): Promise<GetMotdResponse | null> {
     return apiClient.get<GetMotdResponse | null>(API_ENDPOINTS.MOTD.GET, {
       showErrorToast: false,

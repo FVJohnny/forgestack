@@ -1,15 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+// Tokens are delivered as httpOnly cookies, not in the body, so the browser
+// never has script access to them. Only the user id is returned.
 export class LoginUser_ResponseDto {
   @ApiProperty({
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    description: 'JWT access token for authentication',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'ID of the authenticated user',
   })
-  accessToken: string;
-
-  @ApiProperty({
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    description: 'JWT refresh token for obtaining new access tokens',
-  })
-  refreshToken: string;
+  userId: string;
 }

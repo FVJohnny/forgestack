@@ -1,12 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+// Tokens are delivered as httpOnly cookies, not in the body.
 export class GoogleOAuth_ResponseDto {
-  @ApiProperty({ description: 'User ID' })
+  @ApiProperty({ description: 'ID of the authenticated user' })
   userId: string;
-
-  @ApiProperty({ description: 'JWT access token' })
-  accessToken: string;
-
-  @ApiProperty({ description: 'JWT refresh token' })
-  refreshToken: string;
 }

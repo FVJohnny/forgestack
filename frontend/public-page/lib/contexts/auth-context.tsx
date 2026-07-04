@@ -28,19 +28,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user is already logged in on mount
+  // Tokens live in httpOnly cookies the browser can't read, so the session is
+  // established by asking the API who we are. getSession() transparently
+  // refreshes via the cookie on a 401 before giving up.
   useEffect(() => {
-    const token = authService.getAccessToken();
-    const storedUserId = authService.getUserId();
-
-    if (token && storedUserId) {
-      setIsAuthenticated(true);
-      setUserId(storedUserId);
-    }
-    setIsLoading(false);
+    let cancelled = false;
+    void authService.getSession().then((me) => {
+      if (cancelled) return;
+      setIsAuthenticated(Boolean(me));
+      setUserId(me?.userId ?? null);
+      setIsLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Note: Token refresh is handled in dashboard layout to avoid API calls on public pages
+  // The API client fires this when a refresh fails, so the app drops to logged
+  // out without every caller having to handle it.
+  useEffect(() => {
+    const onUnauthenticated = () => {
+      setIsAuthenticated(false);
+      setUserId(null);
+    };
+    window.addEventListener('auth:unauthenticated', onUnauthenticated);
+    return () => window.removeEventListener('auth:unauthenticated', onUnauthenticated);
+  }, []);
 
   const register = useCallback(async (email: string, password: string) => {
     await authService.register(email, password);

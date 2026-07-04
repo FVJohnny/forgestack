@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ProtectedRoute } from '@/app/shared/auth/protected-route';
-import { authService } from '@/lib/contexts/auth-service';
 import { Sidebar } from './components/sidebar';
 import { Topbar } from './components/topbar';
 import { ImpersonationBanner } from './components/impersonation-banner';
@@ -11,13 +10,8 @@ import { cn } from '@/lib/utils';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Refresh the access token once when the authenticated app mounts (public
-  // pages skip this to avoid needless API calls).
-  useEffect(() => {
-    if (authService.getRefreshToken()) {
-      void authService.refreshToken();
-    }
-  }, []);
+  // No manual token refresh here: the API client refreshes via the httpOnly
+  // cookie automatically on a 401.
 
   return (
     <ProtectedRoute>

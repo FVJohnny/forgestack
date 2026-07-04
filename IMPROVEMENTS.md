@@ -254,8 +254,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   Login and Google OAuth controllers dispatched it without `await`, so a rejection became an unhandled promise rejection and failures vanished.
   **Status: Done.** Kept it non-blocking (last-login tracking should not delay the login response) but attached a `.catch` that logs via `CorrelationLogger`, so failures are visible and never become unhandled rejections.
 
-- [ ] **57. Value-object equality is shallow and fragile** (Low)
+- [x] **57. Value-object equality is shallow and fragile** (Low)
   `ValueObject.equals` uses reference equality plus `constructor.name` (breaks under minification), `DateVO` accepts Invalid Date, and `Id` validates twice.
+  **Status: Done.** `ValueObject.equals` now compares prototypes (stable under minification) instead of `constructor.name`, and compares Dates/structural values by content rather than by reference. `DateVO.validate` rejects Invalid Date (`new Date('garbage')`), which the base null/undefined check missed. `Id` dropped its redundant explicit `this.validate()` (the base ctor already validates exactly once). Covered by a new `value-object.spec.ts` (9 cases); common 143 and service-1 506 tests pass.
 
 - [x] **58. Duplicated types and unsafe casts** (Low)
   Two parallel pagination type modules, `IdentityEntry` declared identically in three layers, and `as` casts in the impersonate controller.
@@ -263,7 +264,6 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 
 - [x] **59. `Password.random()` is predictable outside tests** (Low)
   **Status: Done.** Outside `NODE_ENV=test`, `Password.random()` used `'password' + _seq++`, a trivially guessable sequence that would be a real risk if it ever seeded a live account. Replaced it with `randomBytes(24).toString('hex')` plus an `aA1` suffix (guarantees the letter+digit+uppercase policy), and removed the module-level `_seq` counter. The test path (cached `TestPassword123!`) is unchanged, so tests stay deterministic. Verified: service-1 typecheck clean and all 506 tests pass.
-  It generates sequential `passwordN` values, used as placeholder passwords for Google-signup users. Use a cryptographically random value.
 
 - [x] **60. Small backend cleanups** (Low)
   **Status: Done (6 of 7).**

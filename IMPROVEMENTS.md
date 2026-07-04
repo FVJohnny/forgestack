@@ -50,7 +50,8 @@ Check items off as they are done.
   - DONE. The guard now compares SHA-256 digests with `crypto.timingSafeEqual` (hashing first yields the equal-length buffers timingSafeEqual requires, without leaking key length). Verified with the common lib tests and typecheck.
 - [x] 23. [L] Frontend has no security headers/CSP. The only `headers()` rule targets nonexistent .mp4 files.
   - DONE. Removed the dead .mp4 rule and added CSP, X-Content-Type-Options, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy, and HSTS on all routes. The CSP is pragmatic rather than nonce-strict (Next inline scripts, Google Sign-In, flagcdn flags, cross-origin API in prod plus http://localhost in bare dev are all allowed), with a comment telling forkers to tighten connect-src. Verified by building and serving the standalone output and curling the headers.
-- [ ] 24. [L] `record-identity` trusts client-supplied `X-Forwarded-For`. Spoofable audit IPs, needs trusted-proxy config.
+- [x] 24. [L] `record-identity` trusts client-supplied `X-Forwarded-For`. Spoofable audit IPs, needs trusted-proxy config.
+  - DONE. `configureApp` now sets Express `trust proxy` to `TRUSTED_PROXY_HOPS` (default 1, matching the single Caddy hop; with no proxy the socket address wins), and the controller uses `req.ip` instead of hand-parsing the first `X-Forwarded-For` entry, so clients can no longer spoof the recorded IP. This also improves the throttler's per-IP keys, which use the same resolution. Verified with typecheck and the full test run.
 - [ ] 25. [L] Redis password visible in `docker inspect` via compose command/healthcheck interpolation. User tokens stored keyed by raw JWT with no TTL.
 - [ ] 26. [L] Dev Mongo/Redis published on all interfaces with default creds, mongo-express hardcodes admin/admin. Bind to 127.0.0.1 in dev.
 

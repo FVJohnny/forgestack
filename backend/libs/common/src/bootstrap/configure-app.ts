@@ -36,6 +36,12 @@ export function configureApp(app: NestExpressApplication, options: AppConfigOpti
   app.useBodyParser('json', { limit: requestSizeLimit });
   app.useBodyParser('urlencoded', { limit: requestSizeLimit, extended: true });
 
+  // Trust exactly the proxy hops in front of the service (Caddy = 1) so
+  // req.ip resolves to the real client address instead of a spoofable
+  // client-supplied X-Forwarded-For value. With no proxy (bare local runs)
+  // the socket address wins, so 1 is a safe default either way.
+  app.set('trust proxy', Number(process.env.TRUSTED_PROXY_HOPS ?? 1));
+
   // Set global API prefix
   app.setGlobalPrefix('api');
 

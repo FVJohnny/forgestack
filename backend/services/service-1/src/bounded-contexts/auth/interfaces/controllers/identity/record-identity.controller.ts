@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { type ICommandBus } from '@nestjs/cqrs';
+import type { Request } from 'express';
 import { COMMAND_BUS, JwtAuthGuard, type AuthenticatedRequest } from '@libs/nestjs-common';
 import { RecordIdentity_Command } from '@bc/auth/application/commands/record-identity/record-identity.command';
 import { RecordIdentity_ControllerParams } from './record-identity.params';
@@ -29,11 +30,12 @@ export class RecordIdentity_Controller {
     description: 'Identity recorded successfully',
   })
   async recordIdentity(
-    @Req() req: AuthenticatedRequest,
+    @Req() req: Request & AuthenticatedRequest,
     @Body() body: RecordIdentity_ControllerParams,
   ): Promise<void> {
-    // Extract IP from request headers (handles proxies)
-    const ip = this.extractIp(req);
+    // req.ip honors the app-level 'trust proxy' setting (see configureApp),
+    // so clients cannot spoof it with their own X-Forwarded-For header.
+    const ip = req.ip ?? 'unknown';
     const userAgent = req.headers['user-agent'];
 
     const command = new RecordIdentity_Command(
@@ -45,27 +47,5 @@ export class RecordIdentity_Controller {
     );
 
     await this.commandBus.execute(command);
-  }
-
-  private extractIp(request: AuthenticatedRequest): string {
-    // Check for forwarded IP (when behind proxy/load balancer)
-    const forwarded = request.headers['x-forwarded-for'];
-    if (forwarded) {
-      // x-forwarded-for can contain multiple IPs, take the first one (client IP)
-      const ips = Array.isArray(forwarded) ? forwarded[0] : forwarded;
-      return ips.split(',')[0].trim();
-    }
-
-    // Check for real IP header (nginx)
-    const realIp = request.headers['x-real-ip'];
-    if (realIp) {
-      return Array.isArray(realIp) ? realIp[0] : realIp;
-    }
-
-    // Fallback to socket remote address
-    return (
-      (request as unknown as { socket?: { remoteAddress?: string } }).socket?.remoteAddress ||
-      'unknown'
-    );
   }
 }

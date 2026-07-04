@@ -11,14 +11,16 @@
   "peerDependencies": {
     "@libs/nestjs-common": "^1.0.0",
     "@nestjs/common": "^11.0.1",
-    "ioredis": "^5.3.2"
+    "ioredis": "^5.3.2",
+    "@nestjs/throttler": "^6.4.0"
   },
   "devDependencies": {
     "@libs/nestjs-common": "file:../common",
     "@nestjs/common": "^11.0.1",
     "@types/node": "^22.10.7",
     "ioredis": "^5.3.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "@nestjs/throttler": "^6.4.0"
   },
   "keywords": [
     "nestjs",

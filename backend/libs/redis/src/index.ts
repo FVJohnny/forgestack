@@ -7,3 +7,5 @@ export * from './redis-database.module';
 export * from './infrastructure/base.redis-repository';
 export * from './testing/redis-test.service';
 export * from './auth/user-token.redis-repository';
+export * from './throttler/throttler-storage.redis';
+export * from './throttler/redis-throttler-storage.module';

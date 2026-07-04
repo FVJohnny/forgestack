@@ -1,4 +1,4 @@
-import { Injectable, ExecutionContext, Inject } from '@nestjs/common';
+import { Injectable, ExecutionContext, Inject, Optional } from '@nestjs/common';
 import { ThrottlerGuard, ThrottlerStorage } from '@nestjs/throttler';
 import type { ThrottlerModuleOptions } from '@nestjs/throttler';
 import { THROTTLER_OPTIONS } from '@nestjs/throttler/dist/throttler.constants';
@@ -6,6 +6,7 @@ import { Reflector } from '@nestjs/core';
 import { RATE_LIMIT_TYPE_KEY } from './api-rate-limit.decorator';
 import type { RateLimitType } from './api-rate-limit.types';
 import type { AuthenticatedRequest } from '../../auth/jwt-auth.types';
+import { JwtTokenService } from '../../auth/jwt-token.service';
 
 @Injectable()
 export class ApiRateLimitGuard extends ThrottlerGuard {
@@ -13,6 +14,7 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     @Inject(THROTTLER_OPTIONS) options: ThrottlerModuleOptions,
     storageService: ThrottlerStorage,
     reflector: Reflector,
+    @Optional() private readonly jwtTokenService?: JwtTokenService,
   ) {
     super(options, storageService, reflector);
   }
@@ -30,9 +32,11 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
 
     switch (type) {
       case 'user': {
-        const userId = request.tokenData?.userId;
+        // This guard is registered as APP_GUARD, so it runs before route
+        // guards populate request.tokenData; extract the user from the
+        // bearer token directly and fall back to IP when unauthenticated.
+        const userId = request.tokenData?.userId ?? this.extractUserIdFromToken(request);
         if (!userId) {
-          // Fall back to IP if no user is authenticated
           key = suffix;
         } else {
           key = `user:${userId}`;
@@ -51,5 +55,18 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     }
 
     return `${context.getClass().name}-${context.getHandler().name}-${throttlerName}-${key}`;
+  }
+
+  private extractUserIdFromToken(request: Partial<AuthenticatedRequest>): string | undefined {
+    if (!this.jwtTokenService) return undefined;
+
+    const [scheme, token] = request.headers?.authorization?.split(' ') ?? [];
+    if (scheme !== 'Bearer' || !token) return undefined;
+
+    try {
+      return this.jwtTokenService.verifyAccessToken(token).userId;
+    } catch {
+      return undefined;
+    }
   }
 }

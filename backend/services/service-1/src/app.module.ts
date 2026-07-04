@@ -16,7 +16,11 @@ import {
 import { MetricsModule, JwtAuthModule } from '@libs/nestjs-common';
 import { OutboxModule } from '@libs/nestjs-common';
 import { Outbox_MongodbRepository } from '@libs/nestjs-mongodb';
-import { RedisDBModule } from '@libs/nestjs-redis';
+import {
+  RedisDBModule,
+  RedisThrottlerStorageModule,
+  ThrottlerStorageRedis,
+} from '@libs/nestjs-redis';
 import { MongoDBModule } from '@libs/nestjs-mongodb';
 import { KafkaIntegrationEventsModule } from '@libs/nestjs-kafka';
 
@@ -50,7 +54,11 @@ import { KafkaIntegrationEventsModule } from '@libs/nestjs-kafka';
     MetricsModule,
     JwtAuthModule,
     EventTrackerModule,
-    ApiRateLimitModule.forRoot({ '1minute': { type: 'ip', limit: 100 } }),
+    // Rate limits are stored in Redis so they hold across all instances.
+    ApiRateLimitModule.forRoot(
+      { '1minute': { type: 'ip', limit: 100 } },
+      { imports: [RedisThrottlerStorageModule], storageClass: ThrottlerStorageRedis },
+    ),
 
     // BOUNDED CONTEXTS
     AuthBoundedContextModule,

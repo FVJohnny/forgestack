@@ -1,7 +1,6 @@
 import { StringValueObject, DomainValidationException } from '@libs/nestjs-common';
 import * as bcrypt from 'bcrypt';
-
-let _seq = 1;
+import { randomBytes } from 'crypto';
 
 export class Password extends StringValueObject {
   private static readonly SALT_ROUNDS = process.env.NODE_ENV === 'test' ? 1 : 12;
@@ -33,7 +32,13 @@ export class Password extends StringValueObject {
       }
       return Password.cachedTestPassword;
     }
-    return Password.createFromPlainTextSync('password' + _seq++);
+    // Outside tests, generate a cryptographically strong password. The old
+    // 'password' + sequence counter was trivially guessable, which is a real
+    // risk if random() is ever used to seed a real account. hex always
+    // satisfies the letter+digit policy with overwhelming probability, and the
+    // explicit suffix guarantees it.
+    const plainText = randomBytes(24).toString('hex') + 'aA1';
+    return Password.createFromPlainTextSync(plainText);
   }
 
   async verify(plainText: string) {

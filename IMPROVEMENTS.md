@@ -256,7 +256,8 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **58. Duplicated types and unsafe casts** (Low)
   Two parallel pagination type modules, `IdentityEntry` declared identically in three layers, and `as` casts in the impersonate controller.
 
-- [ ] **59. `Password.random()` is predictable outside tests** (Low)
+- [x] **59. `Password.random()` is predictable outside tests** (Low)
+  **Status: Done.** Outside `NODE_ENV=test`, `Password.random()` used `'password' + _seq++`, a trivially guessable sequence that would be a real risk if it ever seeded a live account. Replaced it with `randomBytes(24).toString('hex')` plus an `aA1` suffix (guarantees the letter+digit+uppercase policy), and removed the module-level `_seq` counter. The test path (cached `TestPassword123!`) is unchanged, so tests stay deterministic. Verified: service-1 typecheck clean and all 506 tests pass.
   It generates sequential `passwordN` values, used as placeholder passwords for Google-signup users. Use a cryptographically random value.
 
 - [x] **60. Small backend cleanups** (Low)

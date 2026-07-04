@@ -165,7 +165,7 @@ services:
   # ==========================================================================
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.4.0
+    image: confluentinc/cp-zookeeper:7.7.1
     restart: unless-stopped
     mem_limit: 512m
     environment:
@@ -190,7 +190,7 @@ services:
       start_period: 10s
 
   kafka:
-    image: confluentinc/cp-kafka:7.4.0
+    image: confluentinc/cp-kafka:7.7.1
     restart: unless-stopped
     mem_limit: 1g
     depends_on:

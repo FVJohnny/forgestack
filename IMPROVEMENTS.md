@@ -389,8 +389,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   Dev persisted ZooKeeper but not Kafka's log dir, so on recreate ZK kept the old broker registration while Kafka's cluster id was wiped, causing the mismatch the start-dev recovery tried to clean up.
   **Status: Done (volume part).** Added a `kafka_data_dev` volume mounted at `/var/lib/kafka/data` (matching prod's `kafka_data`), so ZK and Kafka state stay consistent across recreates. The `start-dev.sh` stale-name recovery / `down -v` cleanup is a separate script fix (noted under item 92/the start-dev items); the root cause (missing Kafka volume) is fixed here.
 
-- [ ] **90. Grafana 10.4 (EOL, known CVEs) and cp-kafka 7.4.0 (2023, ZooKeeper)** (Medium)
+- [x] **90. Grafana 10.4 (EOL, known CVEs) and cp-kafka 7.4.0 (2023, ZooKeeper)** (Medium)
   Bump Grafana to a current LTS and consider migrating Kafka to KRaft, which deletes the zookeeper container entirely.
+  **Status: DONE (bump only).** Grafana `10.4.2` → `11.4.6` in `Dockerfile.grafana` and `docker-compose.dev.yml`. cp-kafka/cp-zookeeper `7.4.0` → `7.7.1` in both dev and prod compose. Verified live: Grafana 11.4.6 restarts and re-provisions all datasources/dashboards/alerting cleanly; Kafka 7.7.1 comes up healthy against the persisted volume (cluster id preserved, `users` + `__consumer_offsets` topics survive, `kafka-topics --list` works). The KRaft migration (deleting the zookeeper container) is a larger change deferred as a follow-up; kept the ZooKeeper setup on the patched image.
 
 - [ ] **91. `CADDY_BASIC_AUTH_HASH` was dead config** (Medium)
   **Mostly resolved by item 7**, which wired it to the Portainer site and documented it. Remaining: decide whether any other admin surface should sit behind the same snippet.

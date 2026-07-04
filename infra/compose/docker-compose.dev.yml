@@ -161,7 +161,7 @@ services:
   # ==========================================================================
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.4.0
+    image: confluentinc/cp-zookeeper:7.7.1
     restart: unless-stopped
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -185,7 +185,7 @@ services:
       start_period: 10s
 
   kafka:
-    image: confluentinc/cp-kafka:7.4.0
+    image: confluentinc/cp-kafka:7.7.1
     restart: unless-stopped
     depends_on:
       zookeeper:
@@ -252,7 +252,7 @@ services:
       - backend
 
   grafana:
-    image: grafana/grafana:10.4.2
+    image: grafana/grafana:11.4.6
     restart: unless-stopped
     environment:
       - GF_SECURITY_ADMIN_USER=admin

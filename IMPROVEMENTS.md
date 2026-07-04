@@ -15,11 +15,11 @@ How to read an item:
 |---|---|---|---|
 | A. Security | 26 | 25 done, 1 partial (item 5) | none (all code done) |
 | B. Backend reliability (outbox/inbox/Kafka) | 19 | 19 (44 deferred) | none |
-| C. Backend code quality | 13 | 7 | 48, 49, 52, 54, 57, 58 |
+| C. Backend code quality | 13 | 10 | 48, 49, 52 |
 | D. Backend testing | 2 | 0 | 61, 62 |
 | E. Frontend | 15 | 14 | 71 |
 | F. Infra and deployment | 15 | 14 done, 1 won't-do (82) | none |
-| G. Tooling, lint, DX | 18 | 14 | 100, 102, 105, 106 |
+| G. Tooling, lint, DX | 18 | 18 | none |
 | H. Docs, identity, positioning | 8 | 3 | 114-118 |
 
 All of Section A is code-complete. Item 5's remaining work is manual secret rotation by the maintainer (the repo and its history are already clean).
@@ -239,8 +239,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   `Number('')` / `Number('   ')` coerce to 0, so an empty filter value matched the number 0 in EQUAL/IN conditions.
   **Status: Done.** `parseFromString` now returns empty/whitespace-only strings as-is before the number check. New spec covers empty, whitespace, numeric, boolean, date, and plain-text cases.
 
-- [ ] **54. `@IntegrationEventHandler` constructs a random event to read metadata** (Medium)
+- [x] **54. `@IntegrationEventHandler` constructs a random event to read metadata** (Medium)
   It instantiates `eventClass.random()` (running validation on random data) just to read topic and name. Make those static.
+  **Status: Done.** Added a `static readonly metadata { topic, name, version }` to `Base_IntegrationEvent` and every event subclass (each subclass feeds its own `metadata` into its `super(...)` call, so the instance and static values share one source of truth). The `@IntegrationEventHandler` decorator's `onModuleInit` now reads `eventClass.metadata` directly instead of building a throwaway `random()` instance. Verified live against the running stack: handlers register with the correct topic/name (logs show `Registered inbox handler for topic 'users' and event 'user.created'` etc.), and a real user registration flows end to end (`user.created` processed, notifications projection created, verification email sent). Lint and all 112 common tests pass.
 
 - [x] **55. Mongo config typed as Mongoose options but passed to the native client** (Medium)
   `getMongoConfig()` returned `MongooseModuleOptions` (with a `dbName` the native `MongoClient` silently ignores), and mongoose/@nestjs/mongoose were declared deps only because of that type.
@@ -253,8 +254,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **57. Value-object equality is shallow and fragile** (Low)
   `ValueObject.equals` uses reference equality plus `constructor.name` (breaks under minification), `DateVO` accepts Invalid Date, and `Id` validates twice.
 
-- [ ] **58. Duplicated types and unsafe casts** (Low)
+- [x] **58. Duplicated types and unsafe casts** (Low)
   Two parallel pagination type modules, `IdentityEntry` declared identically in three layers, and `as` casts in the impersonate controller.
+  **Status: Done.** Consolidated `IdentityEntry`, which was declared byte-identically in four files (user aggregate, user DTO, user-identity-marker DTO, and the list-users query response), into one canonical `auth/domain/identity-entry.type.ts`; the four now import (and re-export where consumers relied on the old path). The impersonate controller and its `as` casts are already gone (impersonation was removed earlier). On inspection the "two parallel pagination modules" are NOT a true duplication: `application/pagination/pagination.types.ts` is the internal offset/cursor param + result contract, while `interfaces/pagination.types.ts` is an HTTP request DTO with Swagger/class-validator decorators. That is a legitimate layer split (validation decorators must not leak into the application layer), so they were left separate. Verified: service-1 typecheck/lint clean and all 506 tests pass.
 
 - [x] **59. `Password.random()` is predictable outside tests** (Low)
   **Status: Done.** Outside `NODE_ENV=test`, `Password.random()` used `'password' + _seq++`, a trivially guessable sequence that would be a real risk if it ever seeded a live account. Replaced it with `randomBytes(24).toString('hex')` plus an `aA1` suffix (guarantees the letter+digit+uppercase policy), and removed the module-level `_seq` counter. The test path (cached `TestPassword123!`) is unchanged, so tests stay deterministic. Verified: service-1 typecheck clean and all 506 tests pass.

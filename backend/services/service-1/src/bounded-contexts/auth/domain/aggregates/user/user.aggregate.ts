@@ -11,6 +11,7 @@ import {
   Timestamps,
   UnauthorizedException,
 } from '@libs/nestjs-common';
+import type { IdentityEntry } from '@bc/auth/domain/identity-entry.type';
 import { UserPasswordChanged_DomainEvent } from './events/password-changed.domain-event';
 import { UserDeleted_DomainEvent } from './events/user-deleted.domain-event';
 import { UserLogout_DomainEvent } from './events/user-logout.domain-event';
@@ -36,12 +37,10 @@ export enum AuthProviderEnum {
 
 export type AuthProvider = `${AuthProviderEnum}`;
 
-export interface IdentityEntry {
-  value: string;
-  firstSeen: Date;
-  lastSeen: Date;
-  seenCount: number;
-}
+// Canonical definition lives in domain/identity-entry.type.ts. Imported here
+// for local use and re-exported for consumers that already import it from the
+// user aggregate.
+export type { IdentityEntry };
 
 export interface UserAttributes {
   id: Id;

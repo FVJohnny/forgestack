@@ -1,9 +1,6 @@
-export interface IdentityEntry {
-  value: string;
-  firstSeen: Date;
-  lastSeen: Date;
-  seenCount: number;
-}
+import type { IdentityEntry } from '@bc/auth/domain/identity-entry.type';
+
+export type { IdentityEntry };
 
 export interface ListUsers_QueryResponse {
   users: {

@@ -1,11 +1,7 @@
 import { SharedAggregateDTO } from '@libs/nestjs-common';
+import type { IdentityEntry } from '@bc/auth/domain/identity-entry.type';
 
-export interface IdentityEntry {
-  value: string;
-  firstSeen: Date;
-  lastSeen: Date;
-  seenCount: number;
-}
+export type { IdentityEntry };
 
 export class UserIdentityMarkerDTO extends SharedAggregateDTO {
   userId!: string;

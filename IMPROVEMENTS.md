@@ -459,8 +459,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [x] **99. The Nx lint cache ignores `eslint/rules/**`** (Medium)
   **Status: Done.** Added `{workspaceRoot}/eslint/rules/**/*` to the `sharedGlobals` named input, so editing any custom rule invalidates the lint (and default) cache. Also removed the stale `{workspaceRoot}/jest.preset.js` from the test inputs (item 110), since that file does not exist.
 
-- [ ] **100. Boundary rules are bypassable** (Medium)
+- [x] **100. Boundary rules are bypassable** (Medium)
   `no-cross-bc-imports` misses relative paths, `export from`, and dynamic `import()`; `handler-collocation` is bypassed by alias imports.
+  **Status: Done.** `no-cross-bc-imports` now resolves relative specifiers to a filesystem path and checks the target's `bounded-contexts/<name>` segment, so `../../other-bc/...` is caught (not just `@bc/` aliases). It also handles `export ... from`, `export * from`, and dynamic `import()` with a string literal. `cqrs-handler-collocation` now flags an aliased import of a command/query handler's OWN `_Command`/`_Query` (a collocated message must be a `./` relative import); domain-event handlers are deliberately exempt because the events they handle live on aggregates elsewhere and are legitimately imported via `@bc/` alias (turning that on surfaced only that intended case, confirming the scoping). Verified live with probes: a relative cross-BC import and an aliased command import are both now flagged, and all real code still lints clean. Added RuleTester coverage for the cross-BC rule (alias, relative, re-export, export-star, dynamic import).
 
 - [x] **101. No lint rule for integration events** (Medium)
   Domain events must extend their base class by lint; integration events have no equivalent rule. Add the symmetric rule.

@@ -14,6 +14,7 @@ import tsParser from '@typescript-eslint/parser';
 import domainEventBase from '../domain-event-base.mjs';
 import integrationEventBase from '../integration-event-base.mjs';
 import aggregateBase from '../aggregate-base.mjs';
+import noCrossBcImports from '../no-cross-bc-imports.mjs';
 
 // These rules gate on context.filename and only read the AST (no type info),
 // so a plain @typescript-eslint/parser with no project service is enough.
@@ -120,5 +121,57 @@ ruleTester.run('aggregate-base', aggregateBase, {
   ],
 });
 
+// no-cross-bc-imports: catches BOTH the @bc/ alias form and relative paths /
+// re-exports / dynamic imports that reach into another bounded context.
+const AUTH_FILE =
+  '/repo/backend/services/service-1/src/bounded-contexts/auth/application/handler.ts';
+ruleTester.run('no-cross-bc-imports', noCrossBcImports, {
+  valid: [
+    // Same BC (relative) — allowed.
+    { filename: AUTH_FILE, code: "import { X } from '../domain/x';" },
+    // shared BC — allowed.
+    { filename: AUTH_FILE, code: "import { X } from '@bc/shared/x';" },
+    { filename: AUTH_FILE, code: "import { X } from '@bc/auth/x';" },
+    // Bare package specifier — never a BC.
+    { filename: AUTH_FILE, code: "import { X } from '@libs/nestjs-common';" },
+    // File outside any bounded context — rule does not apply.
+    { filename: '/repo/backend/services/service-1/src/main.ts', code: "import { X } from '@bc/notifications/x';" },
+  ],
+  invalid: [
+    // @bc/ alias into another BC.
+    {
+      filename: AUTH_FILE,
+      code: "import { X } from '@bc/notifications/domain/x';",
+      errors: [{ messageId: 'crossBcImport' }],
+    },
+    // Relative path into another BC (the bypass item 100 called out).
+    {
+      filename: AUTH_FILE,
+      code: "import { X } from '../../notifications/domain/x';",
+      errors: [{ messageId: 'crossBcImport' }],
+    },
+    // Re-export from another BC.
+    {
+      filename: AUTH_FILE,
+      code: "export { X } from '@bc/notifications/x';",
+      errors: [{ messageId: 'crossBcImport' }],
+    },
+    // export * from another BC.
+    {
+      filename: AUTH_FILE,
+      code: "export * from '../../notifications/x';",
+      errors: [{ messageId: 'crossBcImport' }],
+    },
+    // Dynamic import() into another BC.
+    {
+      filename: AUTH_FILE,
+      code: "const m = import('../../notifications/x');",
+      errors: [{ messageId: 'crossBcImport' }],
+    },
+  ],
+});
+
 // eslint-disable-next-line no-console
-console.log('base-class rule suites passed (domain-event, integration-event, aggregate)');
+console.log(
+  'rule suites passed (domain-event, integration-event, aggregate, no-cross-bc-imports)',
+);

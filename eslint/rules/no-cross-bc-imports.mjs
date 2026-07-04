@@ -1,3 +1,5 @@
+import path from 'path';
+
 import { ESLintUtils } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
@@ -8,8 +10,8 @@ const BC_PATH_REGEX = /bounded-contexts\/([^/]+)\//;
 const BC_ALIAS_REGEX = /^@bc\/([^/]+)/;
 
 /**
- * Extracts the bounded context name from a file path or import path.
- * Returns null if the path is not inside a bounded context.
+ * Extracts the bounded context name from a file path (or a resolved import
+ * path). Returns null if the path is not inside a bounded context.
  */
 function getBoundedContext(filePath) {
   const match = filePath.match(BC_PATH_REGEX);
@@ -17,11 +19,23 @@ function getBoundedContext(filePath) {
 }
 
 /**
- * Extracts the bounded context name from an import source using the @bc/ alias.
+ * Resolves the bounded context an import points at, for BOTH the `@bc/<name>`
+ * alias form and relative paths (`../../other-bc/...`) that resolve into a
+ * different bounded-contexts/<name> directory. Returns null when the import
+ * does not target a bounded context.
  */
-function getBoundedContextFromImport(importSource) {
-  const match = importSource.match(BC_ALIAS_REGEX);
-  return match ? match[1] : null;
+function resolveImportedBc(importSource, currentFile) {
+  const aliasMatch = importSource.match(BC_ALIAS_REGEX);
+  if (aliasMatch) return aliasMatch[1];
+
+  // Only relative specifiers can reach another BC on disk; bare package
+  // specifiers (@libs/*, third-party) never do.
+  if (importSource.startsWith('.')) {
+    const resolved = path.resolve(path.dirname(currentFile), importSource);
+    return getBoundedContext(resolved);
+  }
+
+  return null;
 }
 
 export default createRule({
@@ -46,28 +60,41 @@ export default createRule({
     // Not inside a bounded context — skip
     if (!currentBc) return {};
 
+    // Shared check for every import-like node: static import, re-export
+    // (`export ... from`), and dynamic `import()`.
+    function check(node, source) {
+      if (typeof source !== 'string') return;
+
+      const importedBc = resolveImportedBc(source, filename);
+      if (!importedBc) return;
+
+      // Same BC — allowed. Shared BC — allowed (cross-cutting layer).
+      if (importedBc === currentBc || importedBc === 'shared') return;
+
+      context.report({
+        node,
+        messageId: 'crossBcImport',
+        data: { importedBc, currentBc },
+      });
+    }
+
     return {
+      // import ... from '...'
       ImportDeclaration(node) {
-        const source = node.source.value;
-
-        // Check @bc/ alias imports
-        const importedBc = getBoundedContextFromImport(source);
-        if (!importedBc) return;
-
-        // Same BC — allowed
-        if (importedBc === currentBc) return;
-
-        // Shared BC — allowed (it's the cross-cutting concerns layer)
-        if (importedBc === 'shared') return;
-
-        context.report({
-          node: node.source,
-          messageId: 'crossBcImport',
-          data: {
-            importedBc,
-            currentBc,
-          },
-        });
+        check(node.source, node.source.value);
+      },
+      // export ... from '...'  and  export * from '...'
+      ExportNamedDeclaration(node) {
+        if (node.source) check(node.source, node.source.value);
+      },
+      ExportAllDeclaration(node) {
+        if (node.source) check(node.source, node.source.value);
+      },
+      // dynamic import('...') with a string-literal argument
+      ImportExpression(node) {
+        if (node.source && node.source.type === 'Literal') {
+          check(node.source, node.source.value);
+        }
       },
     };
   },

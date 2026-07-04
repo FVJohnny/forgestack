@@ -69,8 +69,36 @@ export default createRule({
       ImportDeclaration(node) {
         const importPath = node.source.value;
 
-        // Skip non-relative imports (e.g., @libs/*, third-party)
+        // Skip non-relative imports (e.g., @libs/*, third-party) — EXCEPT an
+        // aliased import of a command/query handler's OWN message type. A
+        // collocated command/query lives next to its handler, so it must be a
+        // `./` relative import; pulling it in via `@bc/...` (or any bare
+        // specifier) is exactly the alias bypass this rule must catch.
+        //
+        // Domain-event handlers are deliberately excluded here: the events
+        // they handle are defined on aggregates elsewhere (domain/.../events),
+        // so importing them via `@bc/` alias is legitimate, not a bypass.
         if (!importPath.startsWith('.') && !importPath.startsWith('/')) {
+          if (handlerInfo.messageType === 'Command' || handlerInfo.messageType === 'Query') {
+            const messageSuffix = handlerInfo.messageType === 'Command' ? '_Command' : '_Query';
+            const aliasedMessageImport = node.specifiers.some(
+              (spec) =>
+                spec.type === AST_NODE_TYPES.ImportSpecifier &&
+                spec.imported.name.endsWith(messageSuffix),
+            );
+            if (aliasedMessageImport) {
+              context.report({
+                node: node.source,
+                messageId: 'wrongLocation',
+                data: {
+                  handlerType: handlerInfo.handlerType,
+                  messageType: handlerInfo.messageType,
+                  expectedImport: `a "./" relative import from the same directory`,
+                  actualImport: importPath,
+                },
+              });
+            }
+          }
           return;
         }
 

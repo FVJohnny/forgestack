@@ -305,8 +305,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [x] **69. Dependencies pinned to `latest`** (Medium)
   **Status: Done.** Pinned the five `@radix-ui/*` packages and `sonner` to caret ranges of their currently-installed versions (e.g. `^1.1.17`, `^2.0.7`) so a fresh install cannot silently pull a breaking major. Reinstalled, typechecked, and built clean.
 
-- [ ] **70. Docker build depends on a gitignored env file** (Medium)
-  `Dockerfile` copies `infra/env/public-page.env.prod`, which only exists locally, so `docker build` fails on a fresh clone. Fall back to the `.example` file or use build args.
+- [x] **70. Docker build depends on a gitignored env file** (Medium)
+  `Dockerfile` copied `infra/env/public-page.env.prod`, which is gitignored, so `docker build` failed on a fresh clone with a cryptic COPY error.
+  **Status: Done.** The Dockerfile now copies the whole `public-page.env.prod*` set (the trailing `.example` makes the glob match even when the real file is absent, so the build context requirement is satisfied) and then **requires the real file**, failing with an actionable message ("Create it from ...example and set the NEXT_PUBLIC_* values") if it is missing. It deliberately does NOT fall back to the `.example` defaults, since that would bake placeholder NEXT_PUBLIC_* values into a production image. Verified both paths: builds with the real file, fails clearly without it.
 
 - [ ] **71. Zero frontend tests** (Medium)
   The landing page sells "Tests that run in seconds" and the app has none. Add Vitest plus Testing Library with a few examples (api client, auth service, one form).

@@ -34,8 +34,20 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source files
 COPY frontend/public-page/ .
 
-# Copy production env file from infra directory
-COPY infra/env/public-page.env.prod .env.production
+# Production build-time env (NEXT_PUBLIC_* values are baked in at build time).
+# Copy the whole matching set (the trailing `.example` makes it optional-by-glob
+# so the build context isn't required to contain the real file) and require the
+# REAL file — fail loudly rather than baking placeholder .example values into a
+# production image. Create infra/env/public-page.env.prod from the .example
+# before building (see docs/deployment.md).
+COPY infra/env/public-page.env.prod* ./_env/
+RUN if [ -f _env/public-page.env.prod ]; then \
+      cp _env/public-page.env.prod .env.production && rm -rf _env; \
+    else \
+      echo "ERROR: infra/env/public-page.env.prod is missing." >&2; \
+      echo "Create it from infra/env/public-page.env.prod.example and set the NEXT_PUBLIC_* values." >&2; \
+      exit 1; \
+    fi
 
 # Build the application
 RUN pnpm build

@@ -1,0 +1,22 @@
+# The Console
+
+`app/dashboard` is the authenticated area, guarded client-side by
+`ProtectedRoute` and server-validated by the backend's `JwtAuthGuard`. It reads
+live system data — health and event throughput — from the backend's
+JWT-protected `/dashboard` endpoints and renders it with the shared primitives
+(stat tiles, status dots, tables).
+
+The console is composed of panels in `app/dashboard/components/`:
+
+- **`health-panel`** — per-service health, fed by the backend health endpoints.
+- **`events-panel`** — event throughput flowing through Kafka.
+- **`analytics-panel`** — the worked example of calling a second backend
+  service (see [Calling Backend Services](/docs/frontend/backend-services)).
+- **`motd-banner`** — the message of the day, editable by admins.
+- **`sidebar` / `topbar`** — the authenticated chrome added by the dashboard
+  layout.
+
+Admins additionally get user management (list, search, suspend, impersonate)
+and the message-of-the-day editor under `app/dashboard/admin/`.
+
+Next: **[Calling Backend Services](/docs/frontend/backend-services)**.

@@ -1,0 +1,175 @@
+# Domain-Driven Design
+
+In most codebases, business rules have no single home. The rule "an email must
+be valid" gets checked in a controller, again in a service, and once more in a
+test helper. The copies drift, and one day they disagree. Domain-Driven Design
+is a way of building software where the business rules get one home: a
+dedicated layer that models the business, written in the business's own words.
+
+That home is the `domain/` layer of each bounded context. It contains the
+business rules and nothing else: no NestJS decorators, no database calls, no
+HTTP. Three building blocks make it up: **aggregates**, **value objects** and
+**domain events**.
+
+## Code in the business's words
+
+DDD works best when the code uses the vocabulary of the business, so a
+sentence from a product discussion maps directly onto class and method names.
+When the business says "users must verify their email before logging in", the
+code answers with `EmailVerification`, `user.verifyEmail()` and
+`user.canAuthenticate()`. Nothing needs translating between how the team talks
+and how the code reads. DDD calls this shared vocabulary the **ubiquitous
+language**.
+
+The naming conventions in this repo protect that mapping: aggregates, value
+objects and events are named after business concepts, and the file suffixes
+(`.aggregate.ts`, `.vo.ts`, `.domain-event.ts`) say what role each concept
+plays.
+
+## Aggregates
+
+An aggregate is the unit you load, change and save as one piece: a cluster of
+objects treated as a single unit, with one entity as the root. It owns its
+invariants: the only way to change its state is through its own methods, which
+keep it valid.
+
+Every aggregate extends `SharedAggregate`, which provides identity, timestamps,
+equality, and the domain-event machinery.
+
+Here's the `User` aggregate. Note the **static factory** `create()`: it's the
+only entry point, it enforces the "email must be unique" rule via an injected
+port, and it records what happened by applying a domain event.
+
+```ts
+// bounded-contexts/auth/domain/aggregates/user/user.aggregate.ts
+export class User extends SharedAggregate implements UserAttributes {
+  email: Email;
+  password: Password;
+  status: UserStatus;
+  role: UserRole;
+  // …
+
+  static async create(
+    props: CreateUserProps,
+    uniquenessChecker: IUserUniquenessChecker,
+  ): Promise<User> {
+    const isEmailUnique = await uniquenessChecker.isEmailUnique(props.email);
+    if (!isEmailUnique) {
+      throw new AlreadyExistsException('email', props.email.toValue());
+    }
+
+    const user = new User({ /* …id, email, password, active status… */ });
+
+    user.apply(
+      new UserRegistered_DomainEvent(user.id, user.email, user.role, 'email', true),
+    );
+
+    return user;
+  }
+}
+```
+
+<Callout type="tip" title="State changes are methods">
+  To change an aggregate, call a method that expresses the intent:
+  `user.deactivate()`, `user.changePassword(newPassword)`,
+  `user.verifyEmail()`. Assigning properties from outside, like
+  `user.status = UserStatus.inactive()`, is prohibited, because it would skip the
+  rules and events that live inside the method. The
+  `no-direct-entity-mutation` lint rule fails the build on it.
+</Callout>
+
+## Value objects
+
+Value objects model business concepts that are defined by their value, not an identity, like
+an email, a password, or a status. They are **immutable** and **self-validating**:
+constructing one that's invalid throws an error. This pushes validation to the edge and
+**makes illegal states unrepresentable throughout the rest of the code**.
+
+Without them, the same check gets copied wherever the value appears:
+
+```ts
+// in a controller…
+if (!emailRegex.test(body.email)) throw new BadRequestException('Invalid email');
+// …and again in a service, and again in a test helper, each slightly different
+```
+
+With a value object, the check runs exactly once, at construction. Anywhere an
+`Email` exists, it is valid:
+
+```ts
+// bounded-contexts/auth/domain/value-objects/email.vo.ts
+
+import { isDisposableEmailDomain } from './disposable-email-domains';
+
+export class Email extends StringValueObject {
+  constructor(value: string) {
+    super(value.toLowerCase());
+    this.validate();
+  }
+
+  validate(): void {
+    super.validate();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.value)) {
+      throw new DomainValidationException('email', this.value, `Invalid email: ${this.value}`);
+    }
+    if (isDisposableEmailDomain(this.getDomain())) {
+      throw new DomainValidationException('email', this.value, 'Disposable emails not allowed');
+    }
+  }
+
+  getDomain(): string {
+    return this.toValue().split('@')[1];
+  }
+}
+```
+
+Once you have an `Email`, you never have to wonder whether it's well-formed. The 
+ type itself is the guarantee. Value objects live in `*.vo.ts` files.
+
+## Domain events
+
+Domain events record that something meaningful happened, in the past tense.
+The aggregate records the event at the moment of the change (the
+`user.apply(...)` call above). 
+
+Once the command handler has saved the
+aggregate, it dispatches the recorded events, and handlers in the same context
+react to them. 
+
+Every domain event must extend `Base_DomainEvent`:
+
+```ts
+// …/aggregates/user/events/user-registered.domain-event.ts
+export class UserRegistered_DomainEvent extends Base_DomainEvent {
+  constructor(
+    public readonly userId: Id,
+    public readonly email: Email,
+    public readonly role: UserRole,
+    public readonly authProvider: AuthProvider = 'email',
+  ) {
+    super(userId);
+  }
+}
+```
+
+Domain events stay **inside** the bounded context. When something needs to cross the 
+boundaries of a bounded context, an 
+**integration event** must be used instead. See [Event-Driven Architecture](/docs/backend/events).
+
+## Further reading
+
+This page covers how DDD is applied in this codebase, not DDD itself. If the
+ideas are new to you, these are good places to go deeper, in rough reading
+order:
+
+- **Domain-Driven Design Distilled** — Vaughn Vernon. A thin book that covers
+  the whole vocabulary (bounded contexts, aggregates, events) without the
+  weight of the originals.
+- **Learning Domain-Driven Design** — Vlad Khononov. Practical and modern;
+  maps business problems to the patterns used here.
+- **Domain-Driven Design** — Eric Evans. The original book that named the
+  discipline; heavier, best read once the basics have clicked.
+- [DDD Reference](https://www.domainlanguage.com/ddd/reference/) — Evans' free
+  condensed definitions of every pattern.
+

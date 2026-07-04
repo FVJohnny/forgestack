@@ -1,0 +1,67 @@
+# Shared Dockerfile for NestJS services in the monorepo
+# Usage: docker build -f docker/Dockerfile.nestjs-service --build-arg SERVICE_NAME=service-1 .
+
+ARG SERVICE_NAME=service-1
+ARG NODE_VERSION=22
+
+# --- Builder stage ---
+FROM node:${NODE_VERSION}-slim AS builder
+ARG SERVICE_NAME
+WORKDIR /app
+
+# Install build dependencies for native modules
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+
+# === LAYER 1: Package files only (changes rarely) ===
+COPY package*.json ./
+COPY nx.json tsconfig*.json ./
+
+# Copy ONLY package.json from libs (not source - for file: dependency linking)
+COPY backend/libs/common/package.json backend/libs/common/
+COPY backend/libs/mongodb/package.json backend/libs/mongodb/
+COPY backend/libs/kafka/package.json backend/libs/kafka/
+COPY backend/libs/redis/package.json backend/libs/redis/
+COPY backend/services/${SERVICE_NAME}/package.json backend/services/${SERVICE_NAME}/
+
+# === LAYER 2: Install dependencies (cached unless package.json changes) ===
+RUN npm ci
+
+# === LAYER 3: Source files (changes frequently, but doesn't invalidate npm ci) ===
+# CACHE_BUST arg invalidates cache from here onwards when set
+ARG CACHE_BUST
+COPY backend/libs backend/libs
+COPY backend/services/${SERVICE_NAME} backend/services/${SERVICE_NAME}
+
+# === LAYER 4: Build (only this service and its lib dependencies) ===
+RUN npx nx run ${SERVICE_NAME}:build
+
+# === LAYER 5: Prune dev deps ===
+RUN npm prune --production
+
+# --- Runtime stage ---
+FROM node:${NODE_VERSION}-slim AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN groupadd -g 1001 nodejs && useradd -m -u 1001 -g nodejs nodejs
+
+# Pre-create the /data tree with nodejs ownership so any Docker volume
+# mounted under it gets initialized as nodejs:nodejs on first mount.
+# Without this, Docker
+# inherits the mountpoint's owner (root) and the non-root process can't
+# write to it.
+RUN mkdir -p /data && chown -R nodejs:nodejs /data
+
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/backend/libs ./backend/libs
+
+ARG SERVICE_NAME
+COPY --from=builder --chown=nodejs:nodejs /app/backend/services/${SERVICE_NAME}/dist ./backend/services/${SERVICE_NAME}/dist
+COPY --from=builder --chown=nodejs:nodejs /app/backend/services/${SERVICE_NAME}/package.json ./backend/services/${SERVICE_NAME}/
+
+ENV SERVICE_NAME=${SERVICE_NAME}
+USER nodejs
+WORKDIR /app/backend/services/${SERVICE_NAME}
+
+EXPOSE 3000
+CMD sh -c "node dist/services/\${SERVICE_NAME}/src/main.js"

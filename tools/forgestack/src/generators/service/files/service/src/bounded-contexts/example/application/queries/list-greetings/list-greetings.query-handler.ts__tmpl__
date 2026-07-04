@@ -1,0 +1,38 @@
+import { Inject } from '@nestjs/common';
+import { Base_QueryHandler } from '@libs/nestjs-common';
+import {
+  GREETING_REPOSITORY,
+  type Greeting_Repository,
+} from '@bc/example/domain/aggregates/greeting/greeting.repository';
+import { ListGreetings_Query } from './list-greetings.query';
+import type { ListGreetings_QueryResponse } from './list-greetings.query-response';
+
+export class ListGreetings_QueryHandler extends Base_QueryHandler(
+  ListGreetings_Query,
+)<ListGreetings_QueryResponse>() {
+  constructor(
+    @Inject(GREETING_REPOSITORY)
+    private readonly greetingRepository: Greeting_Repository,
+  ) {
+    super();
+  }
+
+  async handle(query: ListGreetings_Query): Promise<ListGreetings_QueryResponse> {
+    const greetings = await this.greetingRepository.findLatest(query.limit);
+
+    return {
+      greetings: greetings.map((g) => ({
+        id: g.id.toValue(),
+        message: g.message.toValue(),
+        source: g.source,
+        createdAt: g.timestamps.createdAt.toValue(),
+      })),
+    };
+  }
+
+  async authorize(_query: ListGreetings_Query) {
+    return true;
+  }
+
+  async validate(_query: ListGreetings_Query) {}
+}

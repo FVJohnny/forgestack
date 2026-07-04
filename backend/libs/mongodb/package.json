@@ -1,0 +1,38 @@
+{
+  "name": "@libs/nestjs-mongodb",
+  "version": "1.0.0",
+  "description": "Shared MongoDB module for NestJS services",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch"
+  },
+  "peerDependencies": {
+    "@libs/nestjs-common": "^1.0.0",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/mongoose": "^11.0.3",
+    "@nestjs/swagger": "^11.0.0",
+    "mongoose": "^8.18.2",
+    "mongodb": "^6.18.0"
+  },
+  "devDependencies": {
+    "@libs/nestjs-common": "file:../common",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/mongoose": "^11.0.3",
+    "@nestjs/swagger": "^11.0.0",
+    "@types/node": "^22.10.7",
+    "mongoose": "^8.18.2",
+    "mongodb": "^6.18.0",
+    "typescript": "^5.7.3"
+  },
+  "keywords": [
+    "nestjs",
+    "mongodb",
+    "mongoose",
+    "database",
+    "shared"
+  ],
+  "author": "",
+  "license": "MIT"
+}

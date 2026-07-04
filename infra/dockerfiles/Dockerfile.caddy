@@ -1,0 +1,15 @@
+FROM caddy:2.8-alpine
+
+# Copy Caddyfile into the image
+COPY ./infra/caddy/Caddyfile /etc/caddy/Caddyfile
+
+# Empty placeholder for the dev-only extra sites (DB viewers, …). Dev mounts
+# infra/caddy/dev-only over this directory; prod keeps it empty so those hosts
+# are never served.
+RUN mkdir -p /etc/caddy/extra && touch /etc/caddy/extra/empty.caddy
+
+# Validate Caddyfile syntax
+RUN caddy validate --config /etc/caddy/Caddyfile
+
+# Use default Caddy entrypoint
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]

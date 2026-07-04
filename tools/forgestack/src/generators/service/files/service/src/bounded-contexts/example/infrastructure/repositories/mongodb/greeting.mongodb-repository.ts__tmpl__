@@ -1,0 +1,41 @@
+import { Injectable, Inject } from '@nestjs/common';
+import { MongoClient } from 'mongodb';
+import { Greeting } from '@bc/example/domain/aggregates/greeting/greeting.aggregate';
+import type { Greeting_Repository } from '@bc/example/domain/aggregates/greeting/greeting.repository';
+import type { GreetingDTO } from '@bc/example/domain/aggregates/greeting/greeting.dto';
+import { MONGO_CLIENT_TOKEN, Base_MongoRepository, IndexSpec } from '@libs/nestjs-mongodb';
+
+@Injectable()
+export class Greeting_MongodbRepository
+  extends Base_MongoRepository<Greeting, GreetingDTO>
+  implements Greeting_Repository
+{
+  static readonly CollectionName = 'example_greetings';
+
+  constructor(@Inject(MONGO_CLIENT_TOKEN) mongoClient: MongoClient) {
+    super(mongoClient, Greeting_MongodbRepository.CollectionName);
+  }
+
+  protected toEntity(dto: GreetingDTO): Greeting {
+    return Greeting.fromValue(dto);
+  }
+
+  protected defineIndexes(): IndexSpec[] {
+    return [
+      {
+        fields: { id: 1 },
+        options: { unique: true, name: 'ux_aggregate_id' },
+      },
+      {
+        fields: { createdAt: -1 },
+        options: { name: 'ix_created_at' },
+      },
+    ];
+  }
+
+  async findLatest(limit: number): Promise<Greeting[]> {
+    const dtos = await this.collection.find({}).sort({ createdAt: -1 }).limit(limit).toArray();
+
+    return dtos.map((dto) => this.toEntity(dto as GreetingDTO));
+  }
+}

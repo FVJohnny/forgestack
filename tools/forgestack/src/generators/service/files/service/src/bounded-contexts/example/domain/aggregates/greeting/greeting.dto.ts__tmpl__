@@ -1,0 +1,7 @@
+import type { SharedAggregateDTO } from '@libs/nestjs-common';
+
+export interface GreetingDTO extends SharedAggregateDTO {
+  id: string;
+  message: string;
+  source: string;
+}

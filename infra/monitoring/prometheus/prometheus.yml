@@ -1,0 +1,48 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  # NestJS services are discovered from Docker: every container labeled
+  # prometheus.scrape=true is scraped automatically (the label lives in the
+  # compose x-nestjs-service anchor). Adding a service needs NO change here.
+  - job_name: 'nestjs-services'
+    metrics_path: /api/v1/metrics
+    authorization:
+      type: 'ApiKey'
+      credentials_file: /etc/prometheus/internal-api-key
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 15s
+    relabel_configs:
+      - source_labels: [__meta_docker_container_label_prometheus_scrape]
+        regex: 'true'
+        action: keep
+      # job = the compose service name (service-1, service-2, …), matching the
+      # label shape the static per-service jobs used to produce.
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: job
+      # Scrape the container's network IP on the app port.
+      - source_labels: [__meta_docker_network_ip]
+        regex: '(.+)'
+        target_label: __address__
+        replacement: '${1}:3000'
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    # Extract container name from image for Docker with containerd snapshotters
+    metric_relabel_configs:
+      # Drop metrics without image (system cgroups, not containers)
+      - source_labels: [image]
+        regex: '^$'
+        action: drop
+      # Extract name from image path: "docker.io/library/redis:7.0-alpine" -> "redis"
+      - source_labels: [image]
+        regex: '.*/([^/:]+)(:.*)?$'
+        target_label: name
+        replacement: '${1}'
+      # Fallback for images like "redis:7.0-alpine" without full path
+      - source_labels: [image, name]
+        regex: '^([^/]+):.*;$'
+        target_label: name
+        replacement: '${1}'

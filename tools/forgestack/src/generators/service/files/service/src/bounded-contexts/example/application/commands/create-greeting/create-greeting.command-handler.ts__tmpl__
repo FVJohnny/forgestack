@@ -1,0 +1,42 @@
+import { type IEventBus } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
+import { CreateGreeting_Command } from './create-greeting.command';
+import { Base_CommandHandler, EVENT_BUS, Transaction } from '@libs/nestjs-common';
+import { Greeting } from '@bc/example/domain/aggregates/greeting/greeting.aggregate';
+import { GreetingMessage } from '@bc/example/domain/value-objects';
+import {
+  GREETING_REPOSITORY,
+  type Greeting_Repository,
+} from '@bc/example/domain/aggregates/greeting/greeting.repository';
+
+export class CreateGreeting_CommandHandler extends Base_CommandHandler(CreateGreeting_Command) {
+  constructor(
+    @Inject(GREETING_REPOSITORY)
+    private readonly greetingRepository: Greeting_Repository,
+    @Inject(EVENT_BUS)
+    eventBus: IEventBus,
+  ) {
+    super(eventBus);
+  }
+
+  async handle(command: CreateGreeting_Command) {
+    const message = new GreetingMessage(command.message);
+
+    const greeting = Greeting.create({ message, source: command.source });
+
+    // Persist and dispatch the aggregate's domain events atomically — the
+    // GreetingCreated handler in domain-event-handlers/ runs as a result.
+    await Transaction.run(async (context) => {
+      await this.greetingRepository.save(greeting, context);
+      await this.sendDomainEvents(greeting);
+    });
+
+    this.logger.log(`Greeting created (${command.source}): ${message.toValue()}`);
+  }
+
+  async authorize(_command: CreateGreeting_Command): Promise<boolean> {
+    return true;
+  }
+
+  async validate(_command: CreateGreeting_Command): Promise<void> {}
+}

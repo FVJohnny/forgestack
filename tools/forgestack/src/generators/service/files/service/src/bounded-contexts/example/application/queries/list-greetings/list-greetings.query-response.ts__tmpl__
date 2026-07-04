@@ -1,0 +1,8 @@
+export interface ListGreetings_QueryResponse {
+  greetings: Array<{
+    id: string;
+    message: string;
+    source: string;
+    createdAt: Date;
+  }>;
+}

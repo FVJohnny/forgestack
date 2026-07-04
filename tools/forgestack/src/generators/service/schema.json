@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "ForgeStackService",
+  "title": "Create a new NestJS service",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Service name (kebab-case, e.g. billing or service-3)",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "What is the service called (kebab-case)?",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "expose": {
+      "type": "boolean",
+      "description": "Expose the service through Caddy at <name>.<domain>",
+      "default": true
+    }
+  },
+  "required": ["name"]
+}

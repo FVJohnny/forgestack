@@ -1,0 +1,26 @@
+# Writing Docs
+
+These pages are **MDX**. `next.config.mjs` enables MDX via `@next/mdx`
+(`pageExtensions` includes `mdx`), and `mdx-components.tsx` maps MDX output onto
+the design tokens so prose, code blocks, tables and callouts all match the rest
+of the app.
+
+The sidebar and the prev/next links at the bottom of each page come from a
+single nav config, `app/docs/nav.ts`. Adding a page is two steps:
+
+1. Create `app/docs/<section>/<page>/page.mdx`.
+2. Add one entry to `DOCS_NAV` in `app/docs/nav.ts`.
+
+Inside the MDX, the `Callout` component is available without imports:
+
+```mdx
+<Callout type="tip" title="Good to know">
+  Callouts render in the site's design tokens like everything else.
+</Callout>
+```
+
+Custom React components can be imported at the top of any page. The
+[Hexagonal Architecture](/docs/backend/hexagonal) page does this for its
+layers diagram.
+
+Next: **[Databases](/docs/databases)**.

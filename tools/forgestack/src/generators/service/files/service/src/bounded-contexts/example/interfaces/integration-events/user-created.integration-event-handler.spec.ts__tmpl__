@@ -1,0 +1,38 @@
+import { UserCreated_IntegrationEventHandler } from './user-created.integration-event-handler';
+import { CreateGreeting_Command } from '@bc/example/application/commands';
+import { UserCreated_IntegrationEvent, MockCommandBus } from '@libs/nestjs-common';
+
+describe('UserCreated_IntegrationEventHandler', () => {
+  const setup = (params: { shouldFailCommandBus?: boolean } = {}) => {
+    const commandBus = new MockCommandBus({ shouldFail: params.shouldFailCommandBus });
+    const handler = new UserCreated_IntegrationEventHandler(commandBus);
+
+    return { commandBus, handler };
+  };
+
+  it('should create a greeting for the new user', async () => {
+    // Arrange
+    const { handler, commandBus } = setup();
+    const event = UserCreated_IntegrationEvent.random();
+
+    // Act
+    await handler.handleEvent(event);
+
+    // Assert
+    expect(commandBus.commands).toHaveLength(1);
+    const command = commandBus.commands[0] as CreateGreeting_Command;
+    expect(command).toBeInstanceOf(CreateGreeting_Command);
+    expect(command.message).toContain(event.email);
+    expect(command.source).toBe(event.name);
+  });
+
+  it('should propagate command bus errors', async () => {
+    // Arrange
+    const { handler } = setup({ shouldFailCommandBus: true });
+
+    // Act & Assert
+    await expect(handler.handleEvent(UserCreated_IntegrationEvent.random())).rejects.toThrow(
+      'CommandBus execute failed',
+    );
+  });
+});

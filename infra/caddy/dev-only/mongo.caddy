@@ -1,0 +1,5 @@
+# Mongo Express — dev only, never deployed to prod.
+{$PROTOCOL:http}://mongo.{$DOMAIN:localhost} {
+    import tls-{$TLS_ENV:dev}
+    reverse_proxy mongo-express:8081
+}

@@ -1,0 +1,50 @@
+# Design System
+
+## Design tokens & theming
+
+Styling is driven entirely by **CSS custom properties** defined in
+`app/globals.css` and exposed to Tailwind v4 via `@theme`. The palette is the
+"Molten Forge" identity — dark forged-steel surfaces with a molten-orange accent:
+
+```css
+--base: #0c0a09;          /* forged-steel background */
+--ink: #f0e9e2;           /* primary text */
+--ink-dim: #a3978c;       /* secondary text */
+--line: rgba(255,180,120,0.09);   /* hairline borders */
+--phosphor: #ff5a1f;      /* primary accent (molten orange) */
+--amber: #ffb429;         /* spark / warning */
+```
+
+Because everything reads from these tokens, **re-theming is a token change** —
+adjust `--phosphor` and the accent cascades across buttons, links, charts,
+diagram connectors and the docs. Components reference Tailwind classes mapped to
+the tokens (`text-ink`, `border-line`, `text-primary`, …), never hard-coded
+colours.
+
+Fonts are loaded with `next/font`: **Geist** for body (`--font-sans`) and
+**JetBrains Mono** for code and labels (`--font-mono`).
+
+## UI primitives
+
+The `app/shared/ui/` folder is the component vocabulary. A selection:
+
+| Primitive | Purpose |
+| --- | --- |
+| `Button` | CVA variants (`primary`, `outline`, `ghost`, `destructive`, …) and sizes |
+| `Card` | `Card` + `CardHeader/Title/Description/Content/Footer` |
+| `Badge` | status pills (`live`, `warn`, `down`, `accent`) |
+| `Input` / `Label` / `PasswordInput` | form controls |
+| `Dialog` / `DropdownMenu` / `Tooltip` | Radix-based overlays |
+| `Table`, `StatTile`, `StatusDot`, `Skeleton` | data display |
+| `Wordmark` | the brand mark (with rising embers) |
+| `EmberField` | the animated forge-ember background |
+
+Compose with the `cn()` helper (`clsx` + `tailwind-merge`) so class overrides
+merge predictably:
+
+```ts
+import { cn } from '@/lib/utils';
+<div className={cn('rounded-lg border border-line', active && 'border-primary')} />
+```
+
+Next: **[Internationalisation](/docs/frontend/i18n)**.

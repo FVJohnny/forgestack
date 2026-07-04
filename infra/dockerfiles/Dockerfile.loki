@@ -1,0 +1,7 @@
+FROM grafana/loki:3.2.1
+
+# Copy Loki configuration
+COPY ./infra/monitoring/loki/loki-config.yaml /etc/loki/loki-config.yaml
+
+# Use default Loki entrypoint with our config
+CMD ["-config.file=/etc/loki/loki-config.yaml"]

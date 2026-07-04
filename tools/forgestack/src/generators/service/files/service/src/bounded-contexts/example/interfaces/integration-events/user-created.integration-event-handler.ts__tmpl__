@@ -1,0 +1,26 @@
+import { Inject } from '@nestjs/common';
+import { type ICommandBus } from '@nestjs/cqrs';
+import { COMMAND_BUS } from '@libs/nestjs-common';
+import { IntegrationEventHandler, UserCreated_IntegrationEvent } from '@libs/nestjs-common';
+import { CorrelationLogger } from '@libs/nestjs-common';
+import { CreateGreeting_Command } from '@bc/example/application/commands';
+
+/**
+ * Reacts to an integration event published by ANOTHER service over Kafka
+ * (user.created fires whenever someone registers). This is how services talk:
+ * no direct calls, just events. The event contracts live in
+ * @libs/nestjs-common so every service shares them.
+ */
+@IntegrationEventHandler(UserCreated_IntegrationEvent)
+export class UserCreated_IntegrationEventHandler {
+  private readonly logger = new CorrelationLogger(UserCreated_IntegrationEventHandler.name);
+
+  constructor(@Inject(COMMAND_BUS) private readonly commandBus: ICommandBus) {}
+
+  async handleEvent(event: UserCreated_IntegrationEvent) {
+    this.logger.log(`👤 A user registered somewhere — greeting them (User ID: ${event.userId})`);
+
+    const command = new CreateGreeting_Command(`Welcome, ${event.email}!`, event.name);
+    await this.commandBus.execute(command);
+  }
+}

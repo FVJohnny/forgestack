@@ -1,0 +1,10 @@
+import type { Repository } from '@libs/nestjs-common';
+import type { Id } from '@libs/nestjs-common';
+import type { Greeting } from './greeting.aggregate';
+
+export const GREETING_REPOSITORY = Symbol('GreetingRepository');
+
+export interface Greeting_Repository extends Repository<Greeting, Id> {
+  /** Most recent greetings, newest first. */
+  findLatest(limit: number): Promise<Greeting[]>;
+}

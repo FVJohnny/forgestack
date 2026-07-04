@@ -1,0 +1,170 @@
+# Repositories
+
+Persistence is the flagship port of the
+[hexagonal architecture](/docs/backend/hexagonal). The domain defines a
+repository *interface* in terms of aggregates and value objects;
+infrastructure provides a technology-specific *adapter* that implements it,
+like MongoDB or PostgreSQL. The domain never imports a database driver, and
+swapping the datastore means writing a new adapter, changing nothing in the
+domain logic.
+
+## The contract
+
+A generic `Repository<T, ID>` contract lives in the common lib:
+
+```ts
+// libs/common/src/general/domain/base.repository.ts
+export interface Repository<T, ID = Id> {
+  findById(id: ID): Promise<T | null>;
+  findByCriteria(criteria: Criteria): Promise<PaginatedRepoResult<T>>;
+  countByCriteria(criteria: Criteria): Promise<number>;
+  exists(id: ID): Promise<boolean>;
+  remove(id: ID, context?: RepositoryContext): Promise<void>;
+  save(entity: T, context?: RepositoryContext): Promise<void>;
+  clear(context?: RepositoryContext): Promise<void>;
+}
+```
+
+A bounded context extends it with aggregate-specific finders, and exposes an
+injection token:
+
+```ts
+// …/auth/domain/aggregates/user/user.repository.ts
+export const USER_REPOSITORY = Symbol('UserRepository');
+
+export interface User_Repository extends Repository<User, Id> {
+  findByEmail(email: Email): Promise<User | null>;
+  findByGoogleId(googleId: string): Promise<User | null>;
+  existsByEmail(email: Email): Promise<boolean>;
+  searchByEmail(emailPattern: string, limit: number): Promise<User[]>;
+}
+```
+
+Handlers depend on the **interface**, injected by token. They have no idea
+there's a Mongo behind it:
+
+```ts
+constructor(
+  @Inject(USER_REPOSITORY) private readonly userRepository: User_Repository,
+) {}
+
+async handle(command: DeactivateUser_Command) {
+  const user = await this.userRepository.findById(new Id(command.userId));
+  user.deactivate();
+  await this.userRepository.save(user);
+}
+```
+
+## The adapter: User_MongodbRepository
+
+The concrete adapter extends `Base_MongoRepository`, which already implements
+the whole generic `Repository` contract: CRUD, criteria queries, index
+management, transaction participation, and translation of Mongo errors into
+domain exceptions. The subclass only supplies what is specific to its
+aggregate: the collection name, the DTO mapping, the indexes, and the custom
+finders.
+
+```ts
+// …/auth/infrastructure/repositories/mongodb/user.mongodb-repository.ts
+@Injectable()
+export class User_MongodbRepository
+  extends Base_MongoRepository<User, UserDTO>
+  implements User_Repository
+{
+  static readonly CollectionName = 'auth_users';
+
+  constructor(@Inject(MONGO_CLIENT_TOKEN) mongoClient: MongoClient) {
+    super(mongoClient, User_MongodbRepository.CollectionName);
+  }
+
+  protected toEntity(dto: UserDTO): User {
+    return User.fromValue(dto);
+  }
+
+  // Custom finders beyond the generic contract
+  async findByEmail(email: Email, context?: RepositoryContext) {
+    try {
+      const session = this.getTransactionSession(context);
+      const document = await this.collection.findOne({ email: email.toValue() }, { session });
+      return document ? User.fromValue(document) : null;
+    } catch (error: unknown) {
+      this.handleDatabaseError('findByEmail', email.toValue(), error);
+    }
+  }
+
+  protected defineIndexes(): IndexSpec[] {
+    return [
+      { fields: { id: 1 }, options: { unique: true, name: 'idx_user_id' } },
+      { fields: { email: 1 }, options: { unique: true, name: 'idx_user_email' } },
+    ];
+  }
+}
+```
+
+Everything else (`save`, `findById`, `findByCriteria`, `exists`, `remove`)
+comes from the base class for free, and the base keeps the declared indexes in
+sync with the collection. The finder above uses two of the base's hooks:
+`getTransactionSession` joins the ambient transaction when the caller passes a
+context, and `handleDatabaseError` turns driver errors into domain
+exceptions.
+
+## Criteria queries
+
+Rather than leaking Mongo query syntax into handlers, the framework uses a
+**Criteria** object (composable `Filters`, operators and pagination) which are
+translated into a Mongo query. The same Criteria could be translated for a
+different datastore, keeping queries database-agnostic.
+
+This is how the `ListUsers_QueryHandler` pages through users whose email
+contains a search term, with no Mongo syntax in sight:
+
+```ts
+// …/auth/application/queries/list-users/list-users.query-handler.ts
+const criteria = new Criteria({
+  filters: new Filters([
+    new Filter(
+      new FilterField('email'),
+      new FilterOperator(Operator.CONTAINS),
+      new FilterValue(query.filterValue),
+    ),
+  ]),
+  order: Order.fromValues('email', OrderTypes.ASC),
+  pagination: new PaginationOffset(query.limit, offset, true),
+});
+
+const { data, total } = await this.userRepository.findByCriteria(criteria);
+```
+
+## Transactions
+
+Writes that must be atomic run inside `Transaction.run`. The repository
+participates in the ambient transaction by registering a Mongo participant and
+using its session, so the state change and the outbox write commit together:
+
+```ts
+await Transaction.run(async (context) => {
+  await this.userRepository.save(user, context);
+  // any outbox write using `context` commits in the same transaction
+});
+```
+
+Under the hood the base repository registers a `TransactionParticipant_Mongodb`
+on first use and threads its `ClientSession` into every operation. MongoDB
+transactions require a replica set, which is why dev and prod run Mongo as a
+single-member `rs0` (see [Databases](/docs/databases)).
+
+## Error translation
+
+The base repo turns infrastructure errors into domain-meaningful ones. A Mongo
+duplicate-key error (code `11000`) becomes an `AlreadyExistsException` naming
+the offending field, so handlers and controllers deal in domain exceptions,
+not driver internals.
+
+<Callout type="tip" title="Swapping adapters">
+  Because the port is defined in the domain and the adapter is the only
+  technology-aware code, you can add a Postgres or in-memory adapter (every
+  context ships an `in-memory` repository for tests) without touching a single
+  handler.
+</Callout>
+
+Next: **[Event-Driven Architecture](/docs/backend/events)**.

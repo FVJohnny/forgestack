@@ -1,0 +1,77 @@
+# Login with Google
+
+ForgeStack ships with Google login built in, on both sides of the stack. The
+login and register pages show a "Sign in with Google" button, and the auth
+context knows how to verify Google tokens, create accounts and link them to
+existing ones. The only thing it needs from you is a **Google client ID**. No
+client ID, no button: the frontend hides it and the backend disables the
+endpoint until one is configured.
+
+## How the flow works
+
+1. The button (`GoogleSignInButton`) opens Google's sign-in popup and receives
+   an **access token** in the browser.
+2. The frontend sends that token to `POST /api/v1/auth/google`.
+3. The controller dispatches `RegisterOrLinkGoogleUser_Command`. The handler
+   verifies the token against Google through the `GOOGLE_OAUTH_SERVICE` port
+   and then either creates a new user, links the Google ID to an existing
+   account with the same email, or does nothing if the link already exists.
+   Linking also marks a pending email verification as verified, since Google
+   has already verified the address.
+4. The controller then runs `AuthenticateWithGoogle_Query`, which loads the
+   user by Google ID and returns a JWT pair, followed by the same
+   `StoreTokens_Command` the normal login uses.
+
+The Google-specific code follows the
+[hexagonal layering](/docs/backend/hexagonal): the domain declares the
+`IGoogleOAuthService` port, and `GoogleOAuthService` in infrastructure is the
+adapter that actually calls Google.
+
+## Get a client ID
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) and
+   create a project (or pick an existing one).
+2. Open **APIs & Services → OAuth consent screen** and set the app name,
+   support email and audience (**External**). While the app is in "Testing"
+   status, only accounts listed under **Test users** can sign in, so add your
+   own.
+3. Open **APIs & Services → Credentials → Create Credentials → OAuth client
+   ID** and pick **Web application** as the type.
+4. Under **Authorized JavaScript origins** add the URLs the frontend runs on:
+   `http://localhost:3000` for dev, plus your production URL later. No
+   redirect URI is needed; the button uses the popup flow.
+5. Create it and copy the **Client ID**. It looks like
+   `1234567890-abc123.apps.googleusercontent.com`. The client secret is not
+   used by this flow.
+
+## Configure ForgeStack
+
+The same client ID goes in two places, one per side of the stack:
+
+```bash
+# backend/services/service-1/.env
+GOOGLE_CLIENT_ID=1234567890-abc123.apps.googleusercontent.com
+
+# frontend/public-page/.env.local
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=1234567890-abc123.apps.googleusercontent.com
+```
+
+Restart both apps. The Google button appears on `/login` and `/register`, and
+signing in with a test-user account should land you in the dashboard.
+
+## Production
+
+- Fill in the same values in `infra/env/service-1.env.prod` and
+  `infra/env/public-page.env.prod` (the `.example` files already have the
+  placeholders).
+- Add the production URL to the **Authorized JavaScript origins** of the
+  client ID.
+- Publish the consent screen (move it out of "Testing") so any Google account
+  can sign in, not just your test users.
+
+<Callout type="tip" title="It's just an adapter">
+  Google is wired in through a port like every other technology.
+  `IGoogleOAuthService` lives in the domain, the handlers depend on the port,
+  and tests inject a fake. Adding another provider (GitHub, Apple) means one
+  new adapter and one new command, not changes to the login flow.
+</Callout>

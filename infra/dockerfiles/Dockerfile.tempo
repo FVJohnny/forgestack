@@ -1,0 +1,7 @@
+FROM grafana/tempo:2.6.1
+
+# Copy Tempo configuration
+COPY ./infra/monitoring/tempo/tempo.yaml /etc/tempo.yaml
+
+# Use default Tempo entrypoint with our config
+CMD ["-config.file=/etc/tempo.yaml"]

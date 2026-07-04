@@ -1,0 +1,22 @@
+echo "Running TypeScript compilation check..."
+npm run -s typecheck || {
+  echo "\n✖ TypeScript compilation failed. Fix errors before committing.";
+  exit 1;
+}
+
+echo "Running Lint..."
+npm run -s lint:fix || {
+  echo "\n✖ Lint failed. Fix issues before committing.";
+  exit 1;
+}
+# Re-stage any files that lint:fix auto-formatted
+git diff --name-only | xargs -r git add
+
+echo "Running Tests..."
+LOG_LEVEL=error CI=true npm run -s test -- --silent --no-colors 2>&1 | grep -E "(FAIL|✖|Error:|●|Expected:|Received:|failed|passed)"
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+  echo "\n✖ Tests failed. Fix failures before committing.";
+  exit 1;
+fi
+
+echo "✓ All pre-commit checks passed."

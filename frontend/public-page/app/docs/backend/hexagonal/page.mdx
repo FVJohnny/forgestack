@@ -1,0 +1,175 @@
+import { HexagonalLayersDiagram } from '@/app/shared/components/hexagonal-layers-diagram';
+
+# Hexagonal Architecture
+
+Hexagonal architecture (also called ports and adapters) is the layering used
+inside every bounded context. Business rules live in a core that knows nothing
+about HTTP, Kafka, MongoDB or SMTP. The code that does touch those
+technologies sits at the edges, behind interfaces, where it is easy to test
+around and easy to replace.
+
+Business logic can be tested without booting a server or a database. 
+And swapping a technology, say MongoDB for Postgres, means writing
+one new edge class while the business rules stay untouched.
+
+## The layers
+
+Every bounded context has the same four folders:
+
+```
+bounded-contexts/<context>/
+├── domain/           business logic: aggregates, value objects, domain events, ports
+├── application/      commands, queries, and domain-event handlers
+├── infrastructure/   adapters: repository implementations, external services
+└── interfaces/       entry points: HTTP controllers, integration event handlers
+```
+
+The whole architecture reduces to one rule: **imports point inward**. The
+diagram shows every dependency that exists between the layers.
+
+<div className="my-10">
+  <HexagonalLayersDiagram />
+</div>
+
+The diagram is the hexagon unrolled: the outside world sits at both ends, and `domain` is the center. 
+Each orange arrow is an import, and every one of them points at the center.
+Only the two edge layers ever talk to the outside world, and only the domain
+knows the business rules.
+
+From the center out:
+
+- **`domain/`** models the business: aggregates, value objects, domain events,
+  and the **ports** that declare what the business needs from the outside
+  world. It imports none of the other layers: no NestJS decorators, no Mongo,
+  no Kafka. Covered in depth in [Domain-Driven Design](/docs/backend/ddd).
+- **`application/`** contains the use cases: command, query and domain-event
+  handlers. It imports `domain`: a handler loads an aggregate through a port,
+  calls a method on it, and saves it back. Covered in
+  [CQRS](/docs/backend/cqrs).
+- **`infrastructure/`** holds the **adapters** like MongoDB repositories, the SMTP
+  client, or a Google OAuth adapter. It imports `domain` because every adapter
+  implements a port the domain declares.
+- **`interfaces/`** holds the entry points: HTTP controllers and
+  integration-event handlers. They translate an outside format (a JSON body,
+  a Kafka message) into a command or query, so this layer imports only
+  `application`.
+
+A registration request touches all four. The controller in `interfaces` turns
+the JSON body into a `RegisterUser_Command`. The handler in `application` asks
+the domain to create a `User`. The aggregate in `domain` enforces the rules
+and records a `UserRegistered` event. The repository adapter in
+`infrastructure` saves it to Mongo through the port.
+
+Because the domain never sees a framework or a driver, its tests construct
+objects directly and run in milliseconds.
+
+## Ports and adapters
+
+A **port** is an interface the inner layers own: it declares what the business
+needs, in business terms. An **adapter** is an outer-layer class that
+implements the port with a real technology. The two are bound together with a
+NestJS injection token in the context module, so the inner code never names a
+concrete implementation.
+
+The **notifications bounded context** provided in this stack shows this pattern.
+The domain declares an email port:
+
+```ts
+// …/notifications/domain/services/email.service.ts (the port)
+export const EMAIL_SERVICE = Symbol('EmailService');
+export interface Email_Service {
+  send(options: EmailOptions): Promise<void>;
+}
+```
+
+Infrastructure ships two adapters for it:
+
+- **`Email_SmtpService`** sends real email through an SMTP server using
+  nodemailer, configured by the `SMTP_*` environment variables.
+- **`Email_InMemoryService`** logs the email to the console and records it in
+  a `sentEmails` array. It is what is used when no mail server is
+  configured, and what the tests inject.
+
+The bounded context module picks one at boot:
+
+```ts
+// …/notifications/notifications.module.ts (the binding)
+{
+  provide: EMAIL_SERVICE,
+  // Real SMTP when configured, console logging otherwise
+  useClass: process.env.SMTP_HOST ? Email_SmtpService : Email_InMemoryService,
+}
+```
+
+Handlers inject the token and depend only on the port's interface, so they
+never know which adapter they got:
+
+```ts
+// …/notifications/application/commands/send-email/send-email.command-handler.ts
+export class SendEmail_CommandHandler extends Base_CommandHandler(SendEmail_Command) {
+  constructor(
+    @Inject(EMAIL_SERVICE)
+    private readonly emailService: Email_Service,
+  ) {
+    super();
+  }
+
+  async handle(command: SendEmail_Command) {
+    await this.emailService.send({
+      to: new Email(command.email),
+      subject: new EmailSubject(command.subject),
+      body: new EmailBody(command.message),
+    });
+  }
+}
+```
+
+## Repositories
+
+The domain defines a repository *interface*
+in terms of aggregates and value objects; infrastructure provides a
+technology-specific *adapter* that implements it, like MongoDB or PostgreSQL. The
+domain never imports a database driver, and swapping the datastore means
+writing a new adapter, changing nothing in the domain logic.
+
+The domain side is just an interface plus an injection token:
+
+```ts
+// …/auth/domain/aggregates/user/user.repository.ts (the port)
+export const USER_REPOSITORY = Symbol('UserRepository');
+
+export interface User_Repository extends Repository<User, Id> {
+  findByEmail(email: Email): Promise<User | null>;
+  findByGoogleId(googleId: string): Promise<User | null>;
+  existsByEmail(email: Email): Promise<boolean>;
+  searchByEmail(emailPattern: string, limit: number): Promise<User[]>;
+}
+```
+
+Handlers depend on the **interface**, injected by token. They have no idea
+there's a Mongo behind it:
+
+```ts
+constructor(
+  @Inject(USER_REPOSITORY) private readonly userRepository: User_Repository,
+) {}
+
+async handle(command: DeactivateUser_Command) {
+  const user = await this.userRepository.findById(new Id(command.userId));
+  user.deactivate();
+  await this.userRepository.save(user);
+}
+```
+
+The concrete Mongo adapter, the base class that gives every repository its
+CRUD, database-agnostic Criteria queries, transactions and error translation
+are covered in [Repositories](/docs/backend/repositories).
+
+<Callout type="tip" title="Swapping adapters">
+  Because the port is defined in the domain and the adapter is the only
+  technology-aware code, you can add a Postgres or in-memory adapter (every
+  context ships an `in-memory` repository for tests) without touching a single
+  handler.
+</Callout>
+
+Next: **[Domain-Driven Design](/docs/backend/ddd)**.

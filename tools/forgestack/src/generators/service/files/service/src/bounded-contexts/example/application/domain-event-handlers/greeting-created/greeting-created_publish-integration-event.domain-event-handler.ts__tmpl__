@@ -1,0 +1,41 @@
+import { Inject } from '@nestjs/common';
+import {
+  Base_DomainEventHandler,
+  Id,
+  OUTBOX_REPOSITORY,
+  type Outbox_Repository,
+  OutboxEvent,
+} from '@libs/nestjs-common';
+import { GreetingCreated_DomainEvent } from '@bc/example/domain/aggregates/greeting/events/greeting-created.domain-event';
+import { GreetingCreated_IntegrationEvent } from '@bc/example/application/integration-events/greeting-created.integration-event';
+
+/**
+ * The bridge from the internal domain event to the public contract: build the
+ * integration event and write it to the outbox, which delivers it to Kafka
+ * reliably. Other services can now react to greetings the same way this
+ * service reacts to user.created.
+ */
+export class GreetingCreated_PublishIntegrationEvent_DomainEventHandler extends Base_DomainEventHandler(
+  GreetingCreated_DomainEvent,
+) {
+  constructor(
+    @Inject(OUTBOX_REPOSITORY)
+    private readonly outboxRepository: Outbox_Repository,
+  ) {
+    super();
+  }
+
+  async handleEvent(event: GreetingCreated_DomainEvent) {
+    const integrationEvent = new GreetingCreated_IntegrationEvent({
+      id: Id.random().toValue(),
+      occurredOn: new Date(),
+      greetingId: event.greetingId.toValue(),
+      message: event.message.toValue(),
+      source: event.source,
+    });
+
+    await this.outboxRepository.save(OutboxEvent.create(integrationEvent));
+
+    this.logger.log(`Published greeting.created for ${event.greetingId.toValue()}`);
+  }
+}

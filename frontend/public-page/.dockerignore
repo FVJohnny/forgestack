@@ -1,0 +1,15 @@
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+yarn-error.log
+.next
+.git
+.gitignore
+README.md
+.env*
+!.env.example
+!.env.production
+.pnpm-store
+.vercel
+*.tsbuildinfo

@@ -6,9 +6,10 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
+        "cwd": "frontend/public-page",
         "commands": [
-          "npx eslint \"frontend/public-page/app/**/*.{ts,tsx}\" \"frontend/public-page/lib/**/*.{ts,tsx}\"",
-          "prettier --config .prettierrc --check \"frontend/public-page/app/**/*.{ts,tsx,json}\" \"frontend/public-page/lib/**/*.{ts,tsx,json}\" \"frontend/public-page/messages/*.json\" \"frontend/public-page/i18n/**/*.{ts,tsx}\""
+          "npx eslint \"app/**/*.{ts,tsx}\" \"lib/**/*.{ts,tsx}\" \"i18n/**/*.{ts,tsx}\"",
+          "prettier --config ../../.prettierrc --check \"app/**/*.{ts,tsx,json}\" \"lib/**/*.{ts,tsx,json}\" \"messages/*.json\" \"i18n/**/*.{ts,tsx}\""
         ],
         "parallel": false,
         "forwardAllArgs": false

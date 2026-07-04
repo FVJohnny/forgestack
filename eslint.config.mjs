@@ -2,7 +2,6 @@ import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
-import importPlugin from 'eslint-plugin-import';
 
 import noDirectEntityMutationRule from './eslint/rules/no-direct-entity-mutation.mjs';
 import { hexagonalArchitectureConfigs } from './eslint/rules/hexagonal-architecture.mjs';
@@ -29,6 +28,9 @@ export default [
       '**/*.d.ts',
       '**/jest.config.js',
       '**/*.config.js',
+      // The frontend has its own flat config (Next.js rules); this backend
+      // config must not reach into it.
+      'frontend/**',
       'backend/libs/**/*.spec.ts',
       'backend/libs/**/*.contract.ts',
       'backend/libs/common/src/test-exports/**',
@@ -120,7 +122,6 @@ export default [
           naming: handlerNamingRule,
         },
       },
-      import: importPlugin,
     },
     rules: {
       '@typescript-eslint/no-unused-vars': [
@@ -167,14 +168,6 @@ export default [
     rules: {
       'no-restricted-imports': 'off',
       'entity-domain/no-direct-entity-mutation': 'off',
-    },
-  },
-
-  // Frontend — disable rules that reference unavailable plugins
-  {
-    files: ['frontend/public-page/**/*.{ts,tsx}'],
-    rules: {
-      'react-hooks/exhaustive-deps': 'off',
     },
   },
 ];

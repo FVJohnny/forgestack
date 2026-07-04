@@ -223,8 +223,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **49. EventTracker monkey-patches the EventBus and duplicates metrics** (Medium)
   It overwrites `publish`/`publishAll` at construction, records success before handlers run, and overlaps entirely with the Prometheus CQRS metrics. Consider removing the subsystem.
 
-- [ ] **50. HTTP duration histogram is double-counted** (Medium)
-  The metrics interceptor records every request twice into `http_request_duration_seconds`. Drop one of the two observations.
+- [x] **50. HTTP duration histogram is double-counted** (Medium)
+  The interceptor recorded each request into `http_request_duration_seconds` twice: once via a `startTimer()` stop callback and once via `observeHttpRequest()`.
+  **Status: Done.** Kept the single explicit `observeHttpRequest()` (it carries the status_code label) and removed the timer path. Also deleted the now-unused `startHttpRequestTimer` method so the double-count cannot be reintroduced.
 
 - [ ] **51. OTel SIGTERM handler hijacks shutdown** (Medium)
   It calls `process.exit(0)`, racing Nest's shutdown hooks (Kafka/Mongo/Redis disconnect, outbox drain). Let Nest own the shutdown.
@@ -232,8 +233,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [ ] **52. Product features live inside the shared framework lib** (Medium)
   The user-token auth context, app-specific Kafka topics, and example events sit in `libs/common`. Separate "framework" from "example app" or mark them clearly as examples.
 
-- [ ] **53. `Data.parseFromString('')` returns 0** (Medium)
-  Empty-string filter values are treated as the number 0 in Mongo EQUAL/IN conditions. Guard for empty and whitespace strings.
+- [x] **53. `Data.parseFromString('')` returns 0** (Medium)
+  `Number('')` / `Number('   ')` coerce to 0, so an empty filter value matched the number 0 in EQUAL/IN conditions.
+  **Status: Done.** `parseFromString` now returns empty/whitespace-only strings as-is before the number check. New spec covers empty, whitespace, numeric, boolean, date, and plain-text cases.
 
 - [ ] **54. `@IntegrationEventHandler` constructs a random event to read metadata** (Medium)
   It instantiates `eventClass.random()` (running validation on random data) just to read topic and name. Make those static.

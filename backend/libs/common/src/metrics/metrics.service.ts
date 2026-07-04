@@ -297,16 +297,6 @@ export class MetricsService {
     this.inboxQueueSize.set({ service: this.serviceName }, size);
   }
 
-  startHttpRequestTimer(labels: Partial<HttpLabelValues>) {
-    const fullLabels = {
-      method: labels.method || 'GET',
-      route: labels.route || 'unknown',
-      status_code: (labels.status_code ?? '200').toString(),
-      service: this.serviceName,
-    } as const;
-    return this.httpRequestDuration.startTimer(fullLabels);
-  }
-
   observeHttpRequest(labels: Partial<HttpLabelValues>, durationSeconds: number) {
     const fullLabels = {
       method: labels.method || 'GET',

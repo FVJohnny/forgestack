@@ -24,23 +24,20 @@ export class MetricsInterceptor implements NestInterceptor {
       ':id',
     );
 
-    const endTimer = this.metrics.startHttpRequestTimer({ method, route });
-
+    // Measure once and record via observeHttpRequest. The old code ALSO used a
+    // startTimer() whose stop callback observes into the same histogram, so
+    // every request was counted twice.
     const start = process.hrtime.bigint();
+    const record = (fallbackStatus: number) => {
+      const status = res?.statusCode || fallbackStatus;
+      const duration = Number(process.hrtime.bigint() - start) / 1e9;
+      this.metrics.observeHttpRequest({ method, route, status_code: status }, duration);
+    };
+
     return next.handle().pipe(
       tap({
-        next: () => {
-          const status = res?.statusCode || 200;
-          const duration = Number(process.hrtime.bigint() - start) / 1e9;
-          endTimer({ status_code: String(status) });
-          this.metrics.observeHttpRequest({ method, route, status_code: status }, duration);
-        },
-        error: () => {
-          const status = res?.statusCode || 500;
-          const duration = Number(process.hrtime.bigint() - start) / 1e9;
-          endTimer({ status_code: String(status) });
-          this.metrics.observeHttpRequest({ method, route, status_code: status }, duration);
-        },
+        next: () => record(200),
+        error: () => record(500),
       }),
     );
   }

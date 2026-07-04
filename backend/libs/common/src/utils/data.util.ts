@@ -1,5 +1,12 @@
 export class Data {
   static parseFromString(value: string): unknown {
+    // An empty or whitespace-only string is a string, not a number. Without
+    // this guard Number('') / Number('  ') coerce to 0, so an empty filter
+    // value would match the number 0 in EQUAL/IN queries.
+    if (value.trim() === '') {
+      return value;
+    }
+
     // Try to parse as number first
     const asNumber = Number(value);
     if (!isNaN(asNumber) && isFinite(asNumber)) {

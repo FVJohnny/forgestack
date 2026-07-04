@@ -360,20 +360,24 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   The prod compose had no `logging:` options and the server had no daemon defaults, so a chatty service could fill the disk.
   **Status: Done.** `setup-server.sh` now writes `/etc/docker/daemon.json` with json-file log rotation (10m x 3) and restarts Docker (skipping if the file already exists), which caps logs daemon-wide for every container. Also added a `logging` anchor to the prod compose applied to the app services to document the intent. Validated with `docker compose config` and `bash -n`.
 
-- [ ] **81. No rollback or post-deploy health verification** (Medium)
+- [x] **81. No rollback or post-deploy health verification** (Medium)
   Use `docker compose up -d --wait`, keep the previous tag, and revert on failure.
+  **Status: DONE (health-gate + failure hint).** The remote deploy now brings up the data stores AND the app tier with `up -d --wait`, so an unhealthy container makes the remote block (under `set -e`) exit non-zero. deploy.sh wraps the ssh call in an `if`: on success it logs "Deploy complete", on failure it prints an actionable message (how to read logs and that the last known-good tags are in git history) and exits 1 instead of silently reporting success. A fully automated tag-revert is coupled to the tag scheme in item 82 and left as a follow-up. Verified `bash -n`.
 
 - [ ] **82. Deploy sed-mutates a tracked compose file with counter tags (v4, v5, v10)** (Medium)
   The committed tags are meaningless to anyone cloning the template and every deploy dirties the repo. Use `${TAG}` interpolation written to the server-side `.env`.
 
-- [ ] **83. `deploy.sh` hardcodes `/opt/forgestack` in the remote heredoc** (Medium)
+- [x] **83. `deploy.sh` hardcodes `/opt/forgestack` in the remote heredoc** (Medium)
   A customized `REMOTE_PATH` rsyncs to one place and deploys from another. Use `cd "$REMOTE_PATH"`.
+  **Status: Done.** The remote heredoc now `cd "$REMOTE_PATH"` (the unquoted heredoc expands it locally), so a customized `REMOTE_PATH` rsyncs and deploys to the same place.
 
-- [ ] **84. No alerting anywhere in the monitoring stack** (Medium)
+- [x] **84. No alerting anywhere in the monitoring stack** (Medium)
   No rules, no Alertmanager, and the Loki ruler points at a host that does not exist. Add minimal alerts: instance down, disk, container restarts, 5xx rate.
+  **Status: DONE (rules; Alertmanager is opt-in).** Added `infra/monitoring/prometheus/alert-rules.yml` with 5 rules across 3 groups: `InstanceDown` (up==0), `ContainerRestarting`, `HostLowDisk` (>85%), `ContainerHighMemory` (>90% of mem_limit), and `HighHttp5xxRate` (>5% of `http_requests_total{status_code=~"5.."}` — verified that is the real metric/label the services expose). Wired via `rule_files` in prometheus.yml, baked into the image (Dockerfile.prometheus) and mounted in dev compose. Commented out the dead Loki ruler `alertmanager_url` (localhost:9093 pointed at nothing) with a note. Verified live: `promtool check rules` passes (5 rules), dev Prometheus reloaded and the rules API returns all 3 groups / 5 rules with no config error; Loki still starts with the ruler commented out. Rules are queryable via `ALERTS` and panellable in Grafana now; running an Alertmanager + a receiver (Slack/email) for push notifications is a documented opt-in (an `alerting:` block is present but commented in prometheus.yml).
 
-- [ ] **85. No backup story for Mongo/Grafana volumes** (Medium)
+- [x] **85. No backup story for Mongo/Grafana volumes** (Medium)
   Add a scheduled mongodump script with off-host copies and document restore.
+  **Status: DONE (Mongo).** Added `infra/scripts/backup-mongo.sh`: resolves the running mongodb container from compose, `mongodump --archive | gzip` to a timestamped file, fails loudly on an empty dump, prunes by `RETENTION_DAYS` (default 14). Credentials come from `compose/.env` (same file deploy.sh ships). deploy.sh now ships the script to the deploy root, and setup-server.sh installs an idempotent daily cron (03:30) for the deploy user writing to `$REMOTE_PATH/backups`. Restore and off-host guidance are documented in the script header. Verified live against the dev replica set: produced a valid 12K archive (header shows `server_version 7.0.29`), pruning ran, and `mongorestore --archive --dryRun` parsed it and completed, proving the round-trip. Grafana dashboards/datasources are provisioned from files in the repo (already versioned), so they need no volume backup; only Grafana's own SQLite (users, ad-hoc changes) is unbacked, which is acceptable for this template.
 
 - [x] **86. Tempo metrics_generator writes to Prometheus, but the receiver is off** (Medium)
   Prometheus had no `command:` so it never got `--web.enable-remote-write-receiver`, and Tempo's `metrics_generator` had no enabled processors, so service-graph/span metrics silently never appeared.

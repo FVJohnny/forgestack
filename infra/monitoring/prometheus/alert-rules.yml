@@ -1,0 +1,72 @@
+groups:
+  # These rules are evaluated by Prometheus itself. Without an Alertmanager
+  # wired up (see the note in prometheus.yml), a firing alert does not send a
+  # notification, but it IS queryable: `ALERTS{alertstate="firing"}` shows up
+  # in the Prometheus UI and can be panelled/alerted-on in Grafana. To get
+  # push notifications, run an Alertmanager and point the `alerting` block in
+  # prometheus.yml at it plus a receiver (Slack/email/webhook).
+  - name: availability
+    rules:
+      - alert: InstanceDown
+        # `up` is 0 when a scrape target is unreachable. Covers cadvisor and,
+        # via docker_sd, every service labeled prometheus.scrape=true.
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Target {{ $labels.job }} ({{ $labels.instance }}) is down'
+          description: 'Prometheus has failed to scrape {{ $labels.instance }} for over 2 minutes.'
+
+      - alert: ContainerRestarting
+        # A container whose start time keeps moving is crash-looping.
+        expr: rate(container_start_time_seconds[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Container {{ $labels.name }} is restarting'
+          description: '{{ $labels.name }} has restarted within the last 15 minutes.'
+
+  - name: resources
+    rules:
+      - alert: HostLowDisk
+        # cAdvisor exposes filesystem usage. Alert when the root fs is >85% full.
+        expr: |
+          (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) > 0.85
+          or
+          (max by (device) (container_fs_usage_bytes) / max by (device) (container_fs_limit_bytes)) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Low disk space'
+          description: 'A filesystem is over 85% full.'
+
+      - alert: ContainerHighMemory
+        # Container using >90% of its mem_limit for a sustained window.
+        expr: |
+          (container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.9)
+          and (container_spec_memory_limit_bytes > 0)
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Container {{ $labels.name }} near its memory limit'
+          description: '{{ $labels.name }} has used >90% of its memory limit for 10 minutes.'
+
+  - name: application
+    rules:
+      - alert: HighHttp5xxRate
+        # More than 5% of requests returning 5xx over 5 minutes. Uses the
+        # http_requests_total counter the NestJS services expose.
+        expr: |
+          (sum by (job) (rate(http_requests_total{status_code=~"5.."}[5m])))
+          /
+          (sum by (job) (rate(http_requests_total[5m]))) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'High 5xx rate on {{ $labels.job }}'
+          description: '{{ $labels.job }} is serving more than 5% 5xx responses.'

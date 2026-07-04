@@ -247,6 +247,22 @@ SYSCTL
 sysctl --system >/dev/null
 
 # ---------------------------------------------------------------------------
+# 9. Daily MongoDB backup cron
+# ---------------------------------------------------------------------------
+# backup-mongo.sh is shipped to $REMOTE_PATH by deploy.sh alongside the compose
+# files. Register a daily cron for the deploy user that dumps Mongo to
+# $REMOTE_PATH/backups (retention handled inside the script). Idempotent: the
+# crontab is rewritten from a marker-guarded template each run.
+log "Installing daily MongoDB backup cron for '$DEPLOY_USER'..."
+CRON_MARKER="# forgestack-mongo-backup"
+CRON_LINE="30 3 * * * cd $REMOTE_PATH && ./backup-mongo.sh >> $REMOTE_PATH/backups/backup.log 2>&1 $CRON_MARKER"
+install -d -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$REMOTE_PATH/backups"
+# Preserve any existing crontab lines that are not ours, then append the line.
+( crontab -u "$DEPLOY_USER" -l 2>/dev/null | grep -v "$CRON_MARKER"; echo "$CRON_LINE" ) \
+    | crontab -u "$DEPLOY_USER" -
+log "  cron installed (daily 03:30, dumps to $REMOTE_PATH/backups)."
+
+# ---------------------------------------------------------------------------
 # Done
 # ---------------------------------------------------------------------------
 echo ""

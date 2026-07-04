@@ -33,8 +33,12 @@ schema_config:
         prefix: index_
         period: 24h
 
-ruler:
-  alertmanager_url: http://localhost:9093
+# The ruler needs an Alertmanager to send to. There is none in this stack yet
+# (see the note in prometheus/prometheus.yml), and `localhost:9093` inside the
+# Loki container points at nothing, so the ruler is left unconfigured. Wire it
+# to the same Alertmanager as Prometheus when you add one.
+# ruler:
+#   alertmanager_url: http://alertmanager:9093
 
 limits_config:
   max_streams_per_user: 50000

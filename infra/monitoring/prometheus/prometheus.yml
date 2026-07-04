@@ -1,6 +1,17 @@
 global:
   scrape_interval: 15s
 
+# Alert rules are evaluated by Prometheus. They are queryable via the ALERTS
+# metric and in the Prometheus UI even with no Alertmanager. To send
+# notifications, run an Alertmanager and uncomment the `alerting` block below.
+rule_files:
+  - /etc/prometheus/alert-rules.yml
+
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
 scrape_configs:
   # NestJS services are discovered from Docker: every container labeled
   # prometheus.scrape=true is scraped automatically (the label lives in the

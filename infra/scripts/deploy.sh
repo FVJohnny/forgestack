@@ -293,6 +293,10 @@ deploy() {
     cp "$INFRA_DIR/env/"*.env.prod "$STAGING/env/"
     cp "$INFRA_DIR/env/infra.env.prod" "$STAGING/compose/.env"
     cp "$INFRA_DIR/mongo/mongo-startup.sh" "$STAGING/mongo/"
+    # Backup script lives at the deploy root so setup-server.sh's cron can call
+    # it as `./backup-mongo.sh` (it resolves compose/.env relative to itself).
+    cp "$INFRA_DIR/scripts/backup-mongo.sh" "$STAGING/"
+    chmod +x "$STAGING/backup-mongo.sh"
     # Runtime secret for Prometheus scrape auth; mounted by the compose file
     # instead of being baked into the pushed image.
     if [ ! -f "$INFRA_DIR/monitoring/prometheus/internal-api-key" ]; then
@@ -309,9 +313,12 @@ deploy() {
 
     log "Starting services on remote..."
     local remote_start=$(date +%s)
-    ssh "$SERVER_USER@$SERVER_IP" << EOF
+    # The remote block runs under `set -e` and `--wait`, so an unhealthy
+    # container makes ssh exit non-zero. Catch that here to print an actionable
+    # rollback hint instead of just aborting under the top-level `set -e`.
+    if ! ssh "$SERVER_USER@$SERVER_IP" << EOF
         set -e
-        cd /opt/forgestack
+        cd "$REMOTE_PATH"
 
         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin docker.io 2>/dev/null
 
@@ -319,7 +326,11 @@ deploy() {
         # healthchecks), instead of a fixed sleep that races broker startup.
         docker compose -f compose/docker-compose.yml up -d --wait mongodb redis zookeeper kafka
 
-        docker compose -f compose/docker-compose.yml up -d ${SERVICES[*]} public-page
+        # --wait again on the app tier: the ssh block runs under \`set -e\`, so a
+        # container that never becomes healthy makes the deploy exit non-zero
+        # (which the caller below turns into a rollback) instead of reporting
+        # success while the app is down.
+        docker compose -f compose/docker-compose.yml up -d --wait ${SERVICES[*]} public-page
 
         docker compose -f compose/docker-compose.yml up -d
 
@@ -329,9 +340,16 @@ deploy() {
         echo "=== Status ==="
         docker compose -f compose/docker-compose.yml ps
 EOF
-
-    add_timing "Remote pull + deploy" "$(( $(date +%s) - remote_start ))"
-    log "Deploy complete!"
+    then
+        add_timing "Remote pull + deploy" "$(( $(date +%s) - remote_start ))"
+        log "Deploy complete!"
+    else
+        log_error "Remote deploy failed (a service did not become healthy within the --wait timeout)."
+        log_error "The previous containers may be in a mixed state. To roll back, on the server run:"
+        log_error "  cd $REMOTE_PATH && docker compose -f compose/docker-compose.yml logs --tail=100"
+        log_error "then redeploy the last known-good image tags (see the committed compose file in git history)."
+        exit 1
+    fi
 }
 
 show_menu() {

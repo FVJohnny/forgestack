@@ -4,5 +4,6 @@ FROM prom/prometheus:v2.54.1
 # into the image (it gets pushed to a registry); the compose file mounts it
 # at /etc/prometheus/internal-api-key at runtime.
 COPY ./infra/monitoring/prometheus/prometheus.yml /etc/prometheus/prometheus.yml
+COPY ./infra/monitoring/prometheus/alert-rules.yml /etc/prometheus/alert-rules.yml
 
 # Use default Prometheus entrypoint

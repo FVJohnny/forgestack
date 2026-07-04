@@ -22,19 +22,13 @@ export function GoogleSignInButton({
   const t = useTranslations('auth');
 
   const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        // Exchange access token for ID token by calling Google's userinfo endpoint
-        // and then get the ID token from the token response
-        // Note: useGoogleLogin with flow: 'implicit' gives us an access_token
-        // We need to use flow: 'auth-code' and exchange on backend, OR
-        // use the GoogleLogin button which gives us credential (ID token) directly
-        // For simplicity, we'll use the access_token and verify on backend
-        onSuccess(tokenResponse.access_token);
-      } catch (error) {
-        console.error('Google login error:', error);
-        onError?.();
-      }
+    // Implicit flow: this yields a Google ACCESS token (not an ID token). The
+    // backend validates it against GOOGLE_CLIENT_ID via Google's tokeninfo
+    // endpoint before trusting it (see the Google OAuth service), which
+    // prevents token substitution. To switch to the credential/ID-token flow,
+    // use the <GoogleLogin> component and verify the ID token server-side.
+    onSuccess: (tokenResponse) => {
+      onSuccess(tokenResponse.access_token);
     },
     onError: () => {
       console.error('Google login failed');

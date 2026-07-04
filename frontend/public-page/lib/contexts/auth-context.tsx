@@ -16,7 +16,7 @@ interface AuthContextType {
   userId: string | null;
   register: (email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (idToken: string) => Promise<void>;
+  loginWithGoogle: (accessToken: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -65,8 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserId(response.userId);
   }, []);
 
-  const loginWithGoogle = useCallback(async (idToken: string) => {
-    const response = await authService.loginWithGoogle(idToken);
+  const loginWithGoogle = useCallback(async (accessToken: string) => {
+    const response = await authService.loginWithGoogle(accessToken);
     setIsAuthenticated(true);
     setUserId(response.userId);
   }, []);

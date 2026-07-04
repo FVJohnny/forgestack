@@ -291,8 +291,9 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   Type errors were silently ignored during `next build`.
   **Status: Done.** Removed the flag and added a `typecheck` script (`tsc --noEmit`) to the frontend package.json. Verified the frontend typechecks and builds clean, so a future type error now fails the build (and CI).
 
-- [ ] **66. Google sign-in sends an access token labeled `idToken`** (Medium)
-  Switch to the credential flow (a real ID token with verifiable audience). Pairs with the backend fix in item 3, which already validates audience for the current access-token flow.
+- [x] **66. Google sign-in sends an access token labeled `idToken`** (Medium)
+  The auth-context parameter was named `idToken` but the value is a Google access token, and the button's comments described a flow that was not implemented.
+  **Status: Done (honest access-token flow).** Renamed the `loginWithGoogle` parameter to `accessToken` and rewrote the button's misleading comments to state accurately that the implicit flow yields an access token, which the backend validates against `GOOGLE_CLIENT_ID` via tokeninfo (item 3) to prevent token substitution. Kept the access-token flow rather than switching to the `<GoogleLogin>` credential/ID-token flow, since the backend audience check already closes the security gap and switching would change the button UI and backend verification; documented how to switch if desired.
 
 - [x] **67. Two parallel auth service implementations** (Medium)
   `lib/contexts/auth-service.ts` (class) and `lib/api/services/auth.service.ts` (object) both implemented register/login/verify/logout, and the class also duplicated the admin and MOTD methods that live in `admin.service.ts` / `account.service.ts`.

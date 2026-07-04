@@ -17,7 +17,18 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     const kafkaConfig = createKafkaConfig();
     const kafka = new Kafka(kafkaConfig);
 
-    const consumerConfig = createKafkaConsumerConfig(kafkaConfig.clientId || 'default-group');
+    // The consumer group id MUST be unique per service. Falling back to a
+    // shared default (the old 'default-group') makes every service without
+    // KAFKA_SERVICE_ID join the same group and steal each other's messages,
+    // so require it explicitly instead.
+    const groupId = process.env.KAFKA_SERVICE_ID;
+    if (!groupId) {
+      throw new Error(
+        'KAFKA_SERVICE_ID must be set: it is the Kafka clientId and consumer group id, and must be unique per service.',
+      );
+    }
+
+    const consumerConfig = createKafkaConsumerConfig(groupId);
     this.consumer = kafka.consumer(consumerConfig);
     this.producer = kafka.producer();
   }

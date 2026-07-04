@@ -169,14 +169,17 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   `cleanupProcessedEvents` / `deleteProcessed` had no callers, so the collections grew unbounded.
   **Status: Done.** Both services now run a self-managed cleanup interval (every 6 hours) that deletes processed events older than the retention window (7 days), consistent with how they already own their processing and stuck-reclaim intervals (no new `@nestjs/schedule` dependency in the framework lib). Added an inbox `cleanupProcessedEvents` method (only the repo had `deleteProcessed`). FAILED dead-letters are retained. Both intervals are cleared on module destroy. New outbox test asserts the cleanup applies a past cutoff.
 
-- [ ] **36. Kafka consumer readiness is wrong** (Medium)
-  Readiness flips true when `consumer.run()` resolves, which happens before partitions are assigned, and a failed `startConsumer` only logs and never retries. Fix: listen for GROUP_JOIN / CRASH events and add retry.
+- [x] **36. Kafka consumer readiness is wrong** (Medium)
+  Readiness flipped true when `consumer.run()` resolved, which happens before partitions are assigned, and a failed `startConsumer` only logged and never retried.
+  **Status: Done.** Readiness is now driven by the consumer group lifecycle: `GROUP_JOIN` sets ready (partitions actually assigned), `CRASH`/`STOP` clear it. A failed `startConsumer` (e.g. broker down at boot) now retries every 5s instead of leaving the pod not-ready forever. Verified live: the "Kafka consumer joined group" log fires on GROUP_JOIN and events flow through end to end after a restart.
 
-- [ ] **37. Kafka group id defaults to `default-group`** (Medium)
-  Services with `KAFKA_SERVICE_ID` unset share one consumer group and steal each other's messages. Fix: fail fast on the missing env var. Also, a consumer is created and connected even for publish-only services.
+- [x] **37. Kafka group id defaults to `default-group`** (Medium)
+  Services with `KAFKA_SERVICE_ID` unset shared one consumer group and stole each other's messages.
+  **Status: Done (fail-fast part).** `KafkaService` now throws at construction if `KAFKA_SERVICE_ID` is unset instead of falling back to the shared `default-group`. All env examples already set it, so nothing breaks. Not changed: the consumer is still created for publish-only services; the listener already skips actually starting it when no topics are registered, so it connects but stays idle. Splitting the producer and consumer into separate providers would be a larger refactor left for later.
 
-- [ ] **38. Kafka SSL/SASL config conflates auth with tuning** (Medium)
-  Connection timeouts and retry policy only apply when credentials are set; TLS-without-SASL is unsupported. Fix: split `KAFKA_SSL` from credentials and always apply the retry config.
+- [x] **38. Kafka SSL/SASL config conflates auth with tuning** (Medium)
+  Connection timeouts and retry policy only applied when credentials were set, and TLS-without-SASL was unsupported.
+  **Status: Done.** The retry policy and connection/request timeouts now apply unconditionally. TLS is enabled when `KAFKA_SSL=true` OR credentials are present (credentials should never travel in the clear), independent of SASL. The SASL mechanism is configurable via `KAFKA_SASL_MECHANISM`. Documented `KAFKA_SSL` in the env examples. Replaced the placeholder `kafka.spec.ts` with a real config-helper spec (6 tests) covering plaintext, TLS-only, and TLS+SASL.
 
 - [ ] **39. Outbox claim does up to 100 sequential `findOneAndUpdate` calls every 100 ms** (Medium)
   Fix: batch-claim with a per-instance token, and make the interval and batch size configurable. The inbox's 10/500ms values are hardcoded too.

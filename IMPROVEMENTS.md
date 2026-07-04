@@ -318,8 +318,8 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
   Register auto-logged-in (verification disabled), yet the login form had a `?registered=true` handler showing a "check your email for verification" message that nothing ever linked to.
   **Status: Done.** Committed to the auto-login story (which matches the backend, where users are created active). Removed the dead `?registered=true` handler and its now-unused success-alert state from the login form, deleted the misleading `auth.login.successMessage` key from all 8 locales, and clarified the register-form comment (documenting how to switch to verification instead). Also fixed the register-then-login failure mode from item 77 (redirect to /login instead of showing "registration failed" when the account was actually created). Build clean, locales in parity.
 
-- [ ] **74. SEO essentials missing** (Medium)
-  Per-page metadata, `not-found.tsx`, robots.txt, a sitemap, and Open Graph / Twitter cards.
+- [x] **74. SEO essentials missing** (Medium)
+  **Status: Done.** Enriched the root metadata with `metadataBase`, a title template (`%s · ForgeStack`), OpenGraph, and Twitter card tags (driven by `NEXT_PUBLIC_SITE_URL`). Added `app/robots.ts` (allows all, disallows `/dashboard`, points at the sitemap), `app/sitemap.ts` (public routes only), and a branded `app/not-found.tsx`. Verified live that `/robots.txt`, `/sitemap.xml`, and a 404 all serve correctly.
 
 - [ ] **75. `fmf.*` translation namespace is unexplained legacy naming** (Medium)
   Rename it to match the ForgeStack brand.

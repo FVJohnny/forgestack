@@ -17,13 +17,36 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-jetbrains-mono',
 });
 
+// Absolute base for OG/canonical URLs. Set NEXT_PUBLIC_SITE_URL in prod;
+// falls back to localhost for dev.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://localhost';
+
 export async function generateMetadata(): Promise<Metadata> {
+  const title = `${BRAND.name} — ${BRAND.tagline}`;
   return {
-    title: `${BRAND.name} — ${BRAND.tagline}`,
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: title,
+      // Child pages set `title: '<page>'` and get "<page> · ForgeStack".
+      template: `%s · ${BRAND.name}`,
+    },
     description: BRAND.tagline,
+    applicationName: BRAND.name,
     icons: {
       icon: '/icon.svg',
       apple: '/icon.svg',
+    },
+    openGraph: {
+      type: 'website',
+      siteName: BRAND.name,
+      title,
+      description: BRAND.tagline,
+      url: SITE_URL,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: BRAND.tagline,
     },
   };
 }

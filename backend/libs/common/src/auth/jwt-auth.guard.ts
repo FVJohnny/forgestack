@@ -7,10 +7,12 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { type IQueryBus } from '@nestjs/cqrs';
+import { JsonWebTokenError, TokenExpiredError, NotBeforeError } from 'jsonwebtoken';
 import { AuthenticatedRequest, JwtTokenPayload } from './jwt-auth.types';
 import { GetUserTokenByToken_Query } from './application/queries/get-user-token-by-token/get-user-token-by-token.query';
 import { QUERY_BUS } from '../cqrs';
 import { ACCESS_TOKEN_COOKIE } from './auth-cookies';
+import { NotFoundException } from '../errors/application.exceptions';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -37,8 +39,22 @@ export class JwtAuthGuard implements CanActivate {
 
       request.tokenData = payload;
       return true;
-    } catch {
-      throw new UnauthorizedException();
+    } catch (error) {
+      // Only genuine auth failures become 401: a bad/expired/not-yet-valid JWT,
+      // or the token not being in the store (NotFoundException). An
+      // infrastructure failure here (e.g. the Redis-backed token query throwing
+      // because Redis is down) must NOT masquerade as "unauthenticated" and log
+      // every user out; let it propagate so it surfaces as a 5xx that
+      // monitoring catches.
+      if (
+        error instanceof JsonWebTokenError ||
+        error instanceof TokenExpiredError ||
+        error instanceof NotBeforeError ||
+        error instanceof NotFoundException
+      ) {
+        throw new UnauthorizedException();
+      }
+      throw error;
     }
   }
 

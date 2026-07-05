@@ -50,7 +50,14 @@ export class CorrelationLogger implements LoggerService {
 
   private shouldLog(level: string): boolean {
     const levels = ['error', 'warn', 'info', 'debug'];
-    const currentLevelIndex = levels.indexOf(this.logLevel);
+    let currentLevelIndex = levels.indexOf(this.logLevel);
+    // An unrecognized LOG_LEVEL (a typo, or a valid Nest level like 'verbose'
+    // that is not in this list) must not silence everything, including errors.
+    // Fall back to 'debug' (log everything) so a misconfigured level is loud,
+    // not silent.
+    if (currentLevelIndex === -1) {
+      currentLevelIndex = levels.indexOf('debug');
+    }
     const requestedLevelIndex = levels.indexOf(level);
     return requestedLevelIndex <= currentLevelIndex;
   }

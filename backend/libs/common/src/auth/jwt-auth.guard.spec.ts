@@ -1,9 +1,11 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { type IQueryBus } from '@nestjs/cqrs';
+import { JsonWebTokenError } from 'jsonwebtoken';
 
 import { ACCESS_TOKEN_COOKIE } from './auth-cookies';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { NotFoundException } from '../errors/application.exceptions';
 
 /**
  * Item 62: the JWT guard is security-critical and had no tests. These cover
@@ -72,17 +74,28 @@ describe('JwtAuthGuard', () => {
   });
 
   it('throws Unauthorized when JWT verification fails', async () => {
-    const verify = jest.fn().mockRejectedValue(new Error('bad signature'));
+    const verify = jest.fn().mockRejectedValue(new JsonWebTokenError('bad signature'));
     const { guard } = setup({ verify });
     const req = { headers: {}, cookies: { [ACCESS_TOKEN_COOKIE]: 'bad' } };
     await expect(guard.canActivate(makeContext(req))).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
   it('throws Unauthorized when the token is not found in the repository', async () => {
-    // JWT verifies, but the repository lookup (revocation check) rejects.
-    const query = jest.fn().mockRejectedValue(new Error('token not found'));
+    // JWT verifies, but the repository lookup (revocation check) rejects with
+    // NotFoundException (token revoked / not in store).
+    const query = jest.fn().mockRejectedValue(new NotFoundException());
     const { guard } = setup({ query });
     const req = { headers: {}, cookies: { [ACCESS_TOKEN_COOKIE]: 'revoked' } };
     await expect(guard.canActivate(makeContext(req))).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('propagates an infrastructure error instead of masking it as 401', async () => {
+    // Item 134: the token-store query throwing because Redis is down must NOT
+    // become a 401 that logs everyone out; it should surface as a 5xx.
+    const infraError = new Error('Redis connection refused');
+    const query = jest.fn().mockRejectedValue(infraError);
+    const { guard } = setup({ query });
+    const req = { headers: {}, cookies: { [ACCESS_TOKEN_COOKIE]: 'valid' } };
+    await expect(guard.canActivate(makeContext(req))).rejects.toBe(infraError);
   });
 });

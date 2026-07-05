@@ -627,11 +627,13 @@ The two most urgent are item 119 (CSRF, from the recent cookie change) and item 
 - [ ] **133. Outbox dead-letters a transient post-publish save failure with a false "max retries" log and metric** (Low)
   In `outbox.service.ts` the catch wraps both the publish and the post-publish `save`. If the publish succeeded but the bookkeeping `save` failed transiently, the in-memory event is already `markAsProcessed()`, so `canRetry()` is false and the else branch dead-letters it: `markAsFailed()`, a `failed` metric, and "Max retries exceeded ... (dead-letter)" for an event with retryCount 0 that was actually delivered. Operators see phantom dead-letters and the failed metric lies. Classification: would improve. Fix: only run the retry/dead-letter path when the publish itself threw.
 
-- [ ] **134. `JwtAuthGuard` turns infrastructure outages into 401s** (Low)
+- [x] **134. `JwtAuthGuard` turns infrastructure outages into 401s** (Low)
   `jwt-auth.guard.ts:30-43` catches everything and throws `UnauthorizedException`, including the Redis-backed token-store query failing because Redis is down. During a Redis outage every authenticated user gets 401 (the frontend then clears session state and redirects to login) instead of a 503 that monitoring would flag. Classification: would improve. Fix: map only JWT-verification/NotFound errors to 401 and let infrastructure errors propagate as 5xx.
+  **Status: Done.** The guard's catch now maps only genuine auth failures to 401: a `JsonWebTokenError`/`TokenExpiredError`/`NotBeforeError` from JWT verification, or a `NotFoundException` from the token-store query (revoked/missing token). Any other error (e.g. Redis down) is rethrown so it surfaces as a 5xx that monitoring catches, instead of silently logging everyone out. Updated the existing guard spec to use realistic error types and added a case asserting an infrastructure error propagates unchanged. All 157 common tests pass.
 
-- [ ] **135. `CorrelationLogger` silently disables all logging on an unrecognized `LOG_LEVEL`** (Low)
+- [x] **135. `CorrelationLogger` silently disables all logging on an unrecognized `LOG_LEVEL`** (Low)
   `correlation-logger.ts:51-56` does `levels.indexOf(this.logLevel)`, which is -1 for a standard-but-unlisted value like `verbose` or any typo, so even `error` (`0 <= -1` is false) is suppressed and the service logs nothing with no hint why. Classification: broken/must fix (one line). Fix: fall back to a default level when the configured value is unknown.
+  **Status: Done.** `shouldLog` now falls back to `debug` (log everything) when `LOG_LEVEL` is unrecognized, so a typo or an unlisted-but-valid level like `verbose` is loud rather than silent.
 
 ## K. Observability
 

@@ -6,9 +6,8 @@ to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Three audit passes of hardening across the stack. The full item-by-item record
-is in `IMPROVEMENTS.md`, `IMPROVEMENTS-PHASE2.md`, and `IMPROVEMENTS-PHASE3.md`;
-the notable user-facing changes:
+Three audit passes of hardening across the stack (the full item-by-item record
+is in the git history). The notable user-facing changes:
 
 ### Security
 

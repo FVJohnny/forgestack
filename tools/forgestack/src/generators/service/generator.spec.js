@@ -84,6 +84,14 @@ describe('service generator', () => {
     expect(tree.read('backend/services/billing/.env', 'utf-8')).toContain(
       'KAFKA_SERVICE_ID=billing',
     );
+
+    // Guard against app.module drifting behind the real services (the wiring
+    // these assertions cover was found stale in a prior audit).
+    const appModule = tree.read('backend/services/billing/src/app.module.ts', 'utf-8');
+    // The durable inbox needs a repository; a bare InboxModule provides nothing.
+    expect(appModule).toContain('InboxModule.forRoot({ repository: Inbox_MongodbRepository })');
+    // Rate limits must be Redis-backed so they hold across instances.
+    expect(appModule).toContain('storageClass: ThrottlerStorageRedis');
   });
 
   it('wires compose, caddy and env files', async () => {
@@ -104,6 +112,12 @@ describe('service generator', () => {
 
     expect(tree.exists('infra/env/billing.env.prod.example')).toBe(true);
     expect(tree.exists('infra/env/billing.env.prod')).toBe(true);
+
+    // The prod Mongo URI must carry credentials + authSource=admin, otherwise it
+    // cannot authenticate against the --auth prod mongod.
+    const prodEnv = tree.read('infra/env/billing.env.prod.example', 'utf-8');
+    expect(prodEnv).toContain('authSource=admin');
+    expect(prodEnv).toContain('KAFKA_SSL=');
   });
 
   it('skips caddy wiring with expose=false', async () => {

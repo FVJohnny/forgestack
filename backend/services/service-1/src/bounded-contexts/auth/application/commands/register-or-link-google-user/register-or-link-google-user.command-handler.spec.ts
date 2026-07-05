@@ -8,7 +8,8 @@ import type {
   GoogleUserInfo,
   IGoogleOAuthService,
 } from '@bc/auth/domain/services/google-oauth.interface';
-import { BadRequestException, MockEventBus, Outbox_InMemoryRepository } from '@libs/nestjs-common';
+import { BadRequestException } from '@nestjs/common';
+import { MockEventBus, Outbox_InMemoryRepository } from '@libs/nestjs-common';
 
 // Item 191: the register-or-link Google command handler had no tests. It has
 // three forks: (1) already-registered googleId -> no-op, (2) existing email ->

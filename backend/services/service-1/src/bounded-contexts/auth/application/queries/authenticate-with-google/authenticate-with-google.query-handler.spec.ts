@@ -8,8 +8,8 @@ import type {
   IGoogleOAuthService,
 } from '@bc/auth/domain/services/google-oauth.interface';
 import { JwtService } from '@nestjs/jwt';
+import { BadRequestException } from '@nestjs/common';
 import {
-  BadRequestException,
   InfrastructureException,
   JwtTokenService,
   UnauthorizedException,
@@ -30,8 +30,11 @@ describe('AuthenticateWithGoogle_QueryHandler', () => {
   const setup = async (
     params: { withUser?: boolean; userStatus?: UserStatus; shouldFailRepository?: boolean } = {},
   ) => {
-    const { withUser = false, userStatus = UserStatus.active(), shouldFailRepository = false } =
-      params;
+    const {
+      withUser = false,
+      userStatus = UserStatus.active(),
+      shouldFailRepository = false,
+    } = params;
 
     const jwtTokenService = new JwtTokenService(new JwtService());
     const repository = new User_InMemoryRepository(shouldFailRepository);

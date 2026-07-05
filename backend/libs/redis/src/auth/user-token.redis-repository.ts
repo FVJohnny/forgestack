@@ -153,16 +153,10 @@ export class UserToken_RedisRepository
         return;
       }
 
-      // Delete all tokens and their lookup indexes
+      // remove() already deletes the item plus both secondary indexes (the
+      // token lookup key and the user-token-set membership), so let it do the
+      // cleanup for each token instead of duplicating the deletes here.
       for (const tokenId of tokenIds) {
-        // Get the token to find its token value for the lookup index
-        const userToken = await this.findById(new Id(tokenId));
-        if (userToken) {
-          // Delete the token lookup index
-          const tokenLookupKey = this.getTokenLookupKey(userToken.token.toValue());
-          await client.del(tokenLookupKey);
-        }
-        await client.del(this.itemKey(tokenId));
         await this.remove(new Id(tokenId), context);
       }
       await client.del(userTokensKey);

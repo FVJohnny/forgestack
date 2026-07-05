@@ -43,6 +43,14 @@ function baseCookieOptions() {
     // cross-site frontend (its Origin is in CORS_ORIGINS).
     sameSite: 'none' as const,
     path: '/',
+    // Scope the cookie to a parent domain so every API subdomain receives it,
+    // not just the one that set it. The dev-console dashboard reads service-1
+    // (service1.localhost) AND service-2 (service2.localhost); without a shared
+    // Domain the cookie is host-only to service-1 and service-2's JWT-protected
+    // routes never see it. Set COOKIE_DOMAIN to the common parent, e.g.
+    // ".localhost" in dev or ".example.com" in prod. Leave it unset to keep the
+    // cookie host-only (single-API deployments do not need it).
+    ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
   };
 }
 

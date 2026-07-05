@@ -63,8 +63,9 @@ export const API_ENDPOINTS = {
   MOTD: {
     GET: '/motd',
   },
-  // Served by service-2 (use service2ApiClient, not apiClient)
+  // Served by service-2 (use service2ApiClient, not apiClient). The browser hits
+  // the JWT-protected dashboard route; /analytics/summary is internal-key only.
   ANALYTICS: {
-    SUMMARY: '/analytics/summary',
+    SUMMARY: '/analytics/dashboard/summary',
   },
 } as const;

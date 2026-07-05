@@ -231,9 +231,11 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  @WithSpan('inbox.handle_event_failure', {
-    attributesFrom: ['id', 'eventName', 'topic'],
-  })
+  // attributesFrom only reads properties off the first argument, and here those
+  // are value objects (event.id, event.eventName, event.topic), not the plain
+  // strings the span wants. Set the attributes explicitly instead, using the
+  // same keys as the inbox.process_integration_event span above.
+  @WithSpan('inbox.handle_event_failure')
   private async handleEventFailure(
     event: InboxEvent,
     message: ParsedIntegrationMessage,
@@ -241,6 +243,10 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     error: unknown,
     durationSeconds: number = 0,
   ) {
+    TracingService.setAttribute('inbox.integration_event_id', event.id.toValue());
+    TracingService.setAttribute('inbox.integration_event_name', event.eventName.toValue());
+    TracingService.setAttribute('inbox.integration_event_topic', event.topic.toValue());
+
     this.logger.error(
       `❌ Error processing inbox event. Topic: ${event.topic.toValue()}, Event: ${event.eventName.toValue()} ( id: ${event.id.toValue()})`,
       normalizeError(error),

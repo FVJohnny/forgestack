@@ -58,6 +58,10 @@ class APIClient {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
+        // Normal requests abort via their own controller; without a timeout
+        // here one hung refresh would pin every queued 401 retry until the
+        // socket dies.
+        signal: AbortSignal.timeout(this.defaultTimeout),
       })
         .then((res) => res.ok)
         .catch(() => false)

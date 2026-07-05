@@ -28,6 +28,9 @@ export function usePolling(callback: () => Promise<void>, intervalMs: number, en
 
     const poll = async () => {
       if (!isMountedRef.current) return;
+      // Stop the chain while the tab is hidden; the visibilitychange handler
+      // below restarts it when the user comes back.
+      if (document.hidden) return;
 
       try {
         await callbackRef.current();
@@ -41,11 +44,20 @@ export function usePolling(callback: () => Promise<void>, intervalMs: number, en
       }
     };
 
+    const onVisibilityChange = () => {
+      if (document.hidden || !isMountedRef.current) return;
+      // Back in the foreground: refresh immediately, then resume the cadence.
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      void poll();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
     // Start the first poll after the interval
     timeoutRef.current = setTimeout(poll, intervalMs);
 
     return () => {
       isMountedRef.current = false;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;

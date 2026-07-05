@@ -13,11 +13,18 @@ export class KafkaIntegrationEventPublisher implements IntegrationEventPublisher
   async publish(topic: string, message: string) {
     try {
       const producer = this.kafkaService.getProducer();
-      // Extract event ID from message for use as Kafka key (ensures proper partitioning and deduplication)
+      // Kafka guarantees ordering only within a partition, and the partition is
+      // chosen by the message key. Key by aggregateId so every event about the
+      // same aggregate (e.g. one user) lands on one partition and is consumed
+      // in order. Fall back to the event id when no aggregateId is set — that
+      // spreads an aggregate's events across partitions, so ordering is NOT
+      // guaranteed in that case (documented on Base_IntegrationEventProps).
+      // Note: the key is for partitioning/ordering only; Kafka does not dedupe
+      // by key (the inbox dedupes by event id instead).
       let messageKey: string | undefined;
       try {
         const parsed = JSON.parse(message);
-        messageKey = parsed.id;
+        messageKey = parsed.aggregateId ?? parsed.id;
       } catch {
         // Ignore parse errors, key will be undefined
       }

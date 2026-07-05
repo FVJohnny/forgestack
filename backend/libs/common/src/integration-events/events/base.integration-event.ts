@@ -8,6 +8,15 @@ import { TracingService } from '../../tracing';
 export interface Base_IntegrationEventProps {
   id: string;
   occurredOn: Date;
+  /**
+   * Optional id of the aggregate this event is about (e.g. the userId). Used as
+   * the Kafka partition key so all events for the same aggregate land on one
+   * partition and are consumed in order. When omitted, the publisher falls back
+   * to the event's own id, which does NOT guarantee per-aggregate ordering
+   * (each event may hash to a different partition). Set this on events whose
+   * order relative to each other matters.
+   */
+  aggregateId?: string;
 }
 
 /**
@@ -40,6 +49,7 @@ export abstract class Base_IntegrationEvent {
 
   readonly id: string;
   readonly occurredOn: Date;
+  readonly aggregateId?: string;
 
   constructor(
     props: Base_IntegrationEventProps,
@@ -49,6 +59,7 @@ export abstract class Base_IntegrationEvent {
   ) {
     this.id = props.id;
     this.occurredOn = props.occurredOn;
+    this.aggregateId = props.aggregateId;
   }
 
   /**
@@ -65,6 +76,7 @@ export abstract class Base_IntegrationEvent {
 
       id: this.id,
       occurredOn: this.occurredOn.toISOString(),
+      ...(this.aggregateId ? { aggregateId: this.aggregateId } : {}),
       metadata: metadata || {},
       ...this.toEventJSON(),
     };

@@ -25,7 +25,8 @@ export class UserCreated_IntegrationEvent extends Base_IntegrationEvent {
 
   constructor(props: UserCreated_IntegrationEventProps) {
     super(
-      props,
+      // Partition Kafka by the user so this user's events stay ordered.
+      { ...props, aggregateId: props.userId },
       UserCreated_IntegrationEvent.metadata.topic,
       UserCreated_IntegrationEvent.metadata.name,
       UserCreated_IntegrationEvent.metadata.version,

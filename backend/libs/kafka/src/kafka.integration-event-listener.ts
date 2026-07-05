@@ -9,6 +9,20 @@ import { type KafkaMessage } from 'kafkajs';
 
 import { KafkaService } from './kafka-service';
 
+/**
+ * A permanently malformed Kafka message (bad JSON, or no id to dedupe on).
+ * Retrying can never fix it, so eachMessage skips it (commits the offset)
+ * instead of blocking its partition with infinite redelivery. Distinct from a
+ * transient processing error, which still blocks the commit so it can be
+ * retried once the dependency recovers.
+ */
+export class PoisonMessageError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PoisonMessageError';
+  }
+}
+
 @Injectable()
 export class KafkaIntegrationEventListener
   extends Base_IntegrationEventListener
@@ -90,6 +104,20 @@ export class KafkaIntegrationEventListener
           try {
             await this.handleMessage(topic, this.parseMessage(message));
           } catch (error) {
+            if (error instanceof PoisonMessageError) {
+              // Permanently malformed message (bad JSON, or no id to dedupe on).
+              // Retrying can never succeed, so DO NOT rethrow: skip it and let
+              // the offset commit, otherwise this one message blocks its
+              // partition forever with infinite redelivery. Logged loudly so it
+              // is visible; a real DLQ topic is the natural next step.
+              this.logger.error(
+                `☠️  Skipping poison Kafka message (unrecoverable) - topic: ${topic}, partition: ${partition}, offset: ${message.offset}: ${error.message}`,
+              );
+              return;
+            }
+            // Transient failure (e.g. Mongo/Redis down during the inbox insert):
+            // rethrow to prevent the offset commit so kafkajs redelivers once
+            // the dependency recovers.
             this.logger.error(
               `❌ Error processing Kafka message - topic: ${topic}, partition: ${partition}, offset: ${message.offset}`,
               error as Error,
@@ -127,8 +155,11 @@ export class KafkaIntegrationEventListener
     try {
       parsedMessage = JSON.parse(message.value?.toString() || '{}');
     } catch (error) {
-      this.logger.error(`Error parsing Kafka message: ${error}`);
-      throw error;
+      // Unparseable JSON is unrecoverable: mark it poison so eachMessage skips
+      // it instead of redelivering forever.
+      throw new PoisonMessageError(
+        `Unparseable Kafka message JSON: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     // The id is what the inbox dedupes on, so it must be stable. Prefer the
@@ -137,7 +168,7 @@ export class KafkaIntegrationEventListener
     // idempotency by making every redelivery look like a new message.
     const id = (parsedMessage.id as string) || message.key?.toString();
     if (!id) {
-      throw new Error(
+      throw new PoisonMessageError(
         'Kafka message has no id (neither payload.id nor message key); cannot dedupe it in the inbox.',
       );
     }

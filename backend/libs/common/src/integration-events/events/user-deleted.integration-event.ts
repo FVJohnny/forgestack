@@ -23,7 +23,7 @@ export class UserDeleted_IntegrationEvent extends Base_IntegrationEvent {
 
   constructor(props: UserDeleted_IntegrationEventProps) {
     super(
-      props,
+      { ...props, aggregateId: props.userId },
       UserDeleted_IntegrationEvent.metadata.topic,
       UserDeleted_IntegrationEvent.metadata.name,
       UserDeleted_IntegrationEvent.metadata.version,

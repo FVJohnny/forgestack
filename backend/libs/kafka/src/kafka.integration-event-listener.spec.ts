@@ -1,5 +1,8 @@
 import type { KafkaMessage } from 'kafkajs';
-import { KafkaIntegrationEventListener } from './kafka.integration-event-listener';
+import {
+  KafkaIntegrationEventListener,
+  PoisonMessageError,
+} from './kafka.integration-event-listener';
 
 // Expose the protected parseMessage for testing.
 class TestListener extends KafkaIntegrationEventListener {
@@ -30,7 +33,12 @@ describe('KafkaIntegrationEventListener.parseMessage', () => {
     expect(parsed.id).toBe('key-1');
   });
 
-  it('throws when there is no id anywhere (does NOT fabricate one)', () => {
-    expect(() => listener.parse(kafkaMessage({ name: 'user.created' }))).toThrow(/no id/i);
+  it('throws PoisonMessageError when there is no id anywhere (does NOT fabricate one)', () => {
+    expect(() => listener.parse(kafkaMessage({ name: 'user.created' }))).toThrow(PoisonMessageError);
+  });
+
+  it('throws PoisonMessageError on unparseable JSON (item 128)', () => {
+    const badMessage = { value: Buffer.from('{not json'), key: null } as unknown as KafkaMessage;
+    expect(() => listener.parse(badMessage)).toThrow(PoisonMessageError);
   });
 });

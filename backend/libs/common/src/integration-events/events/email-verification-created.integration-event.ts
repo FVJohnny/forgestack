@@ -27,7 +27,7 @@ export class EmailVerificationCreated_IntegrationEvent extends Base_IntegrationE
 
   constructor(props: EmailVerificationCreated_IntegrationEventProps) {
     super(
-      props,
+      { ...props, aggregateId: props.userId },
       EmailVerificationCreated_IntegrationEvent.metadata.topic,
       EmailVerificationCreated_IntegrationEvent.metadata.name,
       EmailVerificationCreated_IntegrationEvent.metadata.version,

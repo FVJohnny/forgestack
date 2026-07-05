@@ -23,7 +23,7 @@ export class PasswordResetCompleted_IntegrationEvent extends Base_IntegrationEve
 
   constructor(props: PasswordResetCompleted_IntegrationEventProps) {
     super(
-      props,
+      { ...props, aggregateId: props.userId },
       PasswordResetCompleted_IntegrationEvent.metadata.topic,
       PasswordResetCompleted_IntegrationEvent.metadata.name,
       PasswordResetCompleted_IntegrationEvent.metadata.version,

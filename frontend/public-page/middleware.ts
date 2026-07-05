@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { locales, defaultLocale, type Locale } from './i18n/config';
+import { locales, defaultLocale, negotiateLocale, type Locale } from './i18n/config';
 
 const LOCALE_COOKIE_NAME = 'NEXT_LOCALE';
 
@@ -15,16 +15,10 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  // No valid cookie - check Accept-Language header and set a default cookie
-  const acceptLanguage = request.headers.get('Accept-Language');
-  let locale: Locale = defaultLocale;
-
-  if (acceptLanguage) {
-    const preferredLocale = acceptLanguage.split(',')[0].split('-')[0] as Locale;
-    if (locales.includes(preferredLocale)) {
-      locale = preferredLocale;
-    }
-  }
+  // No valid cookie - negotiate against the full Accept-Language list and
+  // set a default cookie
+  const locale: Locale =
+    negotiateLocale(request.headers.get('Accept-Language')) ?? defaultLocale;
 
   // Set the cookie for future requests
   response.cookies.set(LOCALE_COOKIE_NAME, locale, {

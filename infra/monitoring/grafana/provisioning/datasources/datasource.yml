@@ -30,12 +30,20 @@ datasources:
     editable: false
     jsonData:
       httpMethod: GET
-      tracesToLogs:
+      # Span "service.name" maps to the Loki label "service_name" for the
+      # stream selector; the trace id is matched inside the raw JSON log line
+      # (promtail stores the full line; traceId is not a label).
+      tracesToLogsV2:
         datasourceUid: 'loki'
-        filterByTraceID: true
+        spanStartTimeShift: '-5m'
+        spanEndTimeShift: '5m'
+        tags:
+          - key: 'service.name'
+            value: 'service_name'
+        filterByTraceID: false
         filterBySpanID: false
-        mapTagNamesEnabled: false
-        tags: ['traceId']
+        customQuery: true
+        query: '{$${__tags}} |= `$${__span.traceId}`'
       tracesToMetrics:
         datasourceUid: 'prometheus'
       serviceMap:

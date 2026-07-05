@@ -50,6 +50,8 @@ scrape_configs:
       - timestamp:
           source: timestamp
           format: RFC3339
-      # Show just the message in log line (metadata is in labels)
-      - output:
-          source: message
+      # Keep the raw JSON as the stored line. Grafana's Loki-to-Tempo derived
+      # field extracts the trace id with the regex "traceId":"...", and the
+      # Tempo-to-Loki link filters lines with |= on the trace id, so both
+      # directions need traceId present in the line body (it is deliberately
+      # not a label: trace ids are unbounded-cardinality).

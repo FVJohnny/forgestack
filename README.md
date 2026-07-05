@@ -167,7 +167,7 @@ npx nx g @forgestack/tools:bounded-context billing --service=service-1
 npx nx g @forgestack/tools:bounded-context billing --service=service-1 --command=charge-card
 ```
 
-Both print next steps and pass typecheck/lint out of the box. Flesh the context out with an aggregate, repository, queries, and events following the `example` context.
+Both print next steps and pass typecheck/lint out of the box. Flesh the context out with an aggregate, repository, queries, and events, using a shipped context such as `auth` (in service-1) as a worked reference.
 
 ## Observability
 
@@ -182,7 +182,15 @@ Each is exposed behind Caddy at a placeholder subdomain (e.g. `https://grafana.l
 
 ## Deployment
 
-Production runs the same services via `infra/compose/docker-compose.prod.yml`. Deploys are driven by an interactive, menu-based script:
+Production runs the same services via `infra/compose/docker-compose.prod.yml`.
+
+First, provision a fresh Ubuntu VPS once. This installs Docker, creates the deploy user, hardens SSH, sets up the firewall, swap, and the backup cron:
+
+```bash
+npm run prod:setup
+```
+
+Then deploy (and redeploy) with the interactive, menu-based script:
 
 ```bash
 npm run prod:update          # interactive menu

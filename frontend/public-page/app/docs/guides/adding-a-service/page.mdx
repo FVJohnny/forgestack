@@ -65,7 +65,7 @@ automatically.
 
 ## After generating
 
-- **Dev**: start the stack (`npm run dev`), or `npm run dev:restart <name>
+- **Dev**: start the stack (`npm run dev:start`), or `npm run dev:restart <name>
   caddy` if it's already running. Caddy re-reads its config only on restart.
   `GET /api/v1/greetings` on the new hostname confirms the wiring.
 - **Prod**: fill in `infra/env/<name>.env.prod`, point `<name>.<your-domain>`

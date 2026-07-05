@@ -74,7 +74,7 @@ in-process fake. `jest.env.js` sets `NODE_ENV=test` and clears `MONGODB_URI`,
 which routes connections to `localhost:27017` (the dev compose exposes the
 port) and into a separate `<service>-tests` database, so tests never touch
 dev data. The practical consequence: **repository tests need the dev stack
-running** (`npm run dev`); pure unit tests don't.
+running** (`npm run dev:start`); pure unit tests don't.
 
 ## Where the pieces come from
 

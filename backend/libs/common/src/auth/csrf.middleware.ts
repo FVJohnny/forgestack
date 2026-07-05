@@ -50,22 +50,21 @@ export function createCsrfMiddleware() {
       return;
     }
 
-    const secFetchSite = req.headers['sec-fetch-site'];
-    if (typeof secFetchSite === 'string') {
-      if (secFetchSite === 'cross-site') {
-        logger.warn(`Blocked cross-site ${req.method} ${req.path} (Sec-Fetch-Site)`);
-        res.status(403).json({
-          success: false,
-          error: { code: 'CSRF_BLOCKED', message: 'Cross-site request blocked' },
-        });
-        return;
-      }
-      // same-origin / same-site / none are all trusted.
-      next();
-      return;
-    }
+    const block = () => {
+      logger.warn(`Blocked cross-site ${req.method} ${req.path}`);
+      res.status(403).json({
+        success: false,
+        error: { code: 'CSRF_BLOCKED', message: 'Cross-site request blocked' },
+      });
+    };
 
-    // Older client with no Sec-Fetch-Site: fall back to Origin.
+    // An allowlisted Origin (the legitimate cross-site frontend, listed in
+    // CORS_ORIGINS) or a same-host request is always trusted, regardless of
+    // Sec-Fetch-Site. This must be checked FIRST: the real frontend calls the
+    // API cross-site (localhost -> service1.localhost), so the browser sends
+    // `Sec-Fetch-Site: cross-site`, and blocking purely on that would reject
+    // every legitimate request. It is the Origin allowlist (not the site
+    // relationship) that separates the trusted frontend from an attacker page.
     const origin = req.headers.origin;
     if (typeof origin === 'string' && origin.length > 0) {
       const normalized = normalizeOrigin(origin);
@@ -74,11 +73,21 @@ export function createCsrfMiddleware() {
         next();
         return;
       }
-      logger.warn(`Blocked cross-site ${req.method} ${req.path} (Origin: ${origin})`);
-      res.status(403).json({
-        success: false,
-        error: { code: 'CSRF_BLOCKED', message: 'Cross-site request blocked' },
-      });
+      // Origin present but not allowlisted: a cross-site forgery attempt.
+      block();
+      return;
+    }
+
+    // No Origin header. Use Sec-Fetch-Site when present: a same-origin/same-site
+    // request (or a user-initiated navigation, `none`) is fine; `cross-site`
+    // with no Origin is suspicious, so block it.
+    const secFetchSite = req.headers['sec-fetch-site'];
+    if (typeof secFetchSite === 'string') {
+      if (secFetchSite === 'cross-site') {
+        block();
+        return;
+      }
+      next();
       return;
     }
 

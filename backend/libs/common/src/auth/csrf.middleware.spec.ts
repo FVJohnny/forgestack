@@ -46,13 +46,24 @@ describe('csrf middleware', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
-  it('blocks a cross-site state-changing request via Sec-Fetch-Site', () => {
+  it('blocks a cross-site state-changing request with no Origin', () => {
     const { next, res } = run({ headers: { 'sec-fetch-site': 'cross-site' } });
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(403);
   });
 
-  it('allows same-origin / same-site via Sec-Fetch-Site', () => {
+  it('ALLOWS the allowlisted frontend even when Sec-Fetch-Site is cross-site', () => {
+    // The real frontend calls the API cross-site (localhost -> service1.*), so
+    // the browser sends Sec-Fetch-Site: cross-site with an allowlisted Origin.
+    // This must pass, or the whole app is locked out (the bug this guards).
+    const { next, res } = run({
+      headers: { origin: 'https://app.example.com', 'sec-fetch-site': 'cross-site' },
+    });
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('allows same-origin / same-site via Sec-Fetch-Site (no Origin header)', () => {
     for (const site of ['same-origin', 'same-site', 'none']) {
       const { next, res } = run({ headers: { 'sec-fetch-site': site } });
       expect(next).toHaveBeenCalled();
@@ -60,14 +71,16 @@ describe('csrf middleware', () => {
     }
   });
 
-  it('allows an allowlisted Origin when Sec-Fetch-Site is absent', () => {
+  it('allows an allowlisted Origin', () => {
     const { next, res } = run({ headers: { origin: 'https://app.example.com' } });
     expect(next).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalled();
   });
 
-  it('blocks a non-allowlisted Origin when Sec-Fetch-Site is absent', () => {
-    const { next, res } = run({ headers: { origin: 'https://evil.example' } });
+  it('blocks a non-allowlisted (attacker) Origin', () => {
+    const { next, res } = run({
+      headers: { origin: 'https://evil.example', 'sec-fetch-site': 'cross-site' },
+    });
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(403);
   });

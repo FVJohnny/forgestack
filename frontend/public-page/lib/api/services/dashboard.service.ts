@@ -10,22 +10,16 @@ import type { DashboardEventsResponse, DashboardHealthResponse, GetMotdResponse 
 export const dashboardService = {
   /** Browser-friendly health snapshot (ready + per-check status). */
   async getHealth(): Promise<DashboardHealthResponse> {
-    return apiClient.get<DashboardHealthResponse>(API_ENDPOINTS.DASHBOARD.HEALTH, {
-      showErrorToast: false,
-    });
+    return apiClient.get<DashboardHealthResponse>(API_ENDPOINTS.DASHBOARD.HEALTH);
   },
 
   /** Event-flow throughput data (totals + per-event success/failure). */
   async getEvents(): Promise<DashboardEventsResponse> {
-    return apiClient.get<DashboardEventsResponse>(API_ENDPOINTS.DASHBOARD.EVENTS, {
-      showErrorToast: false,
-    });
+    return apiClient.get<DashboardEventsResponse>(API_ENDPOINTS.DASHBOARD.EVENTS);
   },
 
   /** Public message-of-the-day; null when none set. */
   async getMotd(): Promise<GetMotdResponse | null> {
-    return apiClient.get<GetMotdResponse | null>(API_ENDPOINTS.MOTD.GET, {
-      showErrorToast: false,
-    });
+    return apiClient.get<GetMotdResponse | null>(API_ENDPOINTS.MOTD.GET);
   },
 };

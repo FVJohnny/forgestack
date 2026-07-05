@@ -47,17 +47,13 @@ class AuthService {
   }
 
   async getMe(): Promise<GetMeResponse> {
-    return apiClient.get<GetMeResponse>(API_ENDPOINTS.AUTH.ME, {
-      showErrorToast: false,
-    });
+    return apiClient.get<GetMeResponse>(API_ENDPOINTS.AUTH.ME);
   }
 
   async logout(): Promise<void> {
     // Best-effort: the backend clears the cookies. Ignore errors (the token
     // might already be invalid).
-    await apiClient
-      .post<void>(API_ENDPOINTS.AUTH.LOGOUT, undefined, { showErrorToast: false })
-      .catch(() => {});
+    await apiClient.post<void>(API_ENDPOINTS.AUTH.LOGOUT, undefined).catch(() => {});
   }
 
   // Admin (list/search/delete/suspend users) and MOTD live in admin.service.ts;

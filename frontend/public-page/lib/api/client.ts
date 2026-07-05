@@ -11,7 +11,6 @@
  */
 
 import { API_CONFIG, SERVICE2_API_CONFIG, API_ENDPOINTS } from './config';
-import { handleAPIError } from './error-handler';
 
 export class APIError extends Error {
   constructor(
@@ -26,7 +25,6 @@ export class APIError extends Error {
 
 export interface RequestOptions extends RequestInit {
   timeout?: number;
-  showErrorToast?: boolean;
   // Internal: prevents infinite refresh loops.
   _isRetry?: boolean;
 }
@@ -73,12 +71,7 @@ class APIClient {
   }
 
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const {
-      timeout = this.defaultTimeout,
-      showErrorToast = false,
-      _isRetry = false,
-      ...fetchOptions
-    } = options;
+    const { timeout = this.defaultTimeout, _isRetry = false, ...fetchOptions } = options;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -118,13 +111,7 @@ class APIClient {
           errorData.message ||
           `Request failed with status ${response.status}`;
 
-        const apiError = new APIError(errorMessage, response.status, errorData);
-
-        if (showErrorToast) {
-          handleAPIError(apiError);
-        }
-
-        throw apiError;
+        throw new APIError(errorMessage, response.status, errorData);
       }
 
       // Handle empty responses (204 No Content or empty body)
@@ -137,23 +124,10 @@ class APIClient {
         throw error;
       }
 
-      let apiError: APIError;
-
       if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          apiError = new APIError('Request timeout');
-        } else {
-          apiError = new APIError(error.message);
-        }
-      } else {
-        apiError = new APIError('An unknown error occurred');
+        throw new APIError(error.name === 'AbortError' ? 'Request timeout' : error.message);
       }
-
-      if (showErrorToast) {
-        handleAPIError(apiError);
-      }
-
-      throw apiError;
+      throw new APIError('An unknown error occurred');
     }
   }
 

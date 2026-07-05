@@ -11,8 +11,6 @@ import type { ActivitySummaryResponse } from '../types';
 export const analyticsService = {
   /** Aggregated activity counts per event type + time of the last activity. */
   async getSummary(): Promise<ActivitySummaryResponse> {
-    return service2ApiClient.get<ActivitySummaryResponse>(API_ENDPOINTS.ANALYTICS.SUMMARY, {
-      showErrorToast: false,
-    });
+    return service2ApiClient.get<ActivitySummaryResponse>(API_ENDPOINTS.ANALYTICS.SUMMARY);
   },
 };

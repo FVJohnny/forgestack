@@ -2,8 +2,9 @@ const path = require('path');
 const { pathsToModuleNameMapper } = require('ts-jest');
 const { compilerOptions } = require('../../../tsconfig.base.json');
 
-// This config is identical for every service: the service name and directory
-// are derived from the file's own location, so it can be copied verbatim.
+// Shared shape for every service: the service name and directory are derived
+// from the file's own location. The only per-service part is the
+// coverageThreshold ratchet (each service has its own coverage level).
 const serviceName = path.basename(__dirname);
 const serviceDir = `backend/services/${serviceName}`;
 

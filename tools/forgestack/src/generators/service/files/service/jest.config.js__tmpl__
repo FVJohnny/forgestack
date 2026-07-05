@@ -2,8 +2,9 @@ const path = require('path');
 const { pathsToModuleNameMapper } = require('ts-jest');
 const { compilerOptions } = require('../../../tsconfig.base.json');
 
-// This config is identical for every service: the service name and directory
-// are derived from the file's own location, so it can be copied verbatim.
+// Shared shape for every service: the service name and directory are derived
+// from the file's own location. The only per-service part is the
+// coverageThreshold ratchet below (each service has its own coverage level).
 const serviceName = path.basename(__dirname);
 const serviceDir = `backend/services/${serviceName}`;
 
@@ -31,6 +32,17 @@ module.exports = {
   },
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: '../coverage',
+  // Coverage floor as a regression ratchet (item 61). Starts at 0 for a fresh
+  // service; raise these numbers as you add tests so coverage can only go up.
+  // Only enforced with --coverage (CI / npm run test:cov).
+  coverageThreshold: {
+    global: {
+      statements: 0,
+      branches: 0,
+      functions: 0,
+      lines: 0,
+    },
+  },
   moduleFileExtensions: ['js', 'json', 'ts'],
   moduleNameMapper: {
     ...pathsToModuleNameMapper(paths, { prefix: '<rootDir>/../../../../' }),

@@ -33,7 +33,7 @@
     "test:nocache": "npm run test -- --skip-nx-cache",
     "lint": "nx run-many -t lint",
     "lint:fix": "nx run-many -t lint -- --fix",
-    "test:eslint-rules": "node eslint/rules/__tests__/base-class-rules.test.mjs",
+    "test:eslint-rules": "node --test \"eslint/rules/__tests__/**/*.test.mjs\"",
     "dev:start": "./infra/scripts/start-dev.sh",
     "dev:down": "docker compose -f infra/compose/docker-compose.dev.yml down",
     "dev:logs": "docker compose -f infra/compose/docker-compose.dev.yml logs -f --tail=100",
@@ -69,6 +69,7 @@
     "@types/jest": "^29.5.14",
     "@typescript-eslint/eslint-plugin": "^8.42.0",
     "@typescript-eslint/parser": "^8.42.0",
+    "@typescript-eslint/rule-tester": "^8.62.1",
     "eslint": "^9.37.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
@@ -80,6 +81,7 @@
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.1",
     "tsconfig-paths-jest": "^0.0.1",
+    "typescript": "^5.7.3",
     "typescript-eslint": "^8.42.0"
   }
 }

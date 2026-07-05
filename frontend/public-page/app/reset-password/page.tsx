@@ -12,6 +12,7 @@ import { AuthShell } from '@/app/shared/auth/auth-shell';
 import { AuthHeading } from '@/app/shared/auth/auth-heading';
 import { authService } from '@/lib/contexts/auth-service';
 import { isPasswordValid } from '@/lib/utils/password';
+import { formErrorMessage } from '@/lib/api/error-handler';
 
 function ResetPasswordForm() {
   const t = useTranslations('auth.resetPassword');
@@ -52,7 +53,7 @@ function ResetPasswordForm() {
       setTimeout(() => router.push('/login'), 3000);
     } catch (err) {
       console.error('Reset password error:', err);
-      setError(err instanceof Error ? err.message : t('errors.failed'));
+      setError(formErrorMessage(err, t('errors.failed')));
     } finally {
       setIsLoading(false);
     }

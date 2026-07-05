@@ -10,6 +10,7 @@ import { FormAlert } from '@/app/shared/ui/form-alert';
 import { AuthShell } from '@/app/shared/auth/auth-shell';
 import { AuthHeading } from '@/app/shared/auth/auth-heading';
 import { authService } from '@/lib/contexts/auth-service';
+import { formErrorMessage } from '@/lib/api/error-handler';
 
 export default function ForgotPasswordPage() {
   const t = useTranslations('auth.forgotPassword');
@@ -27,7 +28,7 @@ export default function ForgotPasswordPage() {
       setSuccess(true);
     } catch (err) {
       console.error('Forgot password error:', err);
-      setError(err instanceof Error ? err.message : t('error'));
+      setError(formErrorMessage(err, t('error')));
     } finally {
       setIsLoading(false);
     }

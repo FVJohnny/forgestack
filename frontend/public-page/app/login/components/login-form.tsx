@@ -13,6 +13,7 @@ import { FormAlert } from '@/app/shared/ui/form-alert';
 import { AuthHeading } from '@/app/shared/auth/auth-heading';
 import { GoogleSignInButton } from '@/app/shared/ui/google-sign-in-button';
 import { useAuth } from '@/lib/contexts/auth-context';
+import { formErrorMessage } from '@/lib/api/error-handler';
 
 const GOOGLE_OAUTH_ENABLED = !!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -33,7 +34,7 @@ export function LoginForm() {
       await loginWithGoogle(accessToken);
       router.push('/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('googleError'));
+      setError(formErrorMessage(err, t('googleError')));
     } finally {
       setIsGoogleLoading(false);
     }
@@ -47,7 +48,7 @@ export function LoginForm() {
       await login(email, password);
       router.push('/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('errorDefault'));
+      setError(formErrorMessage(err, t('errorDefault')));
     } finally {
       setIsLoading(false);
     }

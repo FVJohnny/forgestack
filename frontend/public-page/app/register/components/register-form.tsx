@@ -14,6 +14,7 @@ import { AuthHeading } from '@/app/shared/auth/auth-heading';
 import { GoogleSignInButton } from '@/app/shared/ui/google-sign-in-button';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { isPasswordValid } from '@/lib/utils/password';
+import { formErrorMessage } from '@/lib/api/error-handler';
 
 const GOOGLE_OAUTH_ENABLED = !!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -37,7 +38,7 @@ export function RegisterForm() {
       await loginWithGoogle(accessToken);
       router.push('/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : tLogin('googleError'));
+      setError(formErrorMessage(err, tLogin('googleError')));
     } finally {
       setIsGoogleLoading(false);
     }
@@ -72,7 +73,7 @@ export function RegisterForm() {
         router.push('/login');
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('errors.default'));
+      setError(formErrorMessage(err, t('errors.default')));
     } finally {
       setIsLoading(false);
     }

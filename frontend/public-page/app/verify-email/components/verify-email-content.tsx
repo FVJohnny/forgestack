@@ -7,6 +7,7 @@ import { Button } from '@/app/shared/ui/button';
 import { FormAlert } from '@/app/shared/ui/form-alert';
 import { authService } from '@/lib/contexts/auth-service';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { formErrorMessage } from '@/lib/api/error-handler';
 
 type VerificationStatus = 'loading' | 'success' | 'error';
 
@@ -34,7 +35,7 @@ export function VerifyEmailContent() {
       } catch (err) {
         if (isMounted) {
           setStatus('error');
-          setErrorMessage(err instanceof Error ? err.message : t('errors.default'));
+          setErrorMessage(formErrorMessage(err, t('errors.default')));
         }
       }
     };

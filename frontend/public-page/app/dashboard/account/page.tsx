@@ -15,6 +15,7 @@ import { useAuth } from '@/lib/contexts/auth-context';
 import { accountService } from '@/lib/api/services/account.service';
 import { isPasswordValid } from '@/lib/utils/password';
 import { PageHeader } from '../components/page-header';
+import { formErrorMessage } from '@/lib/api/error-handler';
 
 export default function AccountPage() {
   const t = useTranslations('app.account');
@@ -46,7 +47,7 @@ export default function AccountPage() {
       toast.success(t('password.success'));
       setTimeout(() => logout(), 2500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('password.errors.failed'));
+      setError(formErrorMessage(err, t('password.errors.failed')));
     } finally {
       setSubmitting(false);
     }

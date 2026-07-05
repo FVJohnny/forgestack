@@ -2,6 +2,7 @@ import type { SharedAggregateDTO } from '@libs/nestjs-common';
 import { CorrelationLogger } from '@libs/nestjs-common';
 import { MongoClient } from 'mongodb';
 import { MongoDBConfigService } from '../mongodb-config.service';
+import { Base_MongoRepository } from '../infrastructure/base.mongo-repository';
 
 export class MongodbTestService<T extends SharedAggregateDTO> {
   readonly mongoClient: MongoClient;
@@ -73,6 +74,11 @@ export class MongodbTestService<T extends SharedAggregateDTO> {
         return;
       }
       throw error;
+    } finally {
+      // The drop removed the indexes with the collection; forget the memoized
+      // "indexes initialized" state so the next repository operation recreates
+      // them instead of trusting a stale lock.
+      Base_MongoRepository.invalidateIndexLock(this.collectionName);
     }
   }
 }

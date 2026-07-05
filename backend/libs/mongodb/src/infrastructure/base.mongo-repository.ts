@@ -35,7 +35,6 @@ export abstract class Base_MongoRepository<
 {
   protected readonly logger: CorrelationLogger;
   protected readonly collection: Collection<TDto>;
-  private indexesInitialized: Promise<void>;
   private static indexInitializationLocks: Map<string, Promise<void>> = new Map();
 
   constructor(
@@ -46,16 +45,41 @@ export abstract class Base_MongoRepository<
     this.logger = new CorrelationLogger(this.constructor.name);
     this.collection = this.mongoClient.db().collection<TDto>(this.collectionName);
 
-    let existingLock = Base_MongoRepository.indexInitializationLocks.get(this.collectionName);
-    if (!existingLock) {
-      existingLock = this.initializeIndexes();
-      Base_MongoRepository.indexInitializationLocks.set(this.collectionName, existingLock);
-    }
-    this.indexesInitialized = existingLock;
+    // Kick off index creation eagerly. A failure here is not fatal: the lock
+    // is evicted on rejection and ensureIndexes() retries on the next call.
+    void this.getOrCreateIndexLock();
   }
 
   async ensureIndexes(): Promise<void> {
-    await this.indexesInitialized;
+    await this.getOrCreateIndexLock();
+  }
+
+  /**
+   * Forget the memoized init state for a collection. Must be called when the
+   * collection is dropped (e.g. by MongodbTestService.cleanup()), otherwise
+   * the lock keeps saying "initialized" while the unique `id` index that
+   * insertIfNew's E11000-based dedup relies on is gone.
+   */
+  static invalidateIndexLock(collectionName: string): void {
+    Base_MongoRepository.indexInitializationLocks.delete(collectionName);
+  }
+
+  private getOrCreateIndexLock(): Promise<void> {
+    let lock = Base_MongoRepository.indexInitializationLocks.get(this.collectionName);
+    if (!lock) {
+      const attempt = this.initializeIndexes();
+      lock = attempt;
+      Base_MongoRepository.indexInitializationLocks.set(this.collectionName, attempt);
+      // Evict a failed init (e.g. Mongo briefly unreachable at boot) so the
+      // next operation retries instead of rethrowing the cached rejection
+      // forever. The identity check keeps a newer attempt from being evicted.
+      attempt.catch(() => {
+        if (Base_MongoRepository.indexInitializationLocks.get(this.collectionName) === attempt) {
+          Base_MongoRepository.indexInitializationLocks.delete(this.collectionName);
+        }
+      });
+    }
+    return lock;
   }
 
   protected abstract toEntity(dto: TDto): TEnt;

@@ -650,4 +650,46 @@ describe('User Entity', () => {
       });
     });
   });
+
+  // Item 191: Google OAuth aggregate methods were untested.
+  describe('Google OAuth', () => {
+    describe('createFromGoogle', () => {
+      it('creates an active, Google-linked user and emits UserRegistered', async () => {
+        const uniquenessChecker = new UserUniquenessChecker_Mock(true);
+
+        const user = await User.createFromGoogle(
+          { email: new Email('new@example.com'), googleId: 'g-1' },
+          uniquenessChecker,
+        );
+
+        expect(user.status.toValue()).toBe(UserStatusEnum.ACTIVE);
+        expect(user.getUncommittedEvents()).toHaveLength(1);
+        expect(user.getUncommittedEvents()[0]).toBeInstanceOf(UserRegistered_DomainEvent);
+      });
+
+      it('throws AlreadyExistsException when the email is not unique', async () => {
+        const uniquenessChecker = new UserUniquenessChecker_Mock(false);
+
+        await expect(
+          User.createFromGoogle(
+            { email: new Email('taken@example.com'), googleId: 'g-2' },
+            uniquenessChecker,
+          ),
+        ).rejects.toThrow(AlreadyExistsException);
+      });
+    });
+
+    describe('linkGoogleAccount', () => {
+      it('links a googleId to a user that has none', () => {
+        const user = User.random({ googleId: undefined });
+        user.linkGoogleAccount('g-3');
+        expect(user.toValue().googleId).toBe('g-3');
+      });
+
+      it('throws InvalidOperationException when a Google account is already linked', () => {
+        const user = User.random({ googleId: 'already-linked' });
+        expect(() => user.linkGoogleAccount('g-4')).toThrow(InvalidOperationException);
+      });
+    });
+  });
 });

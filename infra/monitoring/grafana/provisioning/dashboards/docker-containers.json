@@ -394,6 +394,7 @@
           "refId": "B"
         }
       ],
+      "description": "Populated only on a Linux host (prod). cAdvisor does not reliably expose container_fs_* metrics on Docker Desktop, so this panel is empty in the local dev stack.",
       "title": "Disk I/O",
       "type": "timeseries"
     },

@@ -10,6 +10,10 @@ Docker Compose configs for dev (`docker-compose.dev.yml`) and prod (`docker-comp
 
 Configuration for the observability stack: Prometheus scrape configs, Grafana provisioning/dashboards, Loki + Promtail log pipeline, and Tempo for distributed traces.
 
+### Removing the monitoring stack
+
+The observability stack is on by default and adds seven containers. If you do not want it, remove these services from both `infra/compose/docker-compose.dev.yml` and `infra/compose/docker-compose.prod.yml`: `prometheus`, `grafana`, `cadvisor`, `tempo`, `loki`, `promtail`, and `portainer`. Then delete the `infra/monitoring/` directory and the matching Dockerfiles under `infra/dockerfiles/` (`Dockerfile.prometheus`, `Dockerfile.grafana`, `Dockerfile.loki`, `Dockerfile.promtail`, `Dockerfile.tempo`). The services keep exporting metrics and traces regardless. To stop them trying to reach Tempo, set `OTEL_TRACES_ENABLED=false` and `OTEL_METRICS_ENABLED=false` in each service env file. The `/metrics` and `/health` endpoints stay up, so you can point your own monitoring at them later.
+
 ## Environment Variables
 
 Each service has a **local dev** env file plus a `.example` template, and the production deploy uses a separate set of `.env.prod` files under `infra/env/`. When adding or changing env vars, **keep the example templates in sync** with the real files.

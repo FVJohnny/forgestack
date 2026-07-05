@@ -51,6 +51,10 @@ groups:
 
       - alert: ContainerHighMemory
         # Container using >90% of its mem_limit for a sustained window.
+        # Only evaluates in prod: it needs container_spec_memory_limit_bytes,
+        # which requires a mem_limit (set in docker-compose.prod.yml) and a
+        # Linux cAdvisor. On Docker Desktop that series is absent, so the > 0
+        # guard makes this a silent no-op in dev (same caveat as HostLowDisk).
         expr: |
           (container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.9)
           and (container_spec_memory_limit_bytes > 0)

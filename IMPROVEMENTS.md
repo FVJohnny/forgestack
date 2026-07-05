@@ -611,6 +611,7 @@ The two most urgent are item 119 (CSRF, from the recent cookie change) and item 
 
 - [ ] **127. Dashboard endpoints are authenticated but not admin-restricted** (Low)
   `DashboardController` uses `@UseGuards(JwtAuthGuard)` only, so `/dashboard/events` and `/dashboard/health` expose internal event throughput and subsystem readiness to any logged-in user, not just admins. The dev console is presumably an admin tool. Classification: opinion. Fix: add `AdminRoleGuard` if the console is admin-only.
+  **Status: Deferred to a product decision (flagged for the maintainer).** These endpoints are now JWT-protected by the global guard (item 125), so they are no longer anonymous. Whether to further restrict them to admins is a genuine product call, not a clear-cut bug: the frontend Overview page (`app/dashboard/page.tsx`, reachable by any logged-in user, not just `/dashboard/admin`) reads `/dashboard/events` and `/dashboard/health`, so adding `AdminRoleGuard` would break the Overview for regular users. Left as-is to avoid a UX regression; if the dev console is meant to be admin-only, add `AdminRoleGuard` to `DashboardController` and gate the Overview route on the frontend too. The data exposed is operational (event throughput, subsystem readiness), not user PII.
 
 ## J. Backend reliability
 

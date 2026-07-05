@@ -52,6 +52,46 @@ jobs:
       - name: Build
         run: npm run build
 
+  # Cheap validation of everything the deploy path depends on: compose
+  # interpolation, shell syntax, alert rules, and the Caddyfile. Without this,
+  # a broken compose file or alert rule is first discovered mid-deploy.
+  infra:
+    name: Infra validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The env files are gitignored; stand-ins from the committed examples
+      # are enough for interpolation and env_file resolution.
+      - name: Create env files from examples
+        run: |
+          for f in infra/env/*.example; do cp "$f" "${f%.example}"; done
+          for d in backend/services/*/; do
+            if [ -f "$d.env.example" ]; then cp "$d.env.example" "$d.env"; fi
+          done
+          cp frontend/public-page/.env.local.example frontend/public-page/.env.local
+          cp infra/monitoring/prometheus/internal-api-key.example infra/monitoring/prometheus/internal-api-key
+
+      - name: Validate compose files
+        run: |
+          docker compose -f infra/compose/docker-compose.dev.yml config -q
+          docker compose -f infra/compose/docker-compose.prod.yml --env-file infra/env/infra.env.prod config -q
+
+      - name: Check shell script syntax
+        run: bash -n infra/scripts/*.sh infra/mongo/mongo-startup.sh scripts/*.sh
+
+      - name: Check Prometheus alert rules
+        run: >
+          docker run --rm -v "$PWD/infra/monitoring/prometheus:/cfg:ro"
+          --entrypoint promtool prom/prometheus:v2.54.1 check rules /cfg/alert-rules.yml
+
+      - name: Validate Caddyfile
+        run: >
+          docker run --rm
+          -v "$PWD/infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
+          -v "$PWD/infra/caddy/dev-only:/etc/caddy/extra:ro"
+          caddy:2.8-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
   # The mongodb/redis lib tests hit real datastores, so stand them up first.
   test:
     name: Test

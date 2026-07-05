@@ -5,11 +5,15 @@
   "targets": {
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": [
+        "{projectRoot}/coverage"
+      ],
       "options": {
         "jestConfig": "tools/forgestack/jest.config.js"
       }
     }
   },
-  "tags": ["type:tooling"]
+  "tags": [
+    "type:tooling"
+  ]
 }

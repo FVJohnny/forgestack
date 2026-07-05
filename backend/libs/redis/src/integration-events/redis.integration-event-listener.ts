@@ -93,9 +93,7 @@ export class RedisIntegrationEventListener extends Base_IntegrationEventListener
     // idempotency by making every redelivery look like a new message.
     const id = parsedMessage.id as string;
     if (!id) {
-      throw new Error(
-        'Redis message has no payload id; cannot dedupe it in the inbox.',
-      );
+      throw new Error('Redis message has no payload id; cannot dedupe it in the inbox.');
     }
 
     return { ...parsedMessage, id, name: parsedMessage.name as string };

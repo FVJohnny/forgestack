@@ -50,7 +50,8 @@ export class TracingMiddleware implements NestMiddleware {
     // Read cookie-first or userId enrichment is dead for all browser traffic.
     const cookieToken = (req.cookies as Record<string, string> | undefined)?.[ACCESS_TOKEN_COOKIE];
     const authHeader = req.headers.authorization;
-    const token = cookieToken ?? (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined);
+    const token =
+      cookieToken ?? (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined);
     if (!token) {
       return undefined;
     }

@@ -41,7 +41,8 @@
     "lint": {
       "inputs": [
         "default",
-        "{workspaceRoot}/eslint.config.mjs"
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/.prettierrc"
       ],
       "cache": true
     },

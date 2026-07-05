@@ -100,7 +100,9 @@ describe('GetNewTokensFromEmailVerification_QueryHandler', () => {
 
   describe('State guard (item 126)', () => {
     it('refuses to mint tokens for an unverified verification', async () => {
-      const { handler, emailVerificationRepository } = await setup({ withEmailVerification: false });
+      const { handler, emailVerificationRepository } = await setup({
+        withEmailVerification: false,
+      });
       // Seed an unverified verification (a different user than the seeded one).
       const unverified = EmailVerification.random();
       await emailVerificationRepository.save(unverified);

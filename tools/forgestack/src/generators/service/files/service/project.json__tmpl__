@@ -47,7 +47,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": ["{projectRoot}/coverage"],
       "options": {
         "jestConfig": "backend/services/<%= name %>/jest.config.js"
       }

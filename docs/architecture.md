@@ -45,9 +45,9 @@ Defined in `tsconfig.base.json`:
 - `@libs/nestjs-kafka` → `backend/libs/kafka/src`
 - `@libs/nestjs-mongodb` → `backend/libs/mongodb/src`
 - `@libs/nestjs-redis` → `backend/libs/redis/src`
-- `@bc/*` → `backend/services/service-1/src/bounded-contexts/*`
+- `@bc/*` → `<service>/src/bounded-contexts/*` (per service: the base config uses TypeScript's `${configDir}`, so each service resolves the alias against its own source tree)
 
-Always prefer these aliases over relative imports when importing across bounded contexts or from libs. Use relative imports only within the same module/folder.
+Use the `@libs/*` aliases when importing from the shared libs, and `@bc/*` for absolute imports within a bounded context (or from the `shared` context). Importing across bounded contexts is forbidden by the `bounded-context/no-cross-imports` lint rule, with `shared` as the only exception. Use relative imports only within the same module/folder.
 
 ## Testing Approach
 

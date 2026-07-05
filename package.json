@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/FVJohnny/nestjs-microservices-framework.git"
+    "url": "https://github.com/FVJohnny/forgestack.git"
   },
   "author": "FVJohnny",
   "engines": {

@@ -9,9 +9,10 @@ getting set up and submitting changes.
 npm run dev:start
 ```
 
-This provisions prerequisites (Node, Docker), installs git hooks, creates
-`.env` files from the examples, and brings up the full stack via Docker
-Compose. See the [README](README.md) and [`docs/`](docs/) for details.
+This checks prerequisites (it verifies Node matches `.nvmrc` and can install
+Docker if it is missing, but never auto-installs Node), installs git hooks,
+creates `.env` files from the examples, and brings up the full stack via
+Docker Compose. See the [README](README.md) and [`docs/`](docs/) for details.
 
 ## Development workflow
 
@@ -24,6 +25,10 @@ Compose. See the [README](README.md) and [`docs/`](docs/) for details.
   npm run lint
   npm run test
   ```
+
+  Note: the mongodb and redis lib suites hit real datastores, so `npm run
+  test` needs the dev stack running (`npm run dev:start`). Without it those
+  suites fail with connection errors.
 
 ## Commit conventions
 

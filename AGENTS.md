@@ -10,7 +10,7 @@ Service-1 applies hexagonal architecture with DDD and CQRS. Domain entities, val
 
 ## Build, Test & Development Commands
 
-- `npm run dev:start` provisions prerequisites and git hooks, creates `.env` files, and brings up the full stack via `infra/scripts/start-dev.sh` (MongoDB, Redis, Kafka, monitoring, Caddy). Stop it with `npm run dev:down`.
+- `npm run dev:start` checks prerequisites (it verifies Node matches `.nvmrc` and can install Docker if it is missing, but never auto-installs Node), installs git hooks, creates `.env` files, and brings up the full stack via `infra/scripts/start-dev.sh` (MongoDB, Redis, Kafka, monitoring, Caddy). Stop it with `npm run dev:down`.
 - `npm run dev:restart <service>` recreates a single service (e.g. `npm run dev:restart service-1`); `npm run dev:restart:all` does a full down + up. Tail logs with `npm run dev:logs`.
 - `npm run build` runs `nx run-many -t build`; target a single service with `nx build service-1`.
 - `npm run typecheck` runs TypeScript checking across the monorepo.

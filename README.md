@@ -104,7 +104,7 @@ Useful dev scripts:
 ```bash
 npm run typecheck     # TypeScript across the monorepo
 npm run lint          # ESLint (includes the custom architectural rules)
-npm run test          # Jest test suites
+npm run test          # Jest test suites (needs the dev stack up: the mongodb and redis suites hit real datastores)
 ```
 
 Other useful scripts: `npm run lint:fix`, `npm run test:watch`, `npm run test:nocache`, `npm run build`.
@@ -197,7 +197,7 @@ The script builds `linux/amd64` images, pushes them to your Docker registry (con
 4. Update monitoring stack
 5. Update ALL (apps + proxy + monitoring)
 6. Deploy only (no builds, re-deploy current image versions)
-7. Exit
+0. Exit
 
 To deploy a single backend service, type its name at the prompt (e.g. `service-1`) instead of a number.
 

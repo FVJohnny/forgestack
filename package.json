@@ -29,7 +29,7 @@
     "build": "nx run-many -t build --exclude=forgestack",
     "typecheck": "./scripts/check-typescript.sh",
     "test": "nx run-many --target=test --all --exclude=forgestack",
-    "test:watch": "npm run test -- --watchAll",
+    "test:watch": "nx run-many --target=test --all --exclude=forgestack,public-page -- --watchAll",
     "test:nocache": "npm run test -- --skip-nx-cache",
     "lint": "nx run-many -t lint --exclude=forgestack",
     "lint:fix": "nx run-many -t lint --exclude=forgestack -- --fix",

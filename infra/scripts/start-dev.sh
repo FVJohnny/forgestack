@@ -107,13 +107,16 @@ npm install
 
 echo "🐳 Starting Docker containers..."
 
-# Check if Kafka had a previous failure and clean up if needed
+# Check if Kafka had a previous failure and clean up if needed. A crashed
+# Kafka often leaves ZooKeeper state that references the dead broker id, so
+# clear both. The compose project is named after the compose file's directory
+# ("compose"), which sets both the container and volume name prefixes.
 echo "  Checking for stale Kafka/ZooKeeper data..."
-if docker ps -a | grep -q "kafka-ephemeral.*Exited"; then
+if docker compose -f infra/compose/docker-compose.dev.yml ps -a --services --status exited 2>/dev/null | grep -qx kafka; then
     echo "  ⚠️  Detected previous Kafka failure. Cleaning up..."
     docker compose -f infra/compose/docker-compose.dev.yml rm -sf kafka zookeeper 2>/dev/null || true
     echo "  Removing ZooKeeper volumes to clear stale data..."
-    docker volume rm docker_zookeeper_data_dev docker_zookeeper_log_dev 2>/dev/null || true
+    docker volume rm compose_zookeeper_data_dev compose_zookeeper_log_dev 2>/dev/null || true
     echo "  ✅ Cleanup complete. Starting fresh..."
 else
     echo "  Removing existing Kafka container to ensure fresh start..."
@@ -124,10 +127,17 @@ fi
 echo "  Starting all containers..."
 if ! docker compose -f infra/compose/docker-compose.dev.yml up --build -d; then
     echo "  ⚠️  Initial startup failed. Attempting recovery..."
-    echo "  Cleaning up all containers and volumes..."
-    docker compose -f infra/compose/docker-compose.dev.yml down -v 2>/dev/null || true
-    echo "  Retrying startup with clean state..."
-    docker compose -f infra/compose/docker-compose.dev.yml up --build -d
+    # Recreate the containers but keep the volumes: a transient failure (port
+    # conflict, slow health check) must not wipe dev Mongo/Redis/Kafka data.
+    echo "  Removing containers (volumes are preserved)..."
+    docker compose -f infra/compose/docker-compose.dev.yml down 2>/dev/null || true
+    echo "  Retrying startup..."
+    if ! docker compose -f infra/compose/docker-compose.dev.yml up --build -d; then
+        echo "  ❌ Startup failed twice. If you suspect corrupted state, wipe the"
+        echo "     dev volumes (THIS DELETES LOCAL DEV DATA) and re-run:"
+        echo "     docker compose -f infra/compose/docker-compose.dev.yml down -v"
+        exit 1
+    fi
 fi
 
 # Trust Caddy's self-signed CA certificate (only needed once, but safe to re-run)

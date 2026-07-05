@@ -1,9 +1,9 @@
-import { CallHandler, ExecutionContext } from '@nestjs/common';
+import type { CallHandler, ExecutionContext } from '@nestjs/common';
 import { EventEmitter } from 'events';
 import { of } from 'rxjs';
 
 import { MetricsInterceptor } from './metrics.interceptor';
-import { MetricsService } from './metrics.service';
+import type { MetricsService } from './metrics.service';
 
 /**
  * Item 136: the interceptor recorded every request as status 200 because it

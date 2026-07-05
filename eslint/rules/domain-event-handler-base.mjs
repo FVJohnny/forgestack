@@ -1,7 +1,8 @@
 import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/FVJohnny/nestjs-microservices-framework/blob/main/eslint/rules/${name}.mjs`,
+  (name) =>
+    `https://github.com/FVJohnny/nestjs-microservices-framework/blob/main/eslint/rules/${name}.mjs`,
 );
 
 export default createRule({
@@ -54,7 +55,10 @@ export default createRule({
 
         // Check if the callee is Base_DomainEventHandler
         const callee = node.superClass.callee;
-        if (callee.type !== AST_NODE_TYPES.Identifier || callee.name !== 'Base_DomainEventHandler') {
+        if (
+          callee.type !== AST_NODE_TYPES.Identifier ||
+          callee.name !== 'Base_DomainEventHandler'
+        ) {
           context.report({
             node,
             messageId: 'mustExtendBase',

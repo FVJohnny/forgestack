@@ -135,7 +135,10 @@ ruleTester.run('no-cross-bc-imports', noCrossBcImports, {
     // Bare package specifier — never a BC.
     { filename: AUTH_FILE, code: "import { X } from '@libs/nestjs-common';" },
     // File outside any bounded context — rule does not apply.
-    { filename: '/repo/backend/services/service-1/src/main.ts', code: "import { X } from '@bc/notifications/x';" },
+    {
+      filename: '/repo/backend/services/service-1/src/main.ts',
+      code: "import { X } from '@bc/notifications/x';",
+    },
   ],
   invalid: [
     // @bc/ alias into another BC.
@@ -171,7 +174,4 @@ ruleTester.run('no-cross-bc-imports', noCrossBcImports, {
   ],
 });
 
-// eslint-disable-next-line no-console
-console.log(
-  'rule suites passed (domain-event, integration-event, aggregate, no-cross-bc-imports)',
-);
+console.log('rule suites passed (domain-event, integration-event, aggregate, no-cross-bc-imports)');

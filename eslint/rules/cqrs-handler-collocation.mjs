@@ -2,7 +2,8 @@ import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 import path from 'path';
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/FVJohnny/nestjs-microservices-framework/blob/main/eslint/rules/${name}.mjs`,
+  (name) =>
+    `https://github.com/FVJohnny/nestjs-microservices-framework/blob/main/eslint/rules/${name}.mjs`,
 );
 
 export default createRule({
@@ -10,8 +11,7 @@ export default createRule({
   meta: {
     type: 'problem',
     docs: {
-      description:
-        'Ensure CQRS handlers only use commands/queries/events from the same directory',
+      description: 'Ensure CQRS handlers only use commands/queries/events from the same directory',
     },
     schema: [],
     messages: {
@@ -22,7 +22,6 @@ export default createRule({
   defaultOptions: [],
   create(context) {
     const filename = context.filename;
-    const sourceCode = context.sourceCode;
 
     // Determine handler type and expected message type based on file path
     function getHandlerInfo(filepath) {
@@ -124,10 +123,7 @@ export default createRule({
             node.specifiers.some((spec) => {
               if (spec.type === AST_NODE_TYPES.ImportSpecifier) {
                 const name = spec.imported.name;
-                return (
-                  name.endsWith('_Command') ||
-                  name.endsWith('_Query')
-                );
+                return name.endsWith('_Command') || name.endsWith('_Query');
               }
               return false;
             });

@@ -18,9 +18,7 @@ describe('RedisIntegrationEventListener.parseMessage', () => {
   });
 
   it('throws when the payload has no id (does NOT fabricate one)', () => {
-    expect(() => listener.parse(JSON.stringify({ name: 'user.created' }))).toThrow(
-      /no payload id/,
-    );
+    expect(() => listener.parse(JSON.stringify({ name: 'user.created' }))).toThrow(/no payload id/);
   });
 
   it('throws on unparseable JSON', () => {

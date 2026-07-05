@@ -11,6 +11,18 @@
       "options": {
         "jestConfig": "tools/forgestack/jest.config.js"
       }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "tools/forgestack/src/**/*.js",
+          "eslint/rules/**/*.mjs"
+        ]
+      }
     }
   },
   "tags": [

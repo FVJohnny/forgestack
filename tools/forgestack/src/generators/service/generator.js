@@ -40,7 +40,9 @@ async function serviceGenerator(tree, options) {
   const insertBefore = (filePath, marker, block, label) => {
     const content = tree.read(filePath, 'utf-8');
     if (content === null || !content.includes(marker)) {
-      warnings.push(`Could not find "${marker.trim()}" in ${filePath} — add the ${label} manually.`);
+      warnings.push(
+        `Could not find "${marker.trim()}" in ${filePath} — add the ${label} manually.`,
+      );
       return;
     }
     if (content.includes(`  ${name}:`)) return; // already wired
@@ -61,7 +63,12 @@ async function serviceGenerator(tree, options) {
     ``,
     ``,
   ].join('\n');
-  insertBefore('infra/compose/docker-compose.dev.yml', '  public-page:', devBlock, 'dev compose block');
+  insertBefore(
+    'infra/compose/docker-compose.dev.yml',
+    '  public-page:',
+    devBlock,
+    'dev compose block',
+  );
 
   const prodBlock = [
     `  ${name}:`,
@@ -75,7 +82,12 @@ async function serviceGenerator(tree, options) {
     ``,
     ``,
   ].join('\n');
-  insertBefore('infra/compose/docker-compose.prod.yml', '  public-page:', prodBlock, 'prod compose block');
+  insertBefore(
+    'infra/compose/docker-compose.prod.yml',
+    '  public-page:',
+    prodBlock,
+    'prod compose block',
+  );
 
   // ---------------------------------------------------------------------
   // 3. Caddy host + caddy depends_on (public services only)
@@ -96,7 +108,9 @@ async function serviceGenerator(tree, options) {
     if (caddy && caddy.includes(caddyMarker) && !caddy.includes(`reverse_proxy ${name}:3000`)) {
       tree.write(caddyPath, caddy.replace(caddyMarker, caddyBlock + caddyMarker));
     } else if (!caddy || !caddy.includes(caddyMarker)) {
-      warnings.push(`Could not find the grafana block in ${caddyPath} — add the ${name} host manually.`);
+      warnings.push(
+        `Could not find the grafana block in ${caddyPath} — add the ${name} host manually.`,
+      );
     }
 
     const prodPath = 'infra/compose/docker-compose.prod.yml';
@@ -125,23 +139,27 @@ async function serviceGenerator(tree, options) {
     // Link the new workspace package (equivalent of running `npm i`).
     installPackagesTask(tree, true);
 
-    /* eslint-disable no-console */
     console.log('');
     console.log(`✅ ${name} scaffolded and installed. Next steps:`);
     console.log('');
     console.log(`  1. npx nx run ${name}:test                # sanity-check the skeleton`);
-    console.log(`  2. npm run dev:restart ${name} caddy      # or npm run dev:start for the full stack`);
+    console.log(
+      `  2. npm run dev:restart ${name} caddy      # or npm run dev:start for the full stack`,
+    );
     if (options.expose !== false) {
       console.log(`     → https://${host}.localhost/api/v1/greetings (GET list / POST {message})`);
     }
-    console.log(`  3. Fill in infra/env/${name}.env.prod for production (secrets are placeholders)`);
+    console.log(
+      `  3. Fill in infra/env/${name}.env.prod for production (secrets are placeholders)`,
+    );
     if (options.expose !== false) {
-      console.log(`  4. Prod DNS: point ${host}.<your-domain> at the server; rebuild caddy on next deploy`);
+      console.log(
+        `  4. Prod DNS: point ${host}.<your-domain> at the server; rebuild caddy on next deploy`,
+      );
     }
     console.log('');
     console.log('  Docs: docs/architecture.md (bounded contexts, events, CQRS wiring)');
     for (const w of warnings) console.log(`  ⚠️  ${w}`);
-    /* eslint-enable no-console */
   };
 }
 

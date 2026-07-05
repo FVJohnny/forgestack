@@ -1,7 +1,8 @@
 import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/FVJohnny/nestjs-microservices-framework/blob/main/eslint/rules/${name}.mjs`,
+  (name) =>
+    `https://github.com/FVJohnny/nestjs-microservices-framework/blob/main/eslint/rules/${name}.mjs`,
 );
 
 export default createRule({
@@ -9,8 +10,7 @@ export default createRule({
   meta: {
     type: 'problem',
     docs: {
-      description:
-        'Enforce that all domain event classes extend from Base_DomainEvent',
+      description: 'Enforce that all domain event classes extend from Base_DomainEvent',
     },
     schema: [],
     messages: {

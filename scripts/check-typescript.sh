@@ -14,4 +14,4 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 echo "🔍 Typechecking all projects (nx run-many -t typecheck)..."
-exec npx nx run-many -t typecheck --exclude=forgestack
+exec npx nx run-many -t typecheck

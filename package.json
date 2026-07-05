@@ -26,13 +26,13 @@
     "boilerplate"
   ],
   "scripts": {
-    "build": "nx run-many -t build --exclude=forgestack",
+    "build": "nx run-many -t build",
     "typecheck": "./scripts/check-typescript.sh",
-    "test": "nx run-many --target=test --all --exclude=forgestack",
-    "test:watch": "nx run-many --target=test --all --exclude=forgestack,public-page -- --watchAll",
+    "test": "nx run-many --target=test",
+    "test:watch": "nx run-many --target=test --exclude=public-page -- --watchAll",
     "test:nocache": "npm run test -- --skip-nx-cache",
-    "lint": "nx run-many -t lint --exclude=forgestack",
-    "lint:fix": "nx run-many -t lint --exclude=forgestack -- --fix",
+    "lint": "nx run-many -t lint",
+    "lint:fix": "nx run-many -t lint -- --fix",
     "test:eslint-rules": "node eslint/rules/__tests__/base-class-rules.test.mjs",
     "dev:start": "./infra/scripts/start-dev.sh",
     "dev:down": "docker compose -f infra/compose/docker-compose.dev.yml down",
@@ -81,6 +81,5 @@
     "ts-jest": "^29.4.1",
     "tsconfig-paths-jest": "^0.0.1",
     "typescript-eslint": "^8.42.0"
-  },
-  "nx": {}
+  }
 }

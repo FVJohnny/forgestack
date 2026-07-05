@@ -1,5 +1,6 @@
-import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import type { ExecutionContext } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
+import type { JwtService } from '@nestjs/jwt';
 import { type IQueryBus } from '@nestjs/cqrs';
 import { JsonWebTokenError } from 'jsonwebtoken';
 
@@ -18,10 +19,12 @@ describe('JwtAuthGuard', () => {
       switchToHttp: () => ({ getRequest: () => req }),
     }) as ExecutionContext;
 
-  const setup = (opts: {
-    verify?: jest.Mock;
-    query?: jest.Mock;
-  } = {}) => {
+  const setup = (
+    opts: {
+      verify?: jest.Mock;
+      query?: jest.Mock;
+    } = {},
+  ) => {
     const jwtService = {
       verifyAsync: opts.verify ?? jest.fn().mockResolvedValue({ sub: 'u1', email: 'a@b.c' }),
     } as unknown as JwtService;
@@ -33,9 +36,9 @@ describe('JwtAuthGuard', () => {
 
   it('throws Unauthorized when no token is present', async () => {
     const { guard } = setup();
-    await expect(guard.canActivate(makeContext({ headers: {}, cookies: {} }))).rejects.toBeInstanceOf(
-      UnauthorizedException,
-    );
+    await expect(
+      guard.canActivate(makeContext({ headers: {}, cookies: {} })),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
   it('accepts a valid httpOnly cookie token and attaches the payload', async () => {

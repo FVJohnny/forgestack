@@ -34,7 +34,9 @@ describe('KafkaIntegrationEventListener.parseMessage', () => {
   });
 
   it('throws PoisonMessageError when there is no id anywhere (does NOT fabricate one)', () => {
-    expect(() => listener.parse(kafkaMessage({ name: 'user.created' }))).toThrow(PoisonMessageError);
+    expect(() => listener.parse(kafkaMessage({ name: 'user.created' }))).toThrow(
+      PoisonMessageError,
+    );
   });
 
   it('throws PoisonMessageError on unparseable JSON (item 128)', () => {

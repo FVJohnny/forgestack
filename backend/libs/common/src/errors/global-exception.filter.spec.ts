@@ -1,4 +1,5 @@
-import { ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import type { ArgumentsHost } from '@nestjs/common';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 import { BaseException } from './base.exception';
 import { GlobalExceptionFilter } from './global-exception.filter';

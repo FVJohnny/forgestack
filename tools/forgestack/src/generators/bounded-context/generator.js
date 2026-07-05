@@ -74,14 +74,17 @@ async function boundedContextGenerator(tree, options) {
     // 2a. Add the import after the last existing bounded-context import (or
     // after the first import as a fallback).
     const importLine = `import { ${moduleClass} } from '${moduleImportPath}';\n`;
-    const bcImportRegex = /import \{ \w+BoundedContextModule \} from '\.\/bounded-contexts\/[^']+';\n/g;
+    const bcImportRegex =
+      /import \{ \w+BoundedContextModule \} from '\.\/bounded-contexts\/[^']+';\n/g;
     const bcImports = [...appModule.matchAll(bcImportRegex)];
     if (bcImports.length > 0) {
       const last = bcImports[bcImports.length - 1];
       const insertAt = last.index + last[0].length;
       appModule = appModule.slice(0, insertAt) + importLine + appModule.slice(insertAt);
     } else {
-      warnings.push(`Could not find a bounded-context import in app.module.ts — add "${importLine.trim()}" manually.`);
+      warnings.push(
+        `Could not find a bounded-context import in app.module.ts — add "${importLine.trim()}" manually.`,
+      );
     }
 
     // 2b. Add the module to the imports: array, after the last existing
@@ -92,25 +95,28 @@ async function boundedContextGenerator(tree, options) {
       const last = entries[entries.length - 1];
       const indent = last[2];
       const insertAt = last.index + last[0].length;
-      appModule = appModule.slice(0, insertAt) + `\n${indent}${moduleClass},` + appModule.slice(insertAt);
+      appModule =
+        appModule.slice(0, insertAt) + `\n${indent}${moduleClass},` + appModule.slice(insertAt);
     } else {
-      warnings.push(`Could not find a BoundedContextModule entry in the app.module imports array — add "${moduleClass}" manually.`);
+      warnings.push(
+        `Could not find a BoundedContextModule entry in the app.module imports array — add "${moduleClass}" manually.`,
+      );
     }
 
     tree.write(appModulePath, appModule);
   }
 
   return () => {
-    /* eslint-disable no-console */
     console.log('');
     console.log(`✅ Bounded context "${context}" scaffolded in ${service}. Next steps:`);
     console.log('');
     console.log(`  1. npx nx run ${service}:typecheck             # sanity-check the skeleton`);
-    console.log(`  2. POST /${contextNames.fileName} { "message": "hi" }  → ${commandNames.className}_Command`);
+    console.log(
+      `  2. POST /${contextNames.fileName} { "message": "hi" }  → ${commandNames.className}_Command`,
+    );
     console.log(`  3. Add an aggregate + repository, queries, and domain/integration events`);
     console.log(`     following the \`example\` context. Docs: docs/architecture.md`);
     for (const w of warnings) console.log(`  ⚠️  ${w}`);
-    /* eslint-enable no-console */
   };
 }
 

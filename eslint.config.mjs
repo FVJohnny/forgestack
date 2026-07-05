@@ -31,9 +31,9 @@ export default [
       // The frontend has its own flat config (Next.js rules); this backend
       // config must not reach into it.
       'frontend/**',
-      'backend/libs/**/*.spec.ts',
-      'backend/libs/**/*.contract.ts',
       'backend/libs/common/src/test-exports/**',
+      // Generator templates are EJS, not valid TS/JS.
+      'tools/forgestack/src/generators/**/files/**',
     ],
   },
 
@@ -149,6 +149,49 @@ export default [
     },
   },
 
+  // Lib spec/contract files are excluded from each lib's tsconfig.json (the
+  // build config), so the project service cannot type them; parse them
+  // against the spec tsconfigs instead of ignoring them wholesale.
+  {
+    files: ['backend/libs/**/*.spec.ts', 'backend/libs/**/*.contract.ts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+        project: ['backend/libs/*/tsconfig.spec.json'],
+      },
+    },
+  },
+
+  // Plain-JS tooling (generator sources, custom lint rules) belongs to no
+  // tsconfig, so lint it without the TypeScript project service, and without
+  // the DDD rules (they need type info and target domain code, not tooling).
+  {
+    files: ['tools/**/*.js', 'eslint/**/*.mjs'],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+      },
+    },
+    rules: {
+      // The generator sources are CommonJS on purpose (run by node directly).
+      '@typescript-eslint/no-require-imports': 'off',
+      'entity-domain/no-direct-entity-mutation': 'off',
+      'cqrs/handler-collocation': 'off',
+      'cqrs/no-direct-decorators': 'off',
+      'value-object/naming': 'off',
+      'domain-event-handler/must-extend-base': 'off',
+      'command-handler/must-extend-base': 'off',
+      'query-handler/must-extend-base': 'off',
+      'aggregate/must-extend-base': 'off',
+      'aggregate-dto/must-extend-base': 'off',
+      'repository/must-extend-base': 'off',
+      'domain-event/must-extend-base': 'off',
+      'integration-event/must-extend-base': 'off',
+      'bounded-context/no-cross-imports': 'off',
+      'handler/naming': 'off',
+    },
+  },
+
   // Hexagonal Architecture rules
   ...hexagonalArchitectureConfigs,
 
@@ -160,14 +203,15 @@ export default [
     },
   },
 
-  // Tests — allow importing in-memory repos (infrastructure) from application
-  // test files, and allow directly mutating aggregate state to set up
-  // scenarios (tests are not production domain logic).
+  // Tests — allow directly mutating aggregate state to set up scenarios and
+  // defining small fixture classes (tests are not production domain logic).
+  // The layer-boundary rules stay ON for specs; hexagonal-architecture.mjs
+  // carves out only the in-memory fakes.
   {
     files: ['**/*.spec.ts', '**/*.test.ts', '**/*.e2e-spec.ts', '**/test/**/*.ts'],
     rules: {
-      'no-restricted-imports': 'off',
       'entity-domain/no-direct-entity-mutation': 'off',
+      'value-object/naming': 'off',
     },
   },
 ];

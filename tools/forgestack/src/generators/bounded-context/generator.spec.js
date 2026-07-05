@@ -78,9 +78,9 @@ describe('bounded-context generator', () => {
     });
 
     const root = 'backend/services/service-2/src/bounded-contexts/billing';
-    expect(
-      tree.exists(`${root}/application/commands/charge-card/charge-card.command.ts`),
-    ).toBe(true);
+    expect(tree.exists(`${root}/application/commands/charge-card/charge-card.command.ts`)).toBe(
+      true,
+    );
     expect(
       tree.read(`${root}/application/commands/charge-card/charge-card.command.ts`, 'utf-8'),
     ).toContain('class ChargeCard_Command');

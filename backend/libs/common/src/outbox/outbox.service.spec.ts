@@ -1,4 +1,4 @@
-import { OutboxService, OUTBOX_REPOSITORY } from './outbox.service';
+import { OutboxService } from './outbox.service';
 import { Outbox_InMemoryRepository } from './infrastructure/outbox.in-memory-repository';
 import { OutboxEvent } from './domain/outbox.aggregate';
 import {

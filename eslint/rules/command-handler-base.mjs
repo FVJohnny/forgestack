@@ -1,7 +1,8 @@
 import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/FVJohnny/nestjs-microservices-framework/blob/main/eslint/rules/${name}.mjs`,
+  (name) =>
+    `https://github.com/FVJohnny/nestjs-microservices-framework/blob/main/eslint/rules/${name}.mjs`,
 );
 
 export default createRule({
@@ -9,8 +10,7 @@ export default createRule({
   meta: {
     type: 'problem',
     docs: {
-      description:
-        'Enforce that all command handler classes extend from Base_CommandHandler',
+      description: 'Enforce that all command handler classes extend from Base_CommandHandler',
     },
     schema: [],
     messages: {

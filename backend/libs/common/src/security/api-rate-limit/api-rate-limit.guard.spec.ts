@@ -1,11 +1,10 @@
-import { ExecutionContext } from '@nestjs/common';
+import type { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { ThrottlerModuleOptions, ThrottlerStorage } from '@nestjs/throttler';
 
 import { ACCESS_TOKEN_COOKIE } from '../../auth/auth-cookies';
-import { JwtTokenService } from '../../auth/jwt-token.service';
+import type { JwtTokenService } from '../../auth/jwt-token.service';
 import { ApiRateLimitGuard } from './api-rate-limit.guard';
-import { RATE_LIMIT_TYPE_KEY } from './api-rate-limit.decorator';
 
 /**
  * Item 122: after the cookie-auth migration (item 8) browsers send no

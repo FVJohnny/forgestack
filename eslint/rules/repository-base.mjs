@@ -1,7 +1,8 @@
 import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/FVJohnny/nestjs-microservices-framework/blob/main/eslint/rules/${name}.mjs`,
+  (name) =>
+    `https://github.com/FVJohnny/nestjs-microservices-framework/blob/main/eslint/rules/${name}.mjs`,
 );
 
 export default createRule({
@@ -9,8 +10,7 @@ export default createRule({
   meta: {
     type: 'problem',
     docs: {
-      description:
-        'Enforce that all repository interfaces extend from Repository',
+      description: 'Enforce that all repository interfaces extend from Repository',
     },
     schema: [],
     messages: {
@@ -40,7 +40,10 @@ export default createRule({
         }
 
         // Only check interfaces that end with _Repository or Repository
-        if (!node.id || (!node.id.name.endsWith('_Repository') && !node.id.name.endsWith('Repository'))) {
+        if (
+          !node.id ||
+          (!node.id.name.endsWith('_Repository') && !node.id.name.endsWith('Repository'))
+        ) {
           return;
         }
 

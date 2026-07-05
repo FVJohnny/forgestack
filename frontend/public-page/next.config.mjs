@@ -38,9 +38,12 @@ const nextConfig = {
     // Google Sign-In loads from accounts.google.com, and the API lives on
     // another origin (https in docker/prod, http://localhost in bare dev).
     // Tighten connect-src to your API hosts when you fork this template.
+    // 'unsafe-eval' is only needed by `next dev` (HMR/eval sourcemaps);
+    // production Next runs fine without it, so don't ship it there.
+    const isDev = process.env.NODE_ENV !== 'production';
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com",
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://accounts.google.com`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
@@ -61,7 +64,9 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          { key: 'Strict-Transport-Security', value: 'max-age=15552000; includeSubDomains' },
+          // One year, matching helmet's value on the API hosts. The app owns
+          // this header: Caddy no longer sets a conflicting copy.
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
         ],
       },
     ];

@@ -33,11 +33,10 @@
 		Referrer-Policy "strict-origin-when-cross-origin"
 		# Block MIME sniffing.
 		X-Content-Type-Options "nosniff"
-		# Limit what other origins may embed us (clickjacking).
-		X-Frame-Options "SAMEORIGIN"
-		# Opt browsers into HTTPS for a year. Harmless in dev (localhost is a
-		# secure context); enforced in prod behind Let's Encrypt.
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		# Framing (X-Frame-Options) and HSTS are owned by the apps themselves
+		# (Next's headers() on the frontend, helmet on the API): Caddy's
+		# `header` would silently OVERWRITE their values with a conflicting
+		# copy (it replaced the frontend's DENY with SAMEORIGIN).
 	}
 }
 

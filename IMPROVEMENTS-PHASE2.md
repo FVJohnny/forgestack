@@ -108,8 +108,9 @@ The most urgent remaining item is 159 (CI cannot pass).
 
 ## M. Frontend
 
-- [ ] **149. Default API base URL is missing the `/api/v1` prefix, so a no-env first run 404s on every call** (Medium)
+- [x] **149. Default API base URL is missing the `/api/v1` prefix, so a no-env first run 404s on every call** (Medium)
   `lib/api/config.ts:7,13` falls back to `http://localhost:3000` / `:3001`, but the backend serves everything under the `api` prefix plus URI version v1 (verified: the correct path is `/api/v1/auth/login`; the un-prefixed path 404s). Every env template uses `.../api/v1`. With `NEXT_PUBLIC_API_URL` unset, the app 404s on every request, a confusing first-run failure. Classification: would improve. Fix: append `/api/v1` to the fallback, or fail loudly when the var is unset.
+  **Status: Done.** Both fallbacks now include `/api/v1` (`http://localhost:3000/api/v1` and `:3001/api/v1`), with a comment explaining the global prefix + URI version. Typecheck, lint, and tests pass. Not verified at runtime with the env unset (the dev stack always sets the vars); the fallback path now matches the shape every env template uses.
 
 - [x] **150. Auth mount race can log a user straight back out after login** (Medium)
   `lib/contexts/auth-context.tsx:34-45` fires `getSession()` at mount and unconditionally applies the result; `cancelled` is only set on unmount, and `AuthProvider` lives in the root layout so it never unmounts. On a slow/cold API the probe is a 401 then a refresh attempt (10s timeouts each). If the user logs in during that window, `login()` sets authenticated true, then the stale probe resolves null and clobbers it to false, and `ProtectedRoute` bounces the freshly-logged-in user back to `/login`. Classification: broken/must fix (edge case). Fix: ignore the mount probe once a login has happened (a ref guard), or skip it when already authenticated.

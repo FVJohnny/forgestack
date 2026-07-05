@@ -3,14 +3,17 @@
  * Centralized configuration for API endpoints and settings
  */
 
+// The backend serves everything under the global `api` prefix plus URI
+// version v1, so the fallbacks must include it: a bare host 404s on every
+// call. The env templates all use `.../api/v1` too.
 export const API_CONFIG = {
-  baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}`,
+  baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}`,
   timeout: 10000,
 } as const;
 
 /** Service-2 — the analytics example service. Separate host, same API shape. */
 export const SERVICE2_API_CONFIG = {
-  baseURL: `${process.env.NEXT_PUBLIC_SERVICE2_API_URL || 'http://localhost:3001'}`,
+  baseURL: `${process.env.NEXT_PUBLIC_SERVICE2_API_URL || 'http://localhost:3001/api/v1'}`,
   timeout: 10000,
 } as const;
 

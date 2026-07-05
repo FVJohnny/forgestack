@@ -34,7 +34,22 @@ export class RedisIntegrationEventListener extends Base_IntegrationEventListener
       // Set up message handler (only once, not for each topic)
       if (!client.listenerCount('message')) {
         client.on('message', (channel: string, message: string) => {
-          this.handleMessage(channel, this.parseMessage(message)).catch(this.logger.error);
+          // Redis pub/sub has no redelivery, so a malformed message can only
+          // be logged and skipped. Parse inside the try: a synchronous throw
+          // in an ioredis event handler would otherwise escape as an
+          // uncaught exception.
+          let parsed: ParsedIntegrationMessage;
+          try {
+            parsed = this.parseMessage(message);
+          } catch (error) {
+            this.logger.error(
+              `Skipping malformed Redis message on channel '${channel}': ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            );
+            return;
+          }
+          this.handleMessage(channel, parsed).catch((error: Error) => this.logger.error(error));
         });
       }
 
@@ -63,18 +78,26 @@ export class RedisIntegrationEventListener extends Base_IntegrationEventListener
   }
 
   protected parseMessage(rawMessage: string): ParsedIntegrationMessage {
+    let parsedMessage: Record<string, unknown>;
     try {
-      const parsedMessage = JSON.parse(rawMessage);
-
-      const messageId =
-        (parsedMessage.messageId as string) ||
-        (parsedMessage.eventId as string) ||
-        `redis-${Date.now()}`;
-
-      return { id: messageId, name: parsedMessage.name, ...parsedMessage };
+      parsedMessage = JSON.parse(rawMessage);
     } catch (error) {
-      this.logger.error(`Error parsing Redis message: ${error}`);
-      throw error;
+      throw new Error(
+        `Unparseable Redis message JSON: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
+
+    // The id is what the inbox dedupes on, so it must be stable. Redis
+    // pub/sub has no message key, so the payload id is the only source.
+    // Never fabricate one (e.g. a timestamp) — that would silently break
+    // idempotency by making every redelivery look like a new message.
+    const id = parsedMessage.id as string;
+    if (!id) {
+      throw new Error(
+        'Redis message has no payload id; cannot dedupe it in the inbox.',
+      );
+    }
+
+    return { ...parsedMessage, id, name: parsedMessage.name as string };
   }
 }

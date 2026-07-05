@@ -53,9 +53,11 @@ export abstract class Base_IntegrationEventListener implements IntegrationEventL
     // Add handler to the topic's handler list
     const topicHandlers = this.addEventHandler(topicName, eventName, handler);
 
-    // Subscribe to topic if this is the first handler for this topic
+    // Subscribe to topic if this is the first handler for this topic. Await
+    // it so a failed subscribe surfaces to the caller as a startup error
+    // instead of becoming an unhandled rejection.
     if (topicHandlers.length === 1) {
-      this.subscribeToTopic(topicName);
+      await this.subscribeToTopic(topicName);
     }
 
     this.logger.log(

@@ -32,8 +32,15 @@ function baseCookieOptions() {
     // SameSite=Lax the browser would not attach these cookies to that fetch
     // (Lax only covers top-level navigations), which made login succeed but
     // the follow-up /auth/me get a 401. SameSite=None lets the cookies ride
-    // cross-site requests; CSRF is mitigated because the tokens are httpOnly
-    // and the API also validates them against the token store.
+    // cross-site requests.
+    //
+    // SameSite=None means the browser also attaches these cookies to requests a
+    // malicious page forges, so SameSite is NOT a CSRF defense here (and
+    // httpOnly is irrelevant to CSRF: a forged request never reads the cookie,
+    // the browser sends it automatically). CSRF is instead handled by the
+    // Sec-Fetch-Site / Origin check in csrf.middleware.ts, which rejects
+    // cross-site state-changing requests while allowing the legitimate
+    // cross-site frontend (its Origin is in CORS_ORIGINS).
     sameSite: 'none' as const,
     path: '/',
   };

@@ -1,6 +1,7 @@
 // FRAMEWORK: reusable auth infrastructure (JWT verification, cookie helpers,
 // the guards). Keep these as-is.
 export * from './auth-cookies';
+export * from './csrf.middleware';
 export * from './jwt-auth.guard';
 export * from './jwt-auth.module';
 export * from './jwt-auth.types';

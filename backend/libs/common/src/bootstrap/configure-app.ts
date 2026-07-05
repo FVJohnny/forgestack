@@ -3,6 +3,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { SwaggerUtility } from '../swagger';
+import { createCsrfMiddleware } from '../auth/csrf.middleware';
 
 export interface AppConfigOptions {
   /** Swagger title/site title. Defaults to "<SERVICE_NAME> API". */
@@ -13,6 +14,8 @@ export interface AppConfigOptions {
   enableHelmet?: boolean;
   enableSwagger?: boolean;
   enableShutdownHooks?: boolean;
+  /** Cross-site request rejection for state-changing methods. Default on. */
+  enableCsrf?: boolean;
   requestSizeLimit?: string;
 }
 
@@ -28,6 +31,7 @@ export function configureApp(app: NestExpressApplication, options: AppConfigOpti
     enableHelmet = true,
     enableSwagger = true,
     enableShutdownHooks = true,
+    enableCsrf = true,
     requestSizeLimit = '2mb',
   } = options;
 
@@ -40,6 +44,14 @@ export function configureApp(app: NestExpressApplication, options: AppConfigOpti
   // Parse cookies so the JWT guard can read the httpOnly access-token cookie
   // and auth controllers can set/clear the token cookies.
   app.use(cookieParser());
+
+  // Reject forged cross-site state-changing requests. The auth cookies are
+  // SameSite=None (see auth-cookies.ts), so SameSite alone is not a CSRF
+  // defense; this middleware checks Sec-Fetch-Site / Origin instead. Must run
+  // after cookieParser and before routing.
+  if (enableCsrf) {
+    app.use(createCsrfMiddleware());
+  }
 
   // Trust exactly the proxy hops in front of the service (Caddy = 1) so
   // req.ip resolves to the real client address instead of a spoofable
@@ -111,8 +123,15 @@ export function configureApp(app: NestExpressApplication, options: AppConfigOpti
     );
   }
 
-  // Setup Swagger
-  if (enableSwagger) {
+  // Setup Swagger. Off in production by default (it publishes the entire API
+  // surface, DTO shapes, and the auth scheme to anonymous visitors); set
+  // SWAGGER_ENABLED=true to force it on, or =false to force it off anywhere.
+  const swaggerEnvOverride = process.env.SWAGGER_ENABLED;
+  const swaggerAllowed =
+    swaggerEnvOverride !== undefined
+      ? swaggerEnvOverride === 'true'
+      : process.env.NODE_ENV !== 'production';
+  if (enableSwagger && swaggerAllowed) {
     const title = options.apiTitle ?? `${process.env.SERVICE_NAME ?? 'service'} API`;
     SwaggerUtility.setupSwagger({
       app,

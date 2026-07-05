@@ -12,5 +12,4 @@ export interface User_Repository extends Repository<User, Id> {
   findAll(): Promise<User[]>;
   findByCriteria(criteria: Criteria): Promise<PaginatedRepoResult<User>>;
   countByCriteria(criteria: Criteria): Promise<number>;
-  searchByEmail(emailPattern: string, limit: number): Promise<User[]>;
 }

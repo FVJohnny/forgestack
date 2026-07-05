@@ -27,8 +27,14 @@ interface RedisCriteriaResult {
 }
 
 /**
- * Converts DDD Criteria to Redis scan patterns and filters
- * Works with hash-based Redis storage where entities are stored as hashes
+ * Converts DDD Criteria to Redis scan patterns and filters. Works with
+ * hash-based Redis storage where entities are stored as hashes.
+ *
+ * Opt-in reference only. No shipped repository uses this converter:
+ * Base_RedisRepository.findByCriteria/countByCriteria throw "not implemented
+ * for Redis repositories" because scanning Redis for criteria queries does not
+ * scale. It is kept as a worked example for teams that store a bounded,
+ * scan-friendly data set in Redis and want to wire criteria support themselves.
  */
 export class RedisCriteriaConverter<D extends SharedAggregateDTO> extends CriteriaConverter<D> {
   constructor(

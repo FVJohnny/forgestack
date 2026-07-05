@@ -55,13 +55,4 @@ export class User_InMemoryRepository
 
     await super.save(user, context);
   }
-
-  async searchByEmail(emailPattern: string, limit: number): Promise<User[]> {
-    super.validate('searchByEmail');
-    const values = await this.findAll();
-    const pattern = emailPattern.toLowerCase();
-    return values
-      .filter((user) => user.email.toValue().toLowerCase().includes(pattern))
-      .slice(0, limit);
-  }
 }

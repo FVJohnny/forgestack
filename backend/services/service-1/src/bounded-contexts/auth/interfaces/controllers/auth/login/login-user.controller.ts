@@ -1,6 +1,6 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Res } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Req, Res } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { type ICommandBus, type IQueryBus } from '@nestjs/cqrs';
 import {
   COMMAND_BUS,
@@ -11,7 +11,7 @@ import {
   CorrelationLogger,
 } from '@libs/nestjs-common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { RecordUserLogin_Command } from '@bc/auth/application/commands';
+import { RecordIdentity_Command, RecordUserLogin_Command } from '@bc/auth/application/commands';
 import { GetNewTokensFromUserCredentials_Query } from '@bc/auth/application/queries';
 import { LoginUser_ControllerParams } from './login-user.params';
 import { LoginUser_ResponseDto } from './login-user.controller-response';
@@ -42,6 +42,7 @@ export class LoginUser_Controller {
     description: 'Invalid credentials',
   })
   async loginUser(
+    @Req() req: Request,
     @Body() body: LoginUser_ControllerParams,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginUser_ResponseDto> {
@@ -62,6 +63,18 @@ export class LoginUser_Controller {
     const recordLoginCommand = new RecordUserLogin_Command({ userId });
     void this.commandBus.execute(recordLoginCommand).catch((error) => {
       this.logger.error(`Failed to record login for user ${userId}`, error as Error);
+    });
+
+    // Record the login IP and User-Agent on the user (fire-and-forget, like
+    // last-login tracking). req.ip honors the app-level 'trust proxy' setting
+    // (see configureApp), so clients cannot spoof it with X-Forwarded-For.
+    const recordIdentityCommand = new RecordIdentity_Command(
+      userId,
+      req.ip ?? 'unknown',
+      req.headers['user-agent'],
+    );
+    void this.commandBus.execute(recordIdentityCommand).catch((error) => {
+      this.logger.error(`Failed to record identity for user ${userId}`, error as Error);
     });
 
     // Deliver tokens as httpOnly cookies; the body carries only the user id.

@@ -23,6 +23,12 @@ export class CreateUser_CommandHandler extends Base_CommandHandler(CreateUser_Co
     const userId = new Id(command.userId);
     const email = new Email(command.email);
 
+    // This keeps a local read model of users in the notifications context. It
+    // demonstrates the projection pattern: the auth context owns users and this
+    // context maintains its own copy from the UserCreated/UserDeleted events.
+    // The shipped send-email flow reads the recipient straight from the event
+    // payload, so this projection is not queried yet; it is the seam a forker
+    // extends when notifications need to look users up by id or email.
     this.logger.log(
       `Creating user projection in notifications context (User ID: ${userId.toValue()})`,
     );

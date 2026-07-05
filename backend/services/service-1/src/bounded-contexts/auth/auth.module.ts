@@ -12,12 +12,10 @@ import { UserToken_RedisRepository } from '@libs/nestjs-redis';
 import { EMAIL_VERIFICATION_REPOSITORY } from './domain/aggregates/email-verification/email-verification.repository';
 import { PASSWORD_RESET_REPOSITORY } from './domain/aggregates/password-reset/password-reset.repository';
 import { USER_REPOSITORY } from './domain/aggregates/user/user.repository';
-import { USER_IDENTITY_MARKER_REPOSITORY } from './domain/aggregates/user-identity-marker/user-identity-marker.repository';
 import { MOTD_REPOSITORY } from './domain/aggregates/motd/motd.repository';
 import { EmailVerification_MongodbRepository } from './infrastructure/repositories/mongodb/email-verification.mongodb-repository';
 import { PasswordReset_MongodbRepository } from './infrastructure/repositories/mongodb/password-reset.mongodb-repository';
 import { User_MongodbRepository } from './infrastructure/repositories/mongodb/user.mongodb-repository';
-import { UserIdentityMarker_MongodbRepository } from './infrastructure/repositories/mongodb/user-identity-marker.mongodb-repository';
 import { Motd_MongodbRepository } from './infrastructure/repositories/mongodb/motd.mongodb-repository';
 
 // Domain Services
@@ -57,10 +55,6 @@ const { controllers, handlers } = RuntimeAutoDiscovery.discoverAllComponents(__d
     {
       provide: PASSWORD_RESET_REPOSITORY,
       useClass: PasswordReset_MongodbRepository,
-    },
-    {
-      provide: USER_IDENTITY_MARKER_REPOSITORY,
-      useClass: UserIdentityMarker_MongodbRepository,
     },
     {
       provide: USER_TOKEN_REPOSITORY,

@@ -1,6 +1,5 @@
 export * from './auth';
 export * from './bootstrap';
-export * from './circuit-breaker';
 export * from './cqrs';
 export * from './errors';
 export * from './event-tracker';

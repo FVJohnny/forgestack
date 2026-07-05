@@ -77,31 +77,6 @@ export class User_MongodbRepository
     }
   }
 
-  async searchByEmail(
-    emailPattern: string,
-    limit: number,
-    context?: RepositoryContext,
-  ): Promise<User[]> {
-    try {
-      const session = this.getTransactionSession(context);
-      // Escape special regex characters for safety
-      const escapedPattern = emailPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const documents = await this.collection
-        .find(
-          {
-            email: { $regex: escapedPattern, $options: 'i' },
-          },
-          { session },
-        )
-        .limit(limit)
-        .toArray();
-
-      return documents.map((doc) => User.fromValue(doc));
-    } catch (error: unknown) {
-      this.handleDatabaseError('searchByEmail', emailPattern, error);
-    }
-  }
-
   protected defineIndexes(): IndexSpec[] {
     return [
       {

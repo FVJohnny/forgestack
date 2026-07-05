@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { ChainableCommander } from 'ioredis';
 
 import {
   OutboxEvent,
@@ -11,6 +12,20 @@ import {
 import { Base_RedisRepository } from '../infrastructure/base.redis-repository';
 import type { RedisService } from '../redis.service';
 
+/**
+ * Opt-in alternative to Outbox_MongodbRepository. No shipped service wires this
+ * in: both example services and the generated service use the Mongo outbox.
+ * It lives here as a swap-in for teams that want to keep the outbox in Redis.
+ * To use it, provide it for OUTBOX_REPOSITORY in your app.module in place of
+ * Outbox_MongodbRepository.
+ *
+ * The claim and reclaim paths are atomic via Lua. The `save` index maintenance
+ * runs the secondary-index updates in a single pipeline; the item write still
+ * happens first (in super.save), so under a hard crash between the two the
+ * indexes self-heal on the next save or reclaim. That is acceptable for the
+ * demo but worth hardening (item write plus index in one MULTI/Lua) before
+ * relying on it in production.
+ */
 @Injectable()
 export class Outbox_RedisRepository
   extends Base_RedisRepository<OutboxEvent>
@@ -36,24 +51,36 @@ export class Outbox_RedisRepository
   async save(event: OutboxEvent, context?: RepositoryContext): Promise<void> {
     await super.save(event, context);
 
-    const client = this.getClient(context);
     const v = event.toValue();
 
-    // Maintain secondary indexes
+    // Maintain the secondary indexes in a single pipeline so a state transition
+    // does not leave the item present in one index and missing from another
+    // between round-trips. Under a transaction context, queue the index updates
+    // onto the shared transaction pipeline (the parent commits it); otherwise
+    // run them in a fresh pipeline here.
+    const transactional = this.isTransactional(context);
+    const pipeline = transactional
+      ? (this.getClient(context) as ChainableCommander)
+      : this.getRedisClient().pipeline();
+
     if (event.isUnprocessed()) {
-      await client.zadd(this.zUnprocessed, Date.parse(String(v.createdAt)), v.id);
-      await client.zrem(this.zProcessed, v.id);
-      await client.zrem(this.zClaimed, v.id);
+      pipeline.zadd(this.zUnprocessed, Date.parse(String(v.createdAt)), v.id);
+      pipeline.zrem(this.zProcessed, v.id);
+      pipeline.zrem(this.zClaimed, v.id);
     } else if (event.isProcessed()) {
-      await client.zrem(this.zUnprocessed, v.id);
-      await client.zrem(this.zClaimed, v.id);
-      await client.zadd(this.zProcessed, Date.parse(String(v.processedAt)), v.id);
+      pipeline.zrem(this.zUnprocessed, v.id);
+      pipeline.zrem(this.zClaimed, v.id);
+      pipeline.zadd(this.zProcessed, Date.parse(String(v.processedAt)), v.id);
     } else if (event.isFailed()) {
       // Dead-lettered: pull it out of every active index so it is never
       // re-claimed. The item itself is kept for inspection.
-      await client.zrem(this.zUnprocessed, v.id);
-      await client.zrem(this.zClaimed, v.id);
-      await client.zrem(this.zProcessed, v.id);
+      pipeline.zrem(this.zUnprocessed, v.id);
+      pipeline.zrem(this.zClaimed, v.id);
+      pipeline.zrem(this.zProcessed, v.id);
+    }
+
+    if (!transactional) {
+      await (pipeline as ChainableCommander).exec();
     }
   }
 

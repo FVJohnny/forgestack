@@ -41,13 +41,35 @@ const nextConfig = {
     // 'unsafe-eval' is only needed by `next dev` (HMR/eval sourcemaps);
     // production Next runs fine without it, so don't ship it there.
     const isDev = process.env.NODE_ENV !== 'production';
+
+    // Build connect-src from the configured API origins. In dev we also allow a
+    // blanket https: plus localhost so a bare-metal dev setup works; in
+    // production we restrict to 'self' and the explicit API hosts so an XSS
+    // payload cannot exfiltrate to any HTTPS host.
+    const apiOrigin = (url) => {
+      try {
+        return new URL(url).origin;
+      } catch {
+        return null;
+      }
+    };
+    const apiOrigins = [
+      process.env.NEXT_PUBLIC_API_URL,
+      process.env.NEXT_PUBLIC_SERVICE2_API_URL,
+    ]
+      .map((u) => (u ? apiOrigin(u) : null))
+      .filter(Boolean);
+    const connectSrc = isDev
+      ? "connect-src 'self' https: http://localhost:* http://127.0.0.1:*"
+      : ['connect-src', "'self'", ...new Set(apiOrigins)].join(' ');
+
     const csp = [
       "default-src 'self'",
       `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://accounts.google.com`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https: http://localhost:* http://127.0.0.1:*",
+      connectSrc,
       'frame-src https://accounts.google.com',
       "object-src 'none'",
       "base-uri 'self'",

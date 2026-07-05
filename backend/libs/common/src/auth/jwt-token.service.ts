@@ -5,6 +5,13 @@ import { v4 as uuid } from 'uuid';
 import type { StringValue } from 'ms';
 import { requiredEnv } from './env.util';
 
+// The stack signs with a symmetric secret (HS256). Pinning the algorithm on
+// both sign and verify is defense-in-depth: it stops an attacker from
+// presenting a token signed with a different (e.g. asymmetric) algorithm, the
+// classic key-substitution / algorithm-confusion attack, if a forker later
+// introduces a public key.
+export const JWT_ALGORITHM = 'HS256';
+
 @Injectable()
 export class JwtTokenService {
   private readonly accessTokenSecret: string;
@@ -25,6 +32,7 @@ export class JwtTokenService {
       {
         secret: this.accessTokenSecret,
         expiresIn: this.accessTokenExpiry,
+        algorithm: JWT_ALGORITHM,
       },
     );
   }
@@ -35,6 +43,7 @@ export class JwtTokenService {
       {
         secret: this.refreshTokenSecret,
         expiresIn: this.refreshTokenExpiry,
+        algorithm: JWT_ALGORITHM,
       },
     );
   }
@@ -42,12 +51,14 @@ export class JwtTokenService {
   verifyAccessToken(token: string): JwtTokenPayload {
     return this.jwtService.verify<JwtTokenPayload>(token, {
       secret: this.accessTokenSecret,
+      algorithms: [JWT_ALGORITHM],
     });
   }
 
   verifyRefreshToken(token: string): JwtTokenPayload {
     return this.jwtService.verify<JwtTokenPayload>(token, {
       secret: this.refreshTokenSecret,
+      algorithms: [JWT_ALGORITHM],
     });
   }
 }

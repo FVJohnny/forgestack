@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { JwtTokenService } from './jwt-token.service';
+import { JwtTokenService, JWT_ALGORITHM } from './jwt-token.service';
 import { InternalApiKeyGuard } from './internal-api-key.guard';
 import { requiredEnv } from './env.util';
 
@@ -16,6 +16,11 @@ import { requiredEnv } from './env.util';
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: requiredEnv('JWT_SECRET'),
+        // Pin the algorithm for the module defaults, so a verify that relies on
+        // them (JwtAuthGuard.verifyAsync) rejects a token signed with anything
+        // other than HS256. See the note in jwt-token.service.ts.
+        signOptions: { algorithm: JWT_ALGORITHM },
+        verifyOptions: { algorithms: [JWT_ALGORITHM] },
       }),
     }),
   ],

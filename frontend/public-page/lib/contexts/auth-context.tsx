@@ -7,6 +7,7 @@ import {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
   type ReactNode,
 } from 'react';
 import { authService } from './auth-service';
@@ -27,6 +28,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // The provider lives in the root layout and never unmounts, so the mount
+  // probe below can still be in flight when the user logs in or out. Once an
+  // explicit auth action has run, its result is fresher than the probe's, so
+  // the probe must not apply a stale answer over it.
+  const authActionRan = useRef(false);
 
   // Tokens live in httpOnly cookies the browser can't read, so the session is
   // established by asking the API who we are. getSession() transparently
@@ -35,8 +41,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     void authService.getSession().then((me) => {
       if (cancelled) return;
-      setIsAuthenticated(Boolean(me));
-      setUserId(me?.userId ?? null);
+      if (!authActionRan.current) {
+        setIsAuthenticated(Boolean(me));
+        setUserId(me?.userId ?? null);
+      }
       setIsLoading(false);
     });
     return () => {
@@ -61,18 +69,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const response = await authService.login(email, password);
+    authActionRan.current = true;
     setIsAuthenticated(true);
     setUserId(response.userId);
   }, []);
 
   const loginWithGoogle = useCallback(async (accessToken: string) => {
     const response = await authService.loginWithGoogle(accessToken);
+    authActionRan.current = true;
     setIsAuthenticated(true);
     setUserId(response.userId);
   }, []);
 
   const logout = useCallback(async () => {
     await authService.logout();
+    authActionRan.current = true;
     setIsAuthenticated(false);
     setUserId(null);
   }, []);

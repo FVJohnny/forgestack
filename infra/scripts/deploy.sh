@@ -316,7 +316,7 @@ deploy() {
     # The remote block runs under `set -e` and `--wait`, so an unhealthy
     # container makes ssh exit non-zero. Catch that here to print an actionable
     # rollback hint instead of just aborting under the top-level `set -e`.
-    if ! ssh "$SERVER_USER@$SERVER_IP" << EOF
+    if ssh "$SERVER_USER@$SERVER_IP" << EOF
         set -e
         cd "$REMOTE_PATH"
 

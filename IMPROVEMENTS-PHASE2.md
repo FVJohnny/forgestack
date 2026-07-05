@@ -18,7 +18,7 @@ Note: several items here were already completed during the first working pass (c
 | M. Frontend | 149-158 | 4 | 5 | 1 |
 | N. Tooling, CI, docs | 159-171 | 7 | 5 | 1 |
 
-The most urgent remaining item is 159 (CI cannot pass).
+All 44 items (128-171) are done as of 2026-07-05; each has a Status line describing the fix and how it was verified.
 
 ## J. Backend reliability
 

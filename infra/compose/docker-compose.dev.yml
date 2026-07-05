@@ -6,7 +6,7 @@ x-nestjs-service: &nestjs-service
   working_dir: /app
   restart: unless-stopped
   volumes:
-    - ${PWD}:/app
+    - ../..:/app
   networks:
     - backend
   logging:
@@ -58,7 +58,7 @@ services:
     working_dir: /app
     restart: unless-stopped
     volumes:
-      - ${PWD}/frontend/public-page:/app
+      - ../../frontend/public-page:/app
       - public_page_node_modules:/app/node_modules
     command: >
       sh -c "rm -rf .next && corepack enable && corepack prepare pnpm@10 --activate && pnpm install --no-frozen-lockfile && pnpm dev"
@@ -88,8 +88,8 @@ services:
       - PROTOCOL=https
       - TLS_ENV=dev
     volumes:
-      - ${PWD}/infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ${PWD}/infra/caddy/dev-only:/etc/caddy/extra:ro
+      - ../../infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../../infra/caddy/dev-only:/etc/caddy/extra:ro
     networks:
       - backend
     depends_on:
@@ -239,9 +239,9 @@ services:
       - '--web.enable-remote-write-receiver'
       - '--web.enable-lifecycle'
     volumes:
-      - ${PWD}/infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ${PWD}/infra/monitoring/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
-      - ${PWD}/infra/monitoring/prometheus/internal-api-key:/etc/prometheus/internal-api-key:ro
+      - ../../infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../../infra/monitoring/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - ../../infra/monitoring/prometheus/internal-api-key:/etc/prometheus/internal-api-key:ro
       # Persist metrics across recreates (dev/prod parity).
       - prometheus_data_dev:/prometheus
       # Read-only Docker socket for docker_sd_configs: services are discovered
@@ -262,8 +262,8 @@ services:
       - GF_SERVER_ROOT_URL=https://grafana.localhost
       - GF_SERVER_SERVE_FROM_SUB_PATH=false
     volumes:
-      - ${PWD}/infra/monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ${PWD}/infra/monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ../../infra/monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ../../infra/monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
     depends_on:
       - prometheus
     networks:
@@ -295,7 +295,7 @@ services:
     command: ['-config.file=/etc/tempo.yaml']
     user: '0:0'
     volumes:
-      - ${PWD}/infra/monitoring/tempo/tempo.yaml:/etc/tempo.yaml
+      - ../../infra/monitoring/tempo/tempo.yaml:/etc/tempo.yaml
       - tempo_data:/tmp/tempo
     networks:
       - backend
@@ -315,7 +315,7 @@ services:
     volumes:
       # Read-only: promtail only reads container logs, never writes.
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ${PWD}/infra/monitoring/promtail/promtail-config.yaml:/etc/promtail/config.yaml
+      - ../../infra/monitoring/promtail/promtail-config.yaml:/etc/promtail/config.yaml
       # Persist the positions file so restarts do not re-ingest all logs.
       - promtail_data_dev:/promtail
     command: -config.file=/etc/promtail/config.yaml

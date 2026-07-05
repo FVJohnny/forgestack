@@ -58,4 +58,3 @@ MongoDB comes up as a single-node replica set (`rs0`); `infra/mongo/` initialize
 ## Secrets
 
 All prod secrets live in `infra/env/*.env.prod` (gitignored). The `*.env.prod.example` files in the same directory document the required keys without values. To update a secret, edit the local `.env.prod` file and re-run `npm run prod:update` choosing option **6** (deploy only, rsyncs env files and restarts containers without rebuilding images).
-</content>

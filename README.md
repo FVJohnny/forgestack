@@ -227,5 +227,3 @@ When the two disagree, the docs site wins.
 ## License
 
 [MIT](LICENSE)
-</content>
-</invoke>

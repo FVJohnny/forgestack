@@ -2,6 +2,8 @@
 
 This file tracks the findings of a full repo audit (2026-07-04). We work through it item by item, one commit per item.
 
+A second audit was done on 2026-07-05 after Phase 1 was fully closed. Its findings are in the "Phase 2" section at the bottom (items 119 onward), separate from the Phase 1 work above.
+
 How to read an item:
 
 - The checkbox shows whether the item is resolved.
@@ -551,3 +553,196 @@ All of Section A is code-complete. Item 5's remaining work is manual secret rota
 - [x] **118. Community files** (Low)
   No CODE_OF_CONDUCT, SECURITY.md has no concrete contact or supported-versions statement, no CHANGELOG or release process, no README badges (add after CI exists), "provisions prerequisites" overstates what `start-dev.sh` does, and the LICENSE copyright says "FVJohnny" instead of a legal name.
   **Status: DONE (one owner-only item left).** Added `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, linked from CONTRIBUTING) and `CHANGELOG.md` (Keep a Changelog format, 1.0.0 baseline). Gave SECURITY.md a Supported versions section and a concrete private vulnerability-reporting path (GitHub Security Advisories, no public issues) under item 117's sweep. Fixed the README overstatement: `dev:start` CHECKS prerequisites (verifies Node, can install Docker) rather than provisioning them. README badges (CI/license/node) already exist. Left for the owner: the LICENSE copyright says "FVJohnny" (their handle); swapping it for a legal name is their call, not something to change unilaterally.
+
+# Phase 2: second audit (2026-07-05)
+
+This is a fresh top-to-bottom audit done after all of Phase 1 was closed. It is a separate pass: it does not touch or re-litigate the items above. Where a Phase 1 item has regressed, the new item says so explicitly and names the Phase 1 number.
+
+How the audit was run: the whole dev stack was booted and driven for real (frontend in a headless browser, the API through Caddy with curl, Mongo and Redis inspected directly, live Prometheus metrics read back). Every "broken" claim below is backed by a runtime capture, a code quote, or a runnable reproduction, not by reading alone.
+
+Each item has a bold title, a plain description, a severity (High/Medium/Low), and a classification: "broken/must fix" (it does the wrong thing now), "would improve" (correct but below standard), or "opinion" (a judgement call). New items are numbered from 119 and grouped by area.
+
+## New progress
+
+| Section | Items | Broken/must fix | Would improve | Opinion |
+|---|---|---|---|---|
+| I. Security and auth | 119-127 | 6 | 2 | 1 |
+| J. Backend reliability | 128-135 | 5 | 3 | 0 |
+| K. Observability | 136-139 | 3 | 1 | 0 |
+| L. Infra and deployment | 140-148 | 3 | 5 | 1 |
+| M. Frontend | 149-158 | 4 | 5 | 1 |
+| N. Tooling, CI, docs | 159-171 | 7 | 5 | 1 |
+
+The two most urgent are item 119 (CSRF, from the recent cookie change) and item 159 (CI cannot pass). Both are direct fallout of work landed after Phase 1 and both contradict what the sections above record as resolved.
+
+## I. Security and auth
+
+- [ ] **119. Auth cookies are `SameSite=None` with no CSRF defense, and the code comment claiming otherwise is wrong** (High)
+  Regression of the deferred tradeoff in item 8. Commit `4a646e4` changed both token cookies from `SameSite=Lax` to `None` (`backend/libs/common/src/auth/auth-cookies.ts:22-40`) so the cross-host `/auth/me` fetch works in dev. The justifying comment says "CSRF is mitigated because the tokens are httpOnly and the API also validates them against the token store." Both claims are false: httpOnly stops a script from reading the cookie, it does nothing for CSRF (the browser attaches the cookie to a forged request automatically), and the token-store check just validates the victim's own valid token. With `SameSite=None` plus the urlencoded body parser enabled in `configure-app.ts`, a cross-site `<form method="POST">` to any cookie-authed state-changing route is a CORS "simple request" (no preflight) and executes with the victim's session. Verified the concrete targets exist and are body-less POSTs guarded only by `JwtAuthGuard`(+`AdminRoleGuard`): `/api/v1/auth/logout` and `/api/v1/admin/users/:id/suspend`. Runtime note: those returned 401 in my tests only because I sent no cookie; a real cross-site attack rides the victim's cookie. Item 8 recorded "Deferred: CSRF hardening beyond SameSite=lax if the API is ever hosted cross-site" but the config is now `None` (always cross-site), so that deferred risk is active. Also note that in prod `app.example.com` and `service1.example.com` are same-site (shared registrable domain), so `Lax` would have worked there; `None` was a dev-only workaround applied globally. Classification: broken/must fix. Fix: validate `Origin`/`Sec-Fetch-Site` on state-changing routes, or add a double-submit CSRF token, or keep `Lax` in prod and special-case dev. At minimum delete the false comment.
+
+- [ ] **120. Swagger and the full OpenAPI spec are served unconditionally, including in production** (High)
+  `configureApp` defaults `enableSwagger = true` with no environment gate (`backend/libs/common/src/bootstrap/configure-app.ts:115-127`), and `SwaggerUtility.setupSwagger` only skips when `config.enabled` is explicitly false (`swagger.utility.ts:12-17`), which no service sets. Verified live: `GET https://service1.localhost/docs` returns the Swagger UI (200) and `GET /docs-json` returns the complete machine-readable spec (200). In production this publishes the entire API surface (every route, DTO, param, and the bearer-auth scheme) to anonymous visitors. Classification: broken/must fix. Fix: gate Swagger behind `NODE_ENV !== 'production'` or an explicit `SWAGGER_ENABLED` flag, defaulting off in prod.
+
+- [ ] **121. Suspending or deleting a user does not revoke their tokens** (Medium)
+  `User.suspend()` (`.../auth/domain/aggregates/user/user.aggregate.ts:244`) and `delete()` only change status/emit their own domain events; neither triggers token revocation. Only `logout()` (line 229) applies `UserLogout_DomainEvent`, which is what drives `RevokeAllUserTokens`. `JwtAuthGuard` checks JWT validity plus token-in-store but never re-reads user status or existence, so a suspended user (or suspended admin) keeps a fully valid access token until it expires. Verified the window is `JWT_EXPIRES_IN=15m` in the prod env examples. During that window `AdminRoleGuard` still grants `/admin/*` from the token's role claim. Refresh is correctly blocked (the refresh handler calls `canAuthenticate()`), so the exposure is bounded, but suspension and deletion are not immediate as an operator expects. Classification: broken/must fix. Fix: emit a revoke-all-tokens effect from `suspend()` and `delete()`.
+
+- [ ] **122. Per-user rate limiting silently fell back to per-IP for all browser traffic** (Medium)
+  Regression of item 17. That fix made the throttler guard extract the user id from the bearer token. Item 8 then moved browser auth to the httpOnly `access_token` cookie, but the guard was never updated: `extractUserIdFromToken` reads only `request.headers.authorization` (`backend/libs/common/src/security/api-rate-limit/api-rate-limit.guard.ts:60-71`), while `JwtAuthGuard.extractToken` reads the cookie first. Browsers send no `Authorization` header now, so every `type: 'user'` limit (all three preset decorators) keys by IP for the primary client. Users behind one NAT share a bucket; a user rotating IPs evades per-account limits. The same cookie-blind extraction is in `tracing.middleware.ts`, so `userId` log/trace enrichment is also dead for browser requests. Classification: broken/must fix. Fix: read the access-token cookie in both places, reusing the guard's extraction.
+
+- [ ] **123. `analytics/summary` on service-2 is completely public** (Medium)
+  `GetActivitySummary_Controller` has no `@UseGuards`, no internal-API-key guard, and no `@PublicApi()` marker (`service-2/.../analytics/interfaces/controllers/analytics/get-activity-summary.controller.ts`). Verified live: `GET https://service2.localhost/api/v1/analytics/summary` returns `{"total":15,"byType":{"user.created":15},"lastActivityAt":...}` with no auth. It leaks how many users have registered and when the last signup happened. Unlike service-1's public routes, which at least carry `@PublicApi()`, there is no marker signalling this is deliberate. Classification: broken/must fix (or annotate as intentionally public and document it). Fix: guard it, or make it an explicit, documented public example.
+
+- [ ] **124. Register leaks account existence, enabling user enumeration** (Medium)
+  Verified live: `POST /api/v1/users` with an existing email returns `409` with `"Entity already exists with email: admin@example.com"`. An attacker learns which emails have accounts by probing the register endpoint. This contrasts with the password-reset flow, which correctly returns 200 for both existing and non-existing emails (verified, no enumeration there). Classification: would improve. Fix: return a generic conflict message without echoing the email, or move to an email-confirmation flow that does not distinguish.
+
+- [ ] **125. No global auth guard: security is opt-in per controller, and `@PublicApi()` only annotates Swagger** (Medium)
+  `@PublicApi()` is `SetMetadata(DECORATORS.API_SECURITY, [])`, purely a Swagger doc annotation (`libs/common/src/swagger/public-api.decorator.ts`). The only `APP_GUARD` is the rate limiter; there is no global `JwtAuthGuard`. Every protected route must individually remember `@UseGuards(...)`, and a forgotten guard ships a public endpoint with no test to catch it (item 123 is an instance). The scattered `@PublicApi()` decorators imply a secure-by-default, opt-out model that does not exist. Classification: would improve. Fix: register a global `JwtAuthGuard` that honors a real `@Public()` metadata key, so exposure is explicit.
+
+- [ ] **126. Email-verification token minting trusts the id without re-checking state** (Low)
+  `GetNewTokensFromEmailVerification_QueryHandler` loads the verification by id and mints access+refresh tokens without checking `isVerified()`/`isExpired()`; its `authorize()` returns true with the comment "possessing a valid email verification id is the credential." Safe today only because the controller runs the one-shot `VerifyEmail_Command` first and the template ships with verification disabled (no rows exist). But it is a standalone credential-minting handler with no state guard, so any future caller or a reordering would mint login tokens from a merely-existing (unverified or expired) id. Classification: would improve. Fix: check verified and not-expired inside the query as defense in depth.
+
+- [ ] **127. Dashboard endpoints are authenticated but not admin-restricted** (Low)
+  `DashboardController` uses `@UseGuards(JwtAuthGuard)` only, so `/dashboard/events` and `/dashboard/health` expose internal event throughput and subsystem readiness to any logged-in user, not just admins. The dev console is presumably an admin tool. Classification: opinion. Fix: add `AdminRoleGuard` if the console is admin-only.
+
+## J. Backend reliability
+
+- [ ] **128. A poison Kafka message wedges its partition forever** (Medium)
+  The inbox has bounded retries and dead-lettering, but only for events it has accepted. Failures before acceptance rethrow from `eachMessage` (`backend/libs/kafka/src/kafka.integration-event-listener.ts:88-100,125-146`): unparseable JSON, the deliberate "message has no id" throw, or a Mongo outage during `insertIfNew`. The rethrow prevents the offset commit, so kafkajs redelivers the same message indefinitely with no backoff, counter, or DLQ, blocking that partition and everything behind it. Transient DB errors deserve the retry; permanently malformed messages need a skip-and-log or dead-letter path. Classification: broken/must fix. Fix: distinguish permanent parse/id failures (skip + log/DLQ, commit the offset) from transient ones (retry).
+
+- [ ] **129. Mongo inbox `reclaimStuckEvents` is non-atomic and can resurrect a completed event to PENDING** (Medium)
+  `inbox.mongodb-repository.ts:100-121` does `find(PROCESSING)` then a per-doc unconditional `save()`. Between the find and the save, the instance that owns the claim can finish and write PROCESSED; the reclaim then overwrites it back to PENDING (retryCount+1) and the handlers run again. The outbox got this right with a single conditional `updateMany` filtered on the PROCESSING marker; the inbox reclaim should be the same one-shot conditional update. Second problem: it ages events by `receivedAt`, which never advances, so a retried or late-claimed event more than the stuck threshold past receipt is treated as stuck even while genuinely in flight, burning a retry and letting a second instance run the same handlers concurrently. Classification: broken/must fix. Fix: conditional update on status, and add a claimed-at timestamp to age by (mirroring the outbox's claim-time bump).
+
+- [ ] **130. Kafka publisher keys messages by unique event id, so per-aggregate ordering is not preserved** (Medium)
+  `kafka.integration-event-publisher.ts:16-33` sets the Kafka message key to `parsed.id`, the event's own unique id. Two events about the same aggregate (`user.created` then `email.verified` for one user) therefore hash to different partitions and can be consumed out of order, discarding the per-topic ordering the outbox loop carefully preserves at publish time (item 30). The comment also claims the key "ensures deduplication," which Kafka does not do outside log compaction. Classification: would improve. Fix: key on the aggregate/entity id, or document that ordering is per-event only and drop the dedup claim.
+
+- [ ] **131. `Base_MongoRepository` caches a rejected index-init promise forever and goes stale when a collection is dropped** (Medium)
+  `base.mongo-repository.ts:38-55,165-223` memoizes index initialization in a static map keyed by collection name. If init fails once (Mongo briefly unreachable at boot, exactly when repositories are constructed), the rejected promise is cached permanently and every later operation on that collection rethrows even after Mongo recovers, until process restart. Item 60 made the failure loud; caching the rejection makes it permanent. Separately, the lock is never invalidated, so `MongodbTestService.cleanup()` dropping a collection leaves the lock saying "initialized" while the unique `id` index is gone, which `insertIfNew`'s E11000-based dedup (item 33) silently depends on. Classification: would improve (with a broken corner). Fix: evict a failed init from the map so it retries, and invalidate on collection drop.
+
+- [ ] **132. Redis integration-event listener fabricates message ids (the item 45 bug, unfixed on the Redis side)** (Medium)
+  `redis.integration-event-listener.ts:65-79` falls back to `redis-${Date.now()}` for the message id and reads `messageId`/`eventId` fields that `Base_IntegrationEvent.toJSON()` never serializes (it writes `id`). Item 45 fixed exactly this for Kafka because a timestamp id makes every redelivery look new and breaks inbox idempotency; the Redis sibling was left with the old behavior. The `...parsedMessage` spread rescues events that carry `id`, but any id-less message still gets a timestamp id. Also on line 37, `subscribeToTopic` is called without `await`, so a failed Redis subscribe becomes an unhandled rejection instead of a startup error. Classification: would improve (broken if the Redis transport is used with the inbox). Fix: mirror the Kafka listener (use payload id or key, throw if neither) and await the subscribe.
+
+- [ ] **133. Outbox dead-letters a transient post-publish save failure with a false "max retries" log and metric** (Low)
+  In `outbox.service.ts` the catch wraps both the publish and the post-publish `save`. If the publish succeeded but the bookkeeping `save` failed transiently, the in-memory event is already `markAsProcessed()`, so `canRetry()` is false and the else branch dead-letters it: `markAsFailed()`, a `failed` metric, and "Max retries exceeded ... (dead-letter)" for an event with retryCount 0 that was actually delivered. Operators see phantom dead-letters and the failed metric lies. Classification: would improve. Fix: only run the retry/dead-letter path when the publish itself threw.
+
+- [ ] **134. `JwtAuthGuard` turns infrastructure outages into 401s** (Low)
+  `jwt-auth.guard.ts:30-43` catches everything and throws `UnauthorizedException`, including the Redis-backed token-store query failing because Redis is down. During a Redis outage every authenticated user gets 401 (the frontend then clears session state and redirects to login) instead of a 503 that monitoring would flag. Classification: would improve. Fix: map only JWT-verification/NotFound errors to 401 and let infrastructure errors propagate as 5xx.
+
+- [ ] **135. `CorrelationLogger` silently disables all logging on an unrecognized `LOG_LEVEL`** (Low)
+  `correlation-logger.ts:51-56` does `levels.indexOf(this.logLevel)`, which is -1 for a standard-but-unlisted value like `verbose` or any typo, so even `error` (`0 <= -1` is false) is suppressed and the service logs nothing with no hint why. Classification: broken/must fix (one line). Fix: fall back to a default level when the configured value is unknown.
+
+## K. Observability
+
+- [ ] **136. Every HTTP error is recorded in Prometheus as `status_code="200"`** (Medium)
+  `metrics.interceptor.ts:30-42` reads `res.statusCode` in the tap, but interceptors run before the exception filter sets the status, so on a thrown error `res.statusCode` is still Express's default 200 (truthy, so the `fallbackStatus` 500 is dead code). Verified live: after sending 8 login requests that returned 401/429, `http_requests_total{route="/api/v1/auth/login"}` shows all of them under `status_code="200"` (`/auth/me` 401s likewise counted as 200). Error-rate dashboards and the `HighHttp5xxRate` alert added in item 84 can never fire. Classification: broken/must fix. Fix: record on `res.on('finish')`, or derive the status from the thrown exception (`HttpException.getStatus()`, else 500).
+
+- [ ] **137. Inbox reports both failure and success to the event tracker for the same failed event** (Medium)
+  `inbox.service.ts`: `processEvent` handles handler errors internally (calls `handleEventFailure`, which tracks `false`) and then returns normally, so back in `safeProcessEvent` the `trackEvent(..., true)` line runs too. Every handler failure is tracked once as failure and once as success, inflating the dev console's `/dashboard/events` counts with a phantom success per failure. The Prometheus metrics only observe `failed`, so the two consoles disagree. Classification: broken/must fix. Fix: have `processEvent` signal failure (rethrow or return a result) so the success line does not run.
+
+- [ ] **138. Log to trace correlation is dead in both directions in Grafana** (Medium)
+  The Loki to Tempo derived field expects `"traceId":"..."` in the stored log line (`datasource.yml`), but promtail's final `output` stage rewrites every line to the bare message, so the regex never matches (`promtail-config.yaml`). The Tempo to Loki link filters by a `traceId` label promtail never creates. Verified live: Loki's label set is only `container, environment, level, service, service_name, stream` and a sample stored line is a bare message. So the trace-log linking the stack advertises does not work. Classification: broken/must fix. Fix: keep the raw JSON line (drop the `output` reduction) or emit traceId as structured metadata and update the matcher.
+
+- [ ] **139. `HostLowDisk` alert references node_exporter metrics that do not exist in this stack** (Medium)
+  `alert-rules.yml`'s `HostLowDisk` first branch uses `node_filesystem_avail_bytes / node_filesystem_size_bytes`, but there is no node_exporter in either compose file (only cAdvisor). Verified live: `count(node_filesystem_avail_bytes)` is empty on the dev Prometheus. The rule's own comment says "cAdvisor exposes filesystem usage," which contradicts the expression, and the container_fs fallback watches container filesystems, not the host `/` where images, logs, and backups accumulate. Classification: would improve. Fix: add node_exporter, or rewrite the rule around metrics that actually exist.
+
+## L. Infra and deployment
+
+- [ ] **140. `deploy.sh` health-gate logic is inverted: a healthy deploy reports failure and exits 1, an unhealthy one prints "Deploy complete!"** (High)
+  Regression that shipped inside the item 81 commit. `deploy.sh:319-352` is `if ! ssh ... then log "Deploy complete!" ... else log_error "Remote deploy failed" ; exit 1`. Because `! ssh` is true only when ssh fails, the branches are swapped. Proven with a runnable reproduction: simulating ssh success routes to "Remote deploy failed + exit 1" and ssh failure routes to "Deploy complete!". So a healthy deploy aborts with an error and exit 1, and an unhealthy deploy (a container that never becomes healthy under `--wait`) reports success. Item 81 was verified only with `bash -n`, which cannot catch this. Classification: broken/must fix. Fix: drop the `!` (or swap the two branches).
+
+- [ ] **141. Prod Mongo URIs in the env templates have no credentials, but prod mongod runs with `--auth`** (High)
+  `infra/env/service-1.env.prod.example` and `service-2.env.prod.example` both use `mongodb://mongodb:27017/...?replicaSet=rs0` with no user, password, or `authSource`, while `infra/mongo/mongo-startup.sh:85` starts `mongod ... --auth --keyFile ...`. The dev examples correctly include `admin:password@...&authSource=admin`. Anyone provisioning a fresh server from the prod templates gets services that fail every DB operation with authorization errors. A structural check of the untracked real files (contents not printed) showed `service-2.env.prod` has no credentials in its URI, so the currently deployed service-2 likely cannot authenticate to prod Mongo. Classification: broken/must fix. Fix: add credentials and `authSource=admin` to both prod `.example` URIs and to the real `service-2.env.prod`.
+
+- [ ] **142. Dev compose bind mounts use cwd-sensitive `${PWD}`, which created a stray `infra/compose/frontend/public-page` tree** (Medium)
+  Every bind mount in `docker-compose.dev.yml` uses `${PWD}/...` while `env_file` entries are compose-file-relative. Running `docker compose -f infra/compose/docker-compose.dev.yml ...` from anywhere but the repo root (which the `dev:down` and `dev:logs` npm scripts do, since they run from the user's cwd) resolves the env_files correctly but points every bind mount at the wrong host path, and Docker creates the missing directories. That is the origin of the untracked `infra/compose/frontend/public-page/` tree (a `node_modules` mountpoint plus a populated `.pnpm-store`). It is gitignored so there is no commit risk, but a container started this way mounts an empty `/app` and crash-loops. Classification: broken/must fix (dev ergonomics). Fix: use compose-file-relative bind-mount paths (compose resolves them against the compose file), delete the stray tree, and optionally pin a top-level `name:`.
+
+- [ ] **143. `start-dev.sh` Kafka recovery is dead code for an old layout, and its fallback wipes all dev data** (Medium)
+  `start-dev.sh:112` greps `docker ps -a` for `kafka-ephemeral.*Exited`, a name no container ever has (the real one is `compose-kafka-1`), and line 116 removes `docker_zookeeper_*` volumes when the actual project prefix is `compose_`. So the stale-Kafka recovery never fires and would target the wrong volumes if it did. Separately, the retry path (line 128) runs `down -v` on any first-attempt failure, destroying dev Mongo/Redis/Kafka data even for a transient port conflict. Item 89 deferred this script fix, so it is still open. Classification: broken/must fix (the dead checks), opinion (the destructive fallback). Fix: match real container/volume names, and do not `down -v` on transient failures.
+
+- [ ] **144. CI never exercises the deployment path** (Medium)
+  `.github/workflows/ci.yml` covers lint/typecheck/build/tests but never builds the two Dockerfiles, never runs `docker compose config` on either compose file, never `bash -n`/shellchecks the infra scripts, never runs `promtool check rules`, and never runs `caddy validate` (that only happens inside the prod image build, which CI does not do). A broken Dockerfile, compose interpolation, alert rule, or Caddyfile is first discovered mid-deploy. Classification: would improve. Fix: add a cheap infra-validation job (compose config, script syntax, promtool, caddy validate, and optionally the image builds with a stand-in `public-page.env.prod` copied from the example).
+
+- [ ] **145. Prod NestJS healthcheck gates on liveness, not readiness** (Low)
+  The prod compose healthcheck hits `/api/v1`, which returns `'ok'` unconditionally, while there is an unauthenticated `/api/v1/ready` that returns 503 until subsystems (like the Kafka consumer group join) are ready (`heartbeat.controller.ts`). So `up -d --wait` can pass while consumers are still broken. Classification: would improve. Fix: point the healthcheck (and the item 140 gate, once corrected) at `/api/v1/ready`.
+
+- [ ] **146. `mem_limit` gaps in prod: caddy, promtail, and portainer are uncapped** (Low)
+  Item 88 added limits to the app and monitoring services but missed promtail, and never covered caddy or portainer (`docker-compose.prod.yml`). On a single small VPS these are the remaining unbounded containers. Classification: would improve. Fix: add `mem_limit` to the three.
+
+- [ ] **147. `deploy.sh` ships the full `infra.env.prod` to the server and does not validate SSH/registry vars** (Low)
+  The staging copy includes `infra.env.prod` (DOCKER_PASS, server IP/user), which nothing on the server reads from `env/` (only the `compose/.env` copy is used), so it widens secret exposure for no benefit. And `$SERVER_USER`/`$SERVER_IP`/`$DOCKER_USER`/`$DOCKER_PASS` are used with no `:?` guards (unlike `DOCKER_REGISTRY`), so a missing var yields a confusing rsync/ssh/docker-login error instead of a clear message. Classification: would improve. Fix: exclude `infra.env.prod` from the `env/` copy and add `:?` guards.
+
+- [ ] **148. Remaining dev/prod drift and root-run mongod** (Low)
+  mongod runs as root in both dev and prod because the `command: ['bash', /scripts/mongo-startup.sh]` override bypasses the image entrypoint's `gosu` privilege drop (which only fires when arg1 is `mongod`). cAdvisor mounts `/var/run` rw in prod but ro in dev (the rw is the wrong direction). Dev Caddy has no `/data` volume, so the local CA is regenerated on every recreate, forcing a fresh cert-trust. Dev Grafana persists nothing. Classification: would improve / opinion. Fix: drop mongod to the mongodb user, align the cAdvisor mount to ro, add `caddy_data_dev`.
+
+## M. Frontend
+
+- [ ] **149. Default API base URL is missing the `/api/v1` prefix, so a no-env first run 404s on every call** (Medium)
+  `lib/api/config.ts:7,13` falls back to `http://localhost:3000` / `:3001`, but the backend serves everything under the `api` prefix plus URI version v1 (verified: the correct path is `/api/v1/auth/login`; the un-prefixed path 404s). Every env template uses `.../api/v1`. With `NEXT_PUBLIC_API_URL` unset, the app 404s on every request, a confusing first-run failure. Classification: would improve. Fix: append `/api/v1` to the fallback, or fail loudly when the var is unset.
+
+- [ ] **150. Auth mount race can log a user straight back out after login** (Medium)
+  `lib/contexts/auth-context.tsx:34-45` fires `getSession()` at mount and unconditionally applies the result; `cancelled` is only set on unmount, and `AuthProvider` lives in the root layout so it never unmounts. On a slow/cold API the probe is a 401 then a refresh attempt (10s timeouts each). If the user logs in during that window, `login()` sets authenticated true, then the stale probe resolves null and clobbers it to false, and `ProtectedRoute` bounces the freshly-logged-in user back to `/login`. Classification: broken/must fix (edge case). Fix: ignore the mount probe once a login has happened (a ref guard), or skip it when already authenticated.
+
+- [ ] **151. Docs site has drifted from the real code in several places** (Medium)
+  Concrete, verified drift: the i18n docs page says the language switcher "sets the cookie and refreshes the route, so no reload," but the switcher calls `window.location.reload()` (item 76 kept the full reload deliberately). The monitoring docs say services are scraped every 5s and show `scrape_interval: 5s`, but the real value is 15s (item 92). The deployment docs label mongo-express as prod and portainer as "dev convenience," which is backwards (mongo-express is dev-only, portainer is in prod behind basic auth), and show a `mongo.{$DOMAIN}` Caddy site that does not exist. The Google-login guide tells users to authorize `http://localhost:3000` for dev, but the dev stack serves the frontend at `https://localhost` through Caddy, so following it yields an `origin_mismatch`. Classification: broken/must fix (wrong documentation). Fix: correct these pages against the current infra.
+
+- [ ] **152. CSP ships `'unsafe-eval'` to production** (Low)
+  `next.config.mjs`'s `script-src` includes `'unsafe-eval'`, which only `next dev` needs; production Next does not. The comment justifies `'unsafe-inline'` and the Google origins but not eval. Related: Caddy's `(common)` snippet and Next set conflicting duplicate `X-Frame-Options` (SAMEORIGIN vs DENY) and HSTS max-age values. Classification: would improve. Fix: make `'unsafe-eval'` conditional on `NODE_ENV`, and pick one owner for the framing/HSTS headers.
+
+- [ ] **153. Backend error messages render verbatim in every form, bypassing i18n** (Low)
+  Every form catch does `err instanceof Error ? err.message : t(...)` (`login-form.tsx`, `register-form.tsx`, `reset-password/page.tsx`, `forgot-password/page.tsx`, `account/page.tsx`), so an APIError's raw English string always wins and users in the 7 non-English locales see untranslated backend text instead of the translated fallbacks that already exist. Classification: would improve. Fix: map known status codes to translated messages and reserve `err.message` for unexpected cases.
+
+- [ ] **154. Admin users table: deleting the last row on a page strands the admin with no pagination** (Low)
+  `users-table.tsx` gates the pager on `data && users.length > 0` and does not adjust `page` after a delete. Deleting the last user on page N>1 refetches page N, gets zero rows, shows "No users found," and hides the pager, with no way back without clearing the filter or reloading. There is also an out-of-order response race on rapid Prev/Next or filter changes (no AbortController), so a slow earlier response can overwrite a newer page. Classification: broken/must fix (edge case). Fix: render the pager whenever `data` exists and clamp `page` to `totalPages` after mutations; sequence or abort in-flight list requests.
+
+- [ ] **155. Dashboard polls forever in hidden tabs, and the refresh call has no timeout** (Low)
+  `use-polling.ts` has no `visibilitychange`/`document.hidden` handling, so the dashboard polls every 5s indefinitely even when the tab is hidden. And `client.ts`'s `attemptRefresh` fetch has no AbortController (unlike normal requests), so a hung refresh pins all queued 401 retries until the socket dies. Classification: would improve. Fix: pause polling when hidden, and give the refresh fetch a timeout.
+
+- [ ] **156. Accept-Language negotiation only inspects the first tag** (Low)
+  `middleware.ts` and `i18n/request.ts` both do `acceptLanguage.split(',')[0]`, so a browser sending `ca,es;q=0.9` gets the default even though a supported locale is listed second. Classification: would improve. Fix: iterate the q-sorted list and pick the first supported locale.
+
+- [ ] **157. Copy and i18n cleanups** (Low)
+  The delete-user confirm dialog labels its cancel button "Clear" (the filter-reset verb), which reads as "clear the user." The register page reuses the login subtitle "Sign in to access your dashboard." `protected-route.tsx` and `verify-email/page.tsx` have hardcoded English visible copy (not aria-labels, so outside the accepted deferral). Three message keys are dead in all 8 locales (`auth.verifyEmail.backToHome`, `app.landing.docs`, `app.admin.motd.help`). The landing still has "from the start" / "from day one" parallelism (item 117 flattened only the two lines it named). Classification: would improve. Fix: add a real `cancel` key, a register subtitle, translate the visible strings, remove the dead keys.
+
+- [ ] **158. Unused frontend dependencies** (Low)
+  `@hookform/resolvers` is a dependency but nothing imports it and `react-hook-form` itself is not even a dep (all forms are hand-rolled useState). `autoprefixer` is unused under Tailwind v4's Lightning CSS. Both are pure install weight. Classification: would improve. Fix: remove both.
+
+## N. Tooling, CI, docs
+
+- [ ] **159. The CI workflow cannot pass: it never installs the frontend's pnpm deps, but Nx runs public-page targets in every job** (High)
+  `.github/workflows/ci.yml` only runs `npm ci` at the root. Nx infers `build`/`test`/`typecheck`/`lint` targets for `public-page` (verified with `nx show project public-page`), and `nx run-many` includes it (verified: `nx run-many -t build` runs 7 projects including public-page and fails). But `frontend/public-page` is excluded from the npm workspaces and installs only via pnpm, so the root `node_modules` has no `next`, `@next/*`, or `vitest` (verified). So `npm run lint`, `typecheck`, `build`, and `test` all fail in CI for the missing frontend deps. `origin/main` has no `.github/` at all (this workflow has never run), so the README CI badge will go red on first push. Classification: broken/must fix. Fix: add `pnpm/action-setup` plus `pnpm install --frozen-lockfile` in `frontend/public-page`, or give public-page a dedicated pnpm job and exclude it from the root run-many scripts.
+
+- [ ] **160. `--coverage` in the CI test step breaks public-page even after deps are installed** (High)
+  `ci.yml:107` runs `npm run test -- --skip-nx-cache --coverage`, forwarding `--coverage` to public-page's vitest, which fails with `Cannot find dependency '@vitest/coverage-v8'` (only an optional peer, not installed). Classification: broken/must fix. Fix: add `@vitest/coverage-v8` to the frontend devDependencies, or do not forward `--coverage` to vitest.
+
+- [x] **161. AI tool-call artifacts are committed into the README and three docs files** (High)
+  `README.md` ends (lines 230-231) with literal `</content>` and `</invoke>` tags, rendered on the repo front page. The same `</content>` leftover is in `docs/deployment.md:61`, `docs/frontend.md:40`, and `docs/infrastructure.md:27`. These are committed (working tree is clean). Classification: broken/must fix. Fix: delete the stray tags.
+  **Status: Done.** Removed the stray `</content>`/`</invoke>` lines from README.md and the three docs files, trimming trailing blank lines. Verified no `</content>`/`</invoke>`/`</antml` markers remain anywhere in README or docs. (The `docs/frontend.md` "react-hook-form + Zod" line is factually wrong too, tracked separately under item 158's dead-deps note.)
+
+- [ ] **162. The service generator template still ships the express moduleNameMapper that item 61 diagnosed as broken** (High)
+  `tools/forgestack/src/generators/service/files/service/jest.config.js__tmpl__:37` still maps `'^express$'` to a per-service `node_modules/express/index.js` path that does not exist under a hoisted install, the exact bug item 61 fixed in the real service configs with `require.resolve('express')`. Every newly generated service inherits the broken mapping and cannot run any test that loads `@nestjs/platform-express`. Classification: broken/must fix. Fix: switch the template to `require.resolve('express')`.
+
+- [ ] **163. Generated services are silently excluded from typecheck and ship `UNLICENSED`** (Medium)
+  The service generator's `project.json` template has no `typecheck` target, while item 104 added one to all six real backend projects, so a generated service passes `npm run typecheck`, pre-commit, and CI without ever being typechecked. The template `package.json` also says `"license": "UNLICENSED"` in an MIT repo (also true of the real service-1/service-2 and missing entirely from `libs/kafka`), and pairs `@types/jest ^30` with `jest ^29` (a mismatch also present in the root and both services). Classification: broken/must fix (the missing typecheck), would improve (license, versions). Fix: add the `typecheck` target to the template, set the license to MIT, align jest versions.
+
+- [ ] **164. `npm run test:watch` and default test flags break on public-page** (Medium)
+  `package.json:32` forwards the jest-only `--watchAll` to public-page's vitest, which throws `Unknown option --watchAll`. This worked before the frontend gained vitest (item 71). Classification: broken/must fix. Fix: scope `test:watch` to the backend projects, or use a vitest-compatible watch invocation for public-page.
+
+- [ ] **165. Nx cache correctness gaps: lint ignores `.prettierrc`, and test outputs never match where coverage is written** (Medium)
+  The lint inputs do not include `.prettierrc`, yet lint runs prettier (root `eslint-plugin-prettier`, and the frontend's `prettier --check`), so editing `.prettierrc` leaves every lint cache green. Every `test` target declares `outputs: ["{workspaceRoot}/coverage/{projectRoot}"]`, but jest writes to `{projectRoot}/coverage` and the forgestack tool writes into `tools/forgestack/src/coverage` (inside the source tree), so cache restores never include coverage and the item-61 threshold ratchet only holds because CI adds `--skip-nx-cache`. Classification: would improve (cache correctness). Fix: add `.prettierrc` to `sharedGlobals`, and align the declared outputs with the real coverage dirs (or set `coverageDirectory` to match).
+
+- [ ] **166. Item 110's unchecked sub-bullets are all still open** (Medium)
+  Verified each: `.gitattributes` still holds only `*.mp4 binary` (no `* text=auto eol=lf`); `--exclude=forgestack` is still on every root script and in `check-typescript.sh`; `test` still uses the deprecated `--all`; lib spec/contract files are still ignored by the root eslint config, and `tools/forgestack` plus `eslint/rules/*.mjs` are never linted; and the spec-file override disables `no-restricted-imports` wholesale, so specs bypass all four hexagonal layer rules (which are implemented as `no-restricted-imports`), not just the in-memory repo import they need. Classification: would improve. Fix: work through the list; the boundary-rule exemption in particular is broader than intended.
+
+- [ ] **167. README deploy menu disagrees with `deploy.sh` on the exit option** (Low)
+  `README.md:200` lists "7. Exit"; `deploy.sh:381` implements `0) Exit`. Item 113 claimed the menu matched exactly. Classification: broken/must fix (doc). Fix: change the README to `0. Exit`.
+
+- [ ] **168. CONTRIBUTING and AGENTS still overstate `dev:start`** (Low)
+  Item 118 fixed only the README. `CONTRIBUTING.md:12` and `AGENTS.md:13` still say `dev:start` "provisions prerequisites (Node, Docker)," contradicting the corrected README (it checks Node, never auto-installs it). Classification: would improve. Fix: align both with the README wording.
+
+- [ ] **169. Stale repo URL after the GitHub rename** (Low)
+  The GitHub repo is now `FVJohnny/forgestack` (item 111's owner TODO was done), but `package.json:9` `repository.url` still points at `nestjs-microservices-framework.git`. GitHub redirects, so nothing breaks, but the identity item 111 tried to close is inconsistent again in-repo. Classification: would improve. Fix: update the URL.
+
+- [ ] **170. `docs/architecture.md` misdescribes `@bc/*` and contradicts the cross-BC rule** (Low)
+  It says `@bc/*` resolves to service-1 only, but `tsconfig.base.json` uses `${configDir}` (per-service, service-2 included). It also says to "prefer these aliases over relative imports when importing across bounded contexts," which directly contradicts the `bounded-context/no-cross-imports` lint rule that forbids cross-BC imports entirely (except `shared`). Classification: would improve. Fix: correct the alias description and the cross-BC guidance.
+
+- [ ] **171. Contributors are not told `npm run test` needs a live Mongo and Redis** (Low)
+  The mongodb/redis lib suites hit real datastores (which is why CI provisions them), but the README and CONTRIBUTING present `npm run test` as a bare command. A fresh contributor running it with no stack up gets connection failures. Classification: would improve. Fix: note the datastore requirement (or that the dev stack must be up) next to the test command.

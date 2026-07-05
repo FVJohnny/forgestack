@@ -24,4 +24,3 @@ Each service has a **local dev** env file plus a `.example` template, and the pr
 - `infra/env/service-1.env.prod` (example: `service-1.env.prod.example`)
 - `infra/env/public-page.env.prod` (example: `public-page.env.prod.example`)
 - `infra/env/infra.env.prod`: shared infra config: domain, TLS, Docker registry, server IP/user, DB/Redis passwords (example: `infra.env.prod.example`)
-  </content>

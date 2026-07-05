@@ -37,4 +37,3 @@ Generic `APIClient` class in `lib/api/` with error handling and toast notificati
 ## Forms
 
 react-hook-form + Zod validation
-</content>

@@ -48,6 +48,7 @@
     },
     "register": {
       "title": "Create Account",
+      "subtitle": "Create your account to get started",
       "email": "Email",
       "emailPlaceholder": "john.doe@example.com",
       "password": "Password",
@@ -81,8 +82,7 @@
       "errors": {
         "noId": "Invalid verification link. No verification ID provided.",
         "default": "Email verification failed. The link may be invalid or expired."
-      },
-      "backToHome": "← Back to home"
+      }
     }
   },
   "app": {
@@ -92,10 +92,9 @@
       "github": "View on GitHub",
       "openDemo": "Open Demo",
       "seeDocs": "See Docs",
-      "docs": "Docs",
       "features": {
         "architecture": {
-          "title": "Strong patterns from the start",
+          "title": "Strong architectural patterns",
           "desc": "Hexagonal architecture, DDD and CQRS shape every service. The structure is already there, and lint rules fail the build when someone breaks it."
         },
         "events": {
@@ -103,7 +102,7 @@
           "desc": "Services never call each other directly. They publish events to Kafka through a transactional outbox, so each part scales and fails on its own without losing a message."
         },
         "observability": {
-          "title": "Monitored from day one",
+          "title": "Built-in monitoring",
           "desc": "Endpoints, commands, queries, events: everything ships metrics, traces and logs into Grafana. There is nothing to instrument by hand."
         },
         "auth": {
@@ -125,7 +124,8 @@
       "panelTitle": "Operate your services from one forge-lit cockpit",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Secure session · token refresh · role-based access",
-      "backToHome": "Back to home"
+      "backToHome": "Back to home",
+      "authenticating": "authenticating"
     },
     "nav": {
       "overview": "Overview",
@@ -220,6 +220,7 @@
         "filterPlaceholder": "Filter by {field}…",
         "search": "Search",
         "clear": "Clear",
+        "cancel": "Cancel",
         "columns": {
           "email": "Email",
           "role": "Role",
@@ -253,7 +254,6 @@
         "title": "Message of the Day",
         "label": "Notice content",
         "placeholder": "Shown to every user on the console…",
-        "help": "Leave a heads-up for everyone (maintenance windows, releases…).",
         "save": "Save notice",
         "saving": "Saving…",
         "clear": "Clear",

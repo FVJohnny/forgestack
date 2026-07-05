@@ -48,6 +48,7 @@
     },
     "register": {
       "title": "Créer un Compte",
+      "subtitle": "Créez votre compte pour commencer",
       "email": "Email",
       "emailPlaceholder": "jean.dupont@exemple.fr",
       "password": "Mot de passe",
@@ -81,8 +82,7 @@
       "errors": {
         "noId": "Lien de vérification invalide. Aucun ID de vérification fourni.",
         "default": "La vérification de l'email a échoué. Le lien peut être invalide ou expiré."
-      },
-      "backToHome": "← Retour à l'accueil"
+      }
     }
   },
   "app": {
@@ -92,10 +92,9 @@
       "github": "Voir sur GitHub",
       "openDemo": "Ouvrir la démo",
       "seeDocs": "Voir les docs",
-      "docs": "Docs",
       "features": {
         "architecture": {
-          "title": "Des patterns solides dès le départ",
+          "title": "Des patterns d'architecture solides",
           "desc": "Architecture hexagonale, DDD et CQRS structurent chaque service. La structure est déjà en place, et les règles de lint font échouer le build quand quelqu'un la casse."
         },
         "events": {
@@ -103,7 +102,7 @@
           "desc": "Les services ne s'appellent jamais directement. Ils publient des événements vers Kafka via un outbox transactionnel : chaque partie scale et tombe indépendamment, sans perdre de message."
         },
         "observability": {
-          "title": "Supervisé dès le premier jour",
+          "title": "Supervision intégrée",
           "desc": "Endpoints, commandes, queries, événements : tout envoie métriques, traces et logs vers Grafana. Rien à instrumenter à la main."
         },
         "auth": {
@@ -125,7 +124,8 @@
       "panelTitle": "Pilotez vos services depuis un cockpit unique aux reflets de forge",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Session sécurisée · rafraîchissement du token · accès basé sur les rôles",
-      "backToHome": "Retour à l'accueil"
+      "backToHome": "Retour à l'accueil",
+      "authenticating": "authentification"
     },
     "nav": {
       "overview": "Vue d'ensemble",
@@ -220,6 +220,7 @@
         "filterPlaceholder": "Filtrer par {field}…",
         "search": "Rechercher",
         "clear": "Effacer",
+        "cancel": "Annuler",
         "columns": {
           "email": "Email",
           "role": "Rôle",
@@ -253,7 +254,6 @@
         "title": "Message du jour",
         "label": "Contenu de l'avis",
         "placeholder": "Affiché à chaque utilisateur sur la console…",
-        "help": "Laissez un message pour tout le monde (fenêtres de maintenance, versions…).",
         "save": "Enregistrer l'avis",
         "saving": "Enregistrement…",
         "clear": "Effacer",

@@ -81,7 +81,7 @@ export function RegisterForm() {
 
   return (
     <div>
-      <AuthHeading title={t('title')} subtitle={tLogin('subtitle')} />
+      <AuthHeading title={t('title')} subtitle={t('subtitle')} />
 
       {error && (
         <FormAlert kind="error" className="mb-4">

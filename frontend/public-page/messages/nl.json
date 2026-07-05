@@ -48,6 +48,7 @@
     },
     "register": {
       "title": "Account Aanmaken",
+      "subtitle": "Maak je account aan om te beginnen",
       "email": "E-mail",
       "emailPlaceholder": "jan.jansen@voorbeeld.nl",
       "password": "Wachtwoord",
@@ -81,8 +82,7 @@
       "errors": {
         "noId": "Ongeldige verificatielink. Geen verificatie-ID opgegeven.",
         "default": "E-mailverificatie mislukt. De link is mogelijk ongeldig of verlopen."
-      },
-      "backToHome": "← Terug naar home"
+      }
     }
   },
   "app": {
@@ -92,10 +92,9 @@
       "github": "Bekijk op GitHub",
       "openDemo": "Demo openen",
       "seeDocs": "Bekijk documentatie",
-      "docs": "Documentatie",
       "features": {
         "architecture": {
-          "title": "Sterke patronen vanaf het begin",
+          "title": "Sterke architectuurpatronen",
           "desc": "Hexagonale architectuur, DDD en CQRS vormen elke service. De structuur staat er al, en lint-regels laten de build falen als iemand die doorbreekt."
         },
         "events": {
@@ -103,7 +102,7 @@
           "desc": "Services roepen elkaar nooit direct aan. Ze publiceren events naar Kafka via een transactionele outbox, zodat elk deel zelfstandig schaalt en faalt zonder berichten te verliezen."
         },
         "observability": {
-          "title": "Gemonitord vanaf dag één",
+          "title": "Ingebouwde monitoring",
           "desc": "Endpoints, commands, queries, events: alles stuurt metrics, traces en logs naar Grafana. Er valt niets met de hand te instrumenteren."
         },
         "auth": {
@@ -125,7 +124,8 @@
       "panelTitle": "Bedien je services vanuit één smeedverlichte cockpit",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Beveiligde sessie · token-vernieuwing · rolgebaseerde toegang",
-      "backToHome": "Terug naar home"
+      "backToHome": "Terug naar home",
+      "authenticating": "authenticatie"
     },
     "nav": {
       "overview": "Overzicht",
@@ -220,6 +220,7 @@
         "filterPlaceholder": "Filter op {field}…",
         "search": "Zoeken",
         "clear": "Wissen",
+        "cancel": "Annuleren",
         "columns": {
           "email": "E-mail",
           "role": "Rol",
@@ -253,7 +254,6 @@
         "title": "Bericht van de dag",
         "label": "Inhoud van mededeling",
         "placeholder": "Getoond aan elke gebruiker op de console…",
-        "help": "Laat een melding achter voor iedereen (onderhoudsvensters, releases…).",
         "save": "Mededeling opslaan",
         "saving": "Opslaan…",
         "clear": "Wissen",

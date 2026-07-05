@@ -48,6 +48,7 @@
     },
     "register": {
       "title": "Konto Erstellen",
+      "subtitle": "Erstelle dein Konto, um loszulegen",
       "email": "E-Mail",
       "emailPlaceholder": "max.mustermann@beispiel.de",
       "password": "Passwort",
@@ -81,8 +82,7 @@
       "errors": {
         "noId": "Ungültiger Bestätigungslink. Keine Bestätigungs-ID angegeben.",
         "default": "E-Mail-Verifizierung fehlgeschlagen. Der Link ist möglicherweise ungültig oder abgelaufen."
-      },
-      "backToHome": "← Zurück zur Startseite"
+      }
     }
   },
   "app": {
@@ -92,10 +92,9 @@
       "github": "Auf GitHub ansehen",
       "openDemo": "Demo öffnen",
       "seeDocs": "Doku ansehen",
-      "docs": "Doku",
       "features": {
         "architecture": {
-          "title": "Starke Muster von Anfang an",
+          "title": "Solide Architekturmuster",
           "desc": "Hexagonale Architektur, DDD und CQRS prägen jeden Service. Die Struktur steht bereits, und Lint-Regeln lassen den Build fehlschlagen, wenn jemand sie verletzt."
         },
         "events": {
@@ -103,7 +102,7 @@
           "desc": "Services rufen sich nie direkt auf. Sie publizieren Events über eine transaktionale Outbox nach Kafka, damit jeder Teil unabhängig skaliert und ausfällt, ohne eine Nachricht zu verlieren."
         },
         "observability": {
-          "title": "Überwacht ab dem ersten Tag",
+          "title": "Integriertes Monitoring",
           "desc": "Endpoints, Commands, Queries, Events: alles liefert Metriken, Traces und Logs nach Grafana. Nichts muss von Hand instrumentiert werden."
         },
         "auth": {
@@ -125,7 +124,8 @@
       "panelTitle": "Steuere deine Services aus einem schmiedeglühenden Cockpit",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Sichere Sitzung · Token-Refresh · rollenbasierter Zugriff",
-      "backToHome": "Zurück zur Startseite"
+      "backToHome": "Zurück zur Startseite",
+      "authenticating": "authentifizierung"
     },
     "nav": {
       "overview": "Übersicht",
@@ -220,6 +220,7 @@
         "filterPlaceholder": "Nach {field} filtern…",
         "search": "Suchen",
         "clear": "Löschen",
+        "cancel": "Abbrechen",
         "columns": {
           "email": "E-Mail",
           "role": "Rolle",
@@ -253,7 +254,6 @@
         "title": "Nachricht des Tages",
         "label": "Hinweisinhalt",
         "placeholder": "Wird jedem Benutzer in der Konsole angezeigt…",
-        "help": "Hinterlasse einen Hinweis für alle (Wartungsfenster, Releases…).",
         "save": "Hinweis speichern",
         "saving": "Wird gespeichert…",
         "clear": "Löschen",

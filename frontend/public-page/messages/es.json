@@ -48,6 +48,7 @@
     },
     "register": {
       "title": "Crear Cuenta",
+      "subtitle": "Crea tu cuenta para empezar",
       "email": "Correo Electrónico",
       "emailPlaceholder": "juan.perez@ejemplo.com",
       "password": "Contraseña",
@@ -81,8 +82,7 @@
       "errors": {
         "noId": "Enlace de verificación inválido. No se proporcionó ID de verificación.",
         "default": "La verificación de correo falló. El enlace puede ser inválido o haber expirado."
-      },
-      "backToHome": "← Volver al inicio"
+      }
     }
   },
   "app": {
@@ -92,10 +92,9 @@
       "github": "Ver en GitHub",
       "openDemo": "Abrir demo",
       "seeDocs": "Ver documentación",
-      "docs": "Documentación",
       "features": {
         "architecture": {
-          "title": "Patrones sólidos desde el principio",
+          "title": "Patrones de arquitectura sólidos",
           "desc": "Arquitectura hexagonal, DDD y CQRS estructuran cada servicio. La estructura ya está montada, y las reglas de lint hacen fallar el build cuando alguien la rompe."
         },
         "events": {
@@ -103,7 +102,7 @@
           "desc": "Los servicios nunca se llaman entre sí. Publican eventos en Kafka a través de un outbox transaccional, así cada parte escala y falla por su cuenta sin perder mensajes."
         },
         "observability": {
-          "title": "Monitorizado desde el primer día",
+          "title": "Monitorización integrada",
           "desc": "Endpoints, comandos, queries, eventos: todo envía métricas, trazas y logs a Grafana. No hay nada que instrumentar a mano."
         },
         "auth": {
@@ -125,7 +124,8 @@
       "panelTitle": "Opera tus servicios desde una cabina iluminada por la forja",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Sesión segura · renovación de tokens · acceso basado en roles",
-      "backToHome": "Volver al inicio"
+      "backToHome": "Volver al inicio",
+      "authenticating": "autenticando"
     },
     "nav": {
       "overview": "Resumen",
@@ -220,6 +220,7 @@
         "filterPlaceholder": "Filtrar por {field}…",
         "search": "Buscar",
         "clear": "Limpiar",
+        "cancel": "Cancelar",
         "columns": {
           "email": "Correo",
           "role": "Rol",
@@ -253,7 +254,6 @@
         "title": "Mensaje del día",
         "label": "Contenido del aviso",
         "placeholder": "Visible para todos los usuarios en la consola…",
-        "help": "Deja un aviso para todos (ventanas de mantenimiento, lanzamientos…).",
         "save": "Guardar aviso",
         "saving": "Guardando…",
         "clear": "Limpiar",

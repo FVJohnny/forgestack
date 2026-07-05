@@ -304,7 +304,7 @@ export function UsersTable() {
           </DialogHeader>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setPendingDelete(null)}>
-              {t('clear')}
+              {t('cancel')}
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
               {t('confirmDelete.confirm')}

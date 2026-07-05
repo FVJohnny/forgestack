@@ -48,6 +48,7 @@
     },
     "register": {
       "title": "Criar Conta",
+      "subtitle": "Crie sua conta para começar",
       "email": "Email",
       "emailPlaceholder": "joao.silva@exemplo.com",
       "password": "Senha",
@@ -81,8 +82,7 @@
       "errors": {
         "noId": "Link de verificação inválido. Nenhum ID de verificação fornecido.",
         "default": "Verificação de email falhou. O link pode ser inválido ou ter expirado."
-      },
-      "backToHome": "← Voltar ao início"
+      }
     }
   },
   "app": {
@@ -92,10 +92,9 @@
       "github": "Ver no GitHub",
       "openDemo": "Abrir Demo",
       "seeDocs": "Ver documentação",
-      "docs": "Documentação",
       "features": {
         "architecture": {
-          "title": "Padrões sólidos desde o início",
+          "title": "Padrões de arquitetura sólidos",
           "desc": "Arquitetura hexagonal, DDD e CQRS estruturam cada serviço. A estrutura já está montada, e as regras de lint quebram o build quando alguém a viola."
         },
         "events": {
@@ -103,7 +102,7 @@
           "desc": "Os serviços nunca se chamam diretamente. Publicam eventos no Kafka por um outbox transacional, então cada parte escala e falha por conta própria sem perder mensagens."
         },
         "observability": {
-          "title": "Monitorado desde o primeiro dia",
+          "title": "Monitoramento integrado",
           "desc": "Endpoints, comandos, queries, eventos: tudo envia métricas, traces e logs para o Grafana. Não há nada para instrumentar na mão."
         },
         "auth": {
@@ -125,7 +124,8 @@
       "panelTitle": "Opere seus serviços a partir de um cockpit iluminado pela forja",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Sessão segura · renovação de token · acesso baseado em papéis",
-      "backToHome": "Voltar ao início"
+      "backToHome": "Voltar ao início",
+      "authenticating": "autenticando"
     },
     "nav": {
       "overview": "Visão Geral",
@@ -220,6 +220,7 @@
         "filterPlaceholder": "Filtrar por {field}…",
         "search": "Buscar",
         "clear": "Limpar",
+        "cancel": "Cancelar",
         "columns": {
           "email": "Email",
           "role": "Papel",
@@ -253,7 +254,6 @@
         "title": "Mensagem do Dia",
         "label": "Conteúdo do aviso",
         "placeholder": "Exibido a todos os usuários no console…",
-        "help": "Deixe um alerta para todos (janelas de manutenção, lançamentos…).",
         "save": "Salvar aviso",
         "saving": "Salvando…",
         "clear": "Limpar",

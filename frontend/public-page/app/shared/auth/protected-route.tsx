@@ -4,10 +4,12 @@ import type React from 'react';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { useUser } from '@/lib/contexts/user-context';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('app.auth');
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { isLoading: userLoading } = useUser();
   const router = useRouter();
@@ -26,7 +28,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <div className="font-mono text-sm text-ink-dim caret">authenticating</div>
+          <div className="font-mono text-sm text-ink-dim caret">{t('authenticating')}</div>
         </div>
       </div>
     );

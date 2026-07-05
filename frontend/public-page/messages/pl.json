@@ -48,6 +48,7 @@
     },
     "register": {
       "title": "Utwórz Konto",
+      "subtitle": "Utwórz konto, aby zacząć",
       "email": "Email",
       "emailPlaceholder": "jan.kowalski@przyklad.pl",
       "password": "Hasło",
@@ -81,8 +82,7 @@
       "errors": {
         "noId": "Nieprawidłowy link weryfikacyjny. Brak ID weryfikacji.",
         "default": "Weryfikacja email nie powiodła się. Link może być nieprawidłowy lub wygasły."
-      },
-      "backToHome": "← Powrót do strony głównej"
+      }
     }
   },
   "app": {
@@ -92,10 +92,9 @@
       "github": "Zobacz na GitHub",
       "openDemo": "Otwórz demo",
       "seeDocs": "Zobacz dokumentację",
-      "docs": "Dokumentacja",
       "features": {
         "architecture": {
-          "title": "Mocne wzorce od samego początku",
+          "title": "Solidne wzorce architektury",
           "desc": "Architektura heksagonalna, DDD i CQRS kształtują każdy serwis. Struktura już stoi, a reguły lint zatrzymują build, gdy ktoś ją łamie."
         },
         "events": {
@@ -103,7 +102,7 @@
           "desc": "Serwisy nigdy nie wołają się bezpośrednio. Publikują zdarzenia do Kafki przez transakcyjny outbox, więc każda część skaluje się i pada niezależnie, nie gubiąc wiadomości."
         },
         "observability": {
-          "title": "Monitorowane od pierwszego dnia",
+          "title": "Wbudowany monitoring",
           "desc": "Endpointy, komendy, zapytania, zdarzenia: wszystko wysyła metryki, trace'y i logi do Grafany. Niczego nie trzeba instrumentować ręcznie."
         },
         "auth": {
@@ -125,7 +124,8 @@
       "panelTitle": "Zarządzaj swoimi usługami z jednego kokpitu rozświetlonego ogniem kuźni",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Bezpieczna sesja · odświeżanie tokenów · dostęp oparty na rolach",
-      "backToHome": "Powrót do strony głównej"
+      "backToHome": "Powrót do strony głównej",
+      "authenticating": "uwierzytelnianie"
     },
     "nav": {
       "overview": "Przegląd",
@@ -220,6 +220,7 @@
         "filterPlaceholder": "Filtruj według {field}…",
         "search": "Szukaj",
         "clear": "Wyczyść",
+        "cancel": "Anuluj",
         "columns": {
           "email": "Email",
           "role": "Rola",
@@ -253,7 +254,6 @@
         "title": "Wiadomość dnia",
         "label": "Treść ogłoszenia",
         "placeholder": "Wyświetlana każdemu użytkownikowi w konsoli…",
-        "help": "Zostaw informację dla wszystkich (okna serwisowe, wydania…).",
         "save": "Zapisz ogłoszenie",
         "saving": "Zapisywanie…",
         "clear": "Wyczyść",

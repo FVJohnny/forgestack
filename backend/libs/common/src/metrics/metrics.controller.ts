@@ -2,9 +2,13 @@ import { Controller, Get, Res, UseGuards } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { Response } from 'express';
 
-import { InternalApiKeyGuard } from '../auth';
+import { InternalApiKeyGuard, Public } from '../auth';
 import { MetricsService } from './metrics.service';
 
+// Prometheus scrape endpoint: authenticated by the internal API key (for
+// service-to-service / Prometheus), not a user JWT, so exempt from the global
+// JwtAuthGuard.
+@Public()
 @Controller()
 @UseGuards(InternalApiKeyGuard)
 @SkipThrottle()

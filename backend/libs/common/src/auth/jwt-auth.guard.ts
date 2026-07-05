@@ -4,14 +4,17 @@ import {
   ExecutionContext,
   UnauthorizedException,
   Inject,
+  Optional,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Reflector } from '@nestjs/core';
 import { type IQueryBus } from '@nestjs/cqrs';
 import { JsonWebTokenError, TokenExpiredError, NotBeforeError } from 'jsonwebtoken';
 import { AuthenticatedRequest, JwtTokenPayload } from './jwt-auth.types';
 import { GetUserTokenByToken_Query } from './application/queries/get-user-token-by-token/get-user-token-by-token.query';
 import { QUERY_BUS } from '../cqrs';
 import { ACCESS_TOKEN_COOKIE } from './auth-cookies';
+import { IS_PUBLIC_KEY } from './public.decorator';
 import { NotFoundException } from '../errors/application.exceptions';
 
 @Injectable()
@@ -19,9 +22,22 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     @Inject(QUERY_BUS) private queryBus: IQueryBus,
+    // Optional so existing per-route @UseGuards(JwtAuthGuard) usage keeps
+    // working (Nest injects the Reflector there too, but Optional makes manual
+    // construction in tests painless). When registered as a global APP_GUARD,
+    // the Reflector lets @Public()/@PublicApi() routes bypass auth.
+    @Optional() private reflector?: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector?.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const token = this.extractToken(request);
 

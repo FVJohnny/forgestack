@@ -2,9 +2,14 @@ import { Controller, Get, HttpCode, HttpStatus, Res, UseGuards } from '@nestjs/c
 import { SkipThrottle } from '@nestjs/throttler';
 import type { Response } from 'express';
 
-import { InternalApiKeyGuard } from '../auth';
+import { InternalApiKeyGuard, Public } from '../auth';
 import { ReadinessService } from './readiness.service';
 
+// Ops endpoints: the health/environment routes do their own auth via the
+// internal API key, and the root/ready probes are intentionally anonymous.
+// None require a user JWT, so exempt the whole controller from the global
+// JwtAuthGuard.
+@Public()
 @Controller()
 @SkipThrottle()
 export class HeartbeatController {

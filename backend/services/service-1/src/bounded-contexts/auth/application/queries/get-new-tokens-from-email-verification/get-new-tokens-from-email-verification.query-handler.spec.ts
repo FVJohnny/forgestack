@@ -5,7 +5,7 @@ import { User_InMemoryRepository } from '@bc/auth/infrastructure/repositories/in
 import { EmailVerification } from '@bc/auth/domain/aggregates/email-verification/email-verification.aggregate';
 import { User } from '@bc/auth/domain/aggregates/user/user.aggregate';
 import { JwtService } from '@nestjs/jwt';
-import { Id, JwtTokenService, NotFoundException } from '@libs/nestjs-common';
+import { Id, JwtTokenService, NotFoundException, UnauthorizedException } from '@libs/nestjs-common';
 
 describe('GetNewTokensFromEmailVerification_QueryHandler', () => {
   const setup = async (
@@ -33,12 +33,17 @@ describe('GetNewTokensFromEmailVerification_QueryHandler', () => {
       await userRepository.save(user);
     }
 
+    // The token-minting handler now requires a verified, non-expired
+    // verification (item 126), so seed one that has been verified.
     const emailVerification = EmailVerification.random({ userId: user.id, email: user.email });
+    if (!emailVerification.isVerified()) {
+      emailVerification.verify();
+    }
     if (withEmailVerification) {
       await emailVerificationRepository.save(emailVerification);
     }
 
-    return { handler, user, emailVerification, jwtTokenService };
+    return { handler, user, emailVerification, emailVerificationRepository, jwtTokenService };
   };
 
   describe('Happy Path', () => {
@@ -90,6 +95,20 @@ describe('GetNewTokensFromEmailVerification_QueryHandler', () => {
 
       // Act & Assert
       await expect(handler.execute(query)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('State guard (item 126)', () => {
+    it('refuses to mint tokens for an unverified verification', async () => {
+      const { handler, emailVerificationRepository } = await setup({ withEmailVerification: false });
+      // Seed an unverified verification (a different user than the seeded one).
+      const unverified = EmailVerification.random();
+      await emailVerificationRepository.save(unverified);
+      const query = new GetNewTokensFromEmailVerification_Query({
+        emailVerificationId: unverified.id.toValue(),
+      });
+
+      await expect(handler.execute(query)).rejects.toThrow(UnauthorizedException);
     });
   });
 

@@ -3,9 +3,12 @@ import { ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger
 import { SkipThrottle } from '@nestjs/throttler';
 import type { MongoClient } from 'mongodb';
 
-import { InternalApiKeyGuard } from '@libs/nestjs-common';
+import { InternalApiKeyGuard, Public } from '@libs/nestjs-common';
 import { MongoDBConfigService } from './mongodb-config.service';
 
+// Authenticated by the internal API key, not a user JWT, so exempt from the
+// global JwtAuthGuard.
+@Public()
 @ApiTags('MongoDB')
 @ApiSecurity('internal-api-key')
 @Controller('mongodb')

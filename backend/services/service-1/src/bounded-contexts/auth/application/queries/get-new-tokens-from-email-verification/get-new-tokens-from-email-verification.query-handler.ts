@@ -11,6 +11,7 @@ import {
   Id,
   JwtTokenService,
   NotFoundException,
+  UnauthorizedException,
   TokenPayload,
 } from '@libs/nestjs-common';
 import { Inject } from '@nestjs/common';
@@ -38,6 +39,16 @@ export class GetNewTokensFromEmailVerification_QueryHandler extends Base_QueryHa
     );
     if (!emailVerification) {
       throw new NotFoundException('email verification');
+    }
+
+    // Defense in depth: this handler mints login tokens, so possessing a
+    // verification id must not be enough on its own. Only mint for a
+    // verification that has actually been verified and has not expired. Today
+    // the controller runs VerifyEmail_Command first (which enforces this), but
+    // this guards against a future caller or a reordering minting tokens from a
+    // merely-existing (unverified or expired) verification.
+    if (emailVerification.isExpired() || !emailVerification.isVerified()) {
+      throw new UnauthorizedException();
     }
 
     const user = await this.userRepository.findById(emailVerification.userId);

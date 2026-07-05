@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { JwtAuthGuard } from '@libs/nestjs-common';
 import { AuthBoundedContextModule } from './bounded-contexts/auth/auth.module';
 import { NotificationsBoundedContextModule } from './bounded-contexts/notifications/notifications.module';
 import { DashboardModule } from './dashboard/dashboard.module';
@@ -65,6 +67,15 @@ import { KafkaIntegrationEventsModule } from '@libs/nestjs-kafka';
 
     // DEV-CONSOLE DASHBOARD (browser-facing, JWT-protected reads)
     DashboardModule,
+  ],
+  providers: [
+    // Secure by default: every route requires a valid session unless it is
+    // explicitly marked @Public()/@PublicApi(). This closes the gap where a
+    // controller that simply forgot @UseGuards(JwtAuthGuard) shipped as a public
+    // endpoint. Framework ops controllers (health/metrics/mongodb/event-tracker)
+    // and the genuinely anonymous auth routes carry @Public(); admin routes keep
+    // their AdminRoleGuard on top of this.
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })
 export class AppModule {}

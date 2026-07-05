@@ -2,13 +2,16 @@ import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 
-import { InternalApiKeyGuard } from '../auth';
+import { InternalApiKeyGuard, Public } from '../auth';
 import { EventTrackerService } from './event-tracker.service';
 
 /**
  * Generic messaging controller that works with any event source implementation
  * (Kafka, Redis, RabbitMQ, etc.) through dependency injection
  */
+// Authenticated by the internal API key (service-to-service), not a user JWT,
+// so exempt from the global JwtAuthGuard.
+@Public()
 @ApiTags('Event-Tracker')
 @ApiSecurity('internal-api-key')
 @Controller('event-tracker')

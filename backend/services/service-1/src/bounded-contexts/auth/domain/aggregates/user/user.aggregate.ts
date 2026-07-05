@@ -254,11 +254,19 @@ export class User extends SharedAggregate implements UserAttributes {
 
   delete(): void {
     this.apply(new UserDeleted_DomainEvent(this.id));
+    // Revoke the deleted user's tokens immediately. Without this the JWT guard
+    // only checks token validity + presence in the store, so a deleted user's
+    // access token stays usable until it expires.
+    this.logout();
   }
 
   suspend(): void {
     this.status = UserStatus.suspended();
     this.timestamps = new Timestamps(this.timestamps.createdAt, DateVO.now());
+    // Revoke tokens so the suspension takes effect now, not after the access
+    // token's natural expiry (a suspended admin would otherwise keep admin
+    // access for the remainder of the token lifetime).
+    this.logout();
   }
 
   unsuspend(): void {

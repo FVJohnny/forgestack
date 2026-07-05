@@ -68,10 +68,15 @@ describe('DeleteUserCommandHandler', () => {
         }),
       );
 
-      expect(eventBus.events).toHaveLength(1);
-      const event = eventBus.events[0] as UserDeleted_DomainEvent;
+      const event = eventBus.events.find(
+        (e) => e instanceof UserDeleted_DomainEvent,
+      ) as UserDeleted_DomainEvent;
       expect(event).toBeInstanceOf(UserDeleted_DomainEvent);
       expect(event.aggregateId.toValue()).toBe(target.id.toValue());
+      // Item 121: deletion also revokes the user's tokens (UserLogout event).
+      expect(eventBus.events.some((e) => e.constructor.name === 'UserLogout_DomainEvent')).toBe(
+        true,
+      );
     });
   });
 

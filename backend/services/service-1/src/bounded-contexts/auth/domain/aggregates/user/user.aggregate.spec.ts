@@ -530,16 +530,19 @@ describe('User Entity', () => {
     });
 
     describe('delete()', () => {
-      it('should emit domain event for user deletion', () => {
+      it('should emit deletion and token-revocation events', () => {
         const user = User.random({ status: UserStatus.active() });
 
         user.delete();
 
         const events = user.getUncommittedEvents();
-        expect(events).toHaveLength(1);
-        const event = events[0] as UserDeleted_DomainEvent;
-        expect(event.constructor.name).toBe('UserDeleted_DomainEvent');
-        expect(event.aggregateId.toValue()).toBe(user.id.toValue());
+        const deleted = events.find(
+          (e) => e.constructor.name === 'UserDeleted_DomainEvent',
+        ) as UserDeleted_DomainEvent;
+        expect(deleted).toBeDefined();
+        expect(deleted.aggregateId.toValue()).toBe(user.id.toValue());
+        // Item 121: deleting a user must revoke their tokens immediately.
+        expect(events.some((e) => e instanceof UserLogout_DomainEvent)).toBe(true);
       });
     });
 
@@ -550,6 +553,15 @@ describe('User Entity', () => {
         user.suspend();
 
         expect(user.status.toValue()).toBe(UserStatusEnum.SUSPENDED);
+      });
+
+      it('should emit a token-revocation event so suspension takes effect now (item 121)', () => {
+        const user = User.random({ status: UserStatus.active() });
+
+        user.suspend();
+
+        const events = user.getUncommittedEvents();
+        expect(events.some((e) => e instanceof UserLogout_DomainEvent)).toBe(true);
       });
     });
 

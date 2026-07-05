@@ -14,7 +14,7 @@ hot-reload bind mounts, in prod it uses pre-built, versioned images.
 | `public-page` | Next.js frontend |
 | `service-1`, `service-2` | NestJS backend services |
 | `caddy` | reverse proxy + TLS termination |
-| `mongodb` + `mongo-express` | primary datastore + web viewer |
+| `mongodb` | primary datastore (`mongo-express` web viewer is dev-only) |
 | `redis` | cache / pub-sub |
 | `zookeeper` + `kafka` | event bus |
 | `prometheus` | metrics |
@@ -22,7 +22,7 @@ hot-reload bind mounts, in prod it uses pre-built, versioned images.
 | `tempo` | traces |
 | `loki` + `promtail` | logs |
 | `cadvisor` | container metrics |
-| `portainer` | container management UI (dev convenience) |
+| `portainer` | container management UI (in prod behind basic auth) |
 
 All services share one `backend` bridge network and address each other by name
 (`kafka:9092`, `redis:6379`, …).
@@ -43,11 +43,16 @@ provisions Let's Encrypt certificates automatically.
 }
 {$PROTOCOL:http}://service1.{$DOMAIN:localhost} { import tls-{$TLS_ENV:dev}; reverse_proxy service-1:3000 }
 {$PROTOCOL:http}://grafana.{$DOMAIN:localhost}  { import tls-{$TLS_ENV:dev}; reverse_proxy grafana:3000 }
-{$PROTOCOL:http}://mongo.{$DOMAIN:localhost}    { import tls-{$TLS_ENV:dev}; reverse_proxy mongo-express:8081 }
+
+# Dev-only sites (e.g. mongo.<domain> for Mongo Express) load from
+# infra/caddy/dev-only/, mounted at /etc/caddy/extra in the dev compose.
+# The prod image ships an empty placeholder, so those hosts don't exist there.
+import /etc/caddy/extra/*.caddy
 ```
 
 Subdomains route to each browser-facing service: the app on the root domain, the
-API on `service1.`, dashboards on `grafana.`, the DB viewer on `mongo.`.
+API on `service1.`, dashboards on `grafana.`, and in dev the DB viewer on
+`mongo.`.
 
 <Callout type="tip" title="The *.localhost dev domain">
   Browsers resolve any <code>*.localhost</code> name to 127.0.0.1 with no

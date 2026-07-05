@@ -34,12 +34,12 @@ consumer's spans link back to the producer's request.
 Every service exposes metrics at `/api/v1/metrics` (behind an internal API
 key). Prometheus discovers the services from Docker. Any container labeled
 `prometheus.scrape=true` (part of the compose service template) is scraped
-every 5s under its compose service name, plus container metrics from cAdvisor:
+every 15s under its compose service name, plus container metrics from cAdvisor:
 
 ```yaml
 # infra/monitoring/prometheus/prometheus.yml
 global:
-  scrape_interval: 5s
+  scrape_interval: 15s
 scrape_configs:
   - job_name: 'nestjs-services'
     metrics_path: /api/v1/metrics

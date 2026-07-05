@@ -38,8 +38,9 @@ adapter that actually calls Google.
 3. Open **APIs & Services → Credentials → Create Credentials → OAuth client
    ID** and pick **Web application** as the type.
 4. Under **Authorized JavaScript origins** add the URLs the frontend runs on:
-   `http://localhost:3000` for dev, plus your production URL later. No
-   redirect URI is needed; the button uses the popup flow.
+   `https://localhost` for dev (the dev stack serves the frontend through
+   Caddy on that origin), plus your production URL later. No redirect URI is
+   needed; the button uses the popup flow.
 5. Create it and copy the **Client ID**. It looks like
    `1234567890-abc123.apps.googleusercontent.com`. The client secret is not
    used by this flow.

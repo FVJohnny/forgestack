@@ -199,13 +199,15 @@ npm run prod:update -- 3     # or pass the option number directly
 
 The script builds `linux/amd64` images, pushes them to your Docker registry (configure in `infra/env/infra.env.prod`), auto-increments the image version tags in the prod compose file, then syncs the compose + env files to the server and runs `docker compose up -d`. Menu options:
 
-1. Update frontend
-2. Update ALL apps (frontend + services)
-3. Update Caddy (reverse proxy)
-4. Update monitoring stack
-5. Update ALL (apps + proxy + monitoring)
-6. Deploy only (no builds, re-deploy current image versions)
-0. Exit
+```
+1) Update frontend
+2) Update ALL apps (frontend + services)
+3) Update Caddy (reverse proxy)
+4) Update monitoring stack
+5) Update ALL (apps + proxy + monitoring)
+6) Deploy only (no builds, re-deploy current image versions)
+0) Exit
+```
 
 To deploy a single backend service, type its name at the prompt (e.g. `service-1`) instead of a number.
 
@@ -215,13 +217,15 @@ Production env files live in `infra/env/*.env.prod` (gitignored); the matching `
 
 The rules in `eslint/rules/` are what keep the architecture from eroding. They run as part of `npm run lint` and include:
 
-- `hexagonal-architecture`: domain can't import application/infrastructure; application can't import infrastructure.
-- `no-cross-bc-imports`: bounded contexts may not import each other's internals.
-- `no-direct-entity-mutation`: aggregates are changed only through behavior methods.
-- `no-direct-cqrs-decorators`: use the provided `Base_*` handler classes, not raw NestJS CQRS decorators.
-- `cqrs-handler-collocation` / `handler-naming`: commands, queries, and events live and are named consistently with their handlers.
-- `value-object-naming`: `.vo.ts` files implement the value-object contract.
-- `*-base` rules (`aggregate-base`, `command-handler-base`, `query-handler-base`, `domain-event-handler-base`, `repository-base`, and more): enforce extension of the shared base classes.
+The names below are the rule ids as registered in `eslint.config.mjs`, so you can search for or override them directly.
+
+- hexagonal-architecture (a `no-restricted-imports` config, not a single named rule): domain can't import application/infrastructure; application can't import infrastructure.
+- `bounded-context/no-cross-imports`: bounded contexts may not import each other's internals.
+- `entity-domain/no-direct-entity-mutation`: aggregates are changed only through behavior methods.
+- `cqrs/no-direct-decorators`: use the provided `Base_*` handler classes, not raw NestJS CQRS decorators.
+- `cqrs/handler-collocation` / `handler/naming`: commands, queries, and events live and are named consistently with their handlers.
+- `value-object/naming`: `.vo.ts` files implement the value-object contract.
+- `*/must-extend-base` rules (`aggregate/must-extend-base`, `aggregate-dto/must-extend-base`, `command-handler/must-extend-base`, `query-handler/must-extend-base`, `domain-event/must-extend-base`, `domain-event-handler/must-extend-base`, `integration-event/must-extend-base`, `repository/must-extend-base`): enforce extension of the shared base classes.
 
 ## Documentation
 

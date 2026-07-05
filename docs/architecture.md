@@ -30,12 +30,15 @@ The shipped contexts are a working demo of the pattern: `auth` publishes user-li
 
 Run `npm run lint` to catch violations:
 
-- `hexagonal-architecture`: domain cannot import application/infrastructure; application cannot import infrastructure
-- `no-direct-entity-mutation`: aggregates must be mutated via behavior methods, not direct property assignment
-- `no-direct-cqrs-decorators`: use `Base_*` handler classes instead of raw NestJS CQRS decorators
-- `cqrs-handler-collocation`: commands/queries/events must be imported from the same directory as their handlers
-- `value-object-naming`: `.vo.ts` files must implement `IValueObject` and vice versa
-- `aggregate-base`, `aggregate-dto-base`, `command-handler-base`, `query-handler-base`, `domain-event-handler-base`, `domain-event-base`, `repository-base`: enforce base class extension
+The names below are the rule ids as registered in `eslint.config.mjs`.
+
+- hexagonal-architecture (a `no-restricted-imports` config, not a single named rule): domain cannot import application/infrastructure; application cannot import infrastructure
+- `entity-domain/no-direct-entity-mutation`: aggregates must be mutated via behavior methods, not direct property assignment
+- `cqrs/no-direct-decorators`: use `Base_*` handler classes instead of raw NestJS CQRS decorators
+- `cqrs/handler-collocation`: commands/queries/events must be imported from the same directory as their handlers
+- `bounded-context/no-cross-imports`: bounded contexts may not import each other's internals
+- `value-object/naming`: `.vo.ts` files must implement `IValueObject` and vice versa
+- `aggregate/must-extend-base`, `aggregate-dto/must-extend-base`, `command-handler/must-extend-base`, `query-handler/must-extend-base`, `domain-event-handler/must-extend-base`, `domain-event/must-extend-base`, `integration-event/must-extend-base`, `repository/must-extend-base`: enforce base class extension
 
 ## TypeScript Path Aliases
 

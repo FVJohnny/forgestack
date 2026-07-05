@@ -7,8 +7,8 @@ as an Nx target, so results are cached and only affected projects re-run.
 ```bash
 npm test                          # all projects (Nx-cached)
 npm run test:nocache              # same, ignoring the cache
-npx nx run billing:test           # one service
-cd backend/services/billing && npx jest src/path/to/file.spec.ts   # one file
+npx nx run service-1:test         # one service
+cd backend/services/service-1 && npx jest src/path/to/file.spec.ts   # one file
 ```
 
 The pre-commit hook runs the full suite (plus typecheck and lint), so a

@@ -30,9 +30,15 @@ Image versions are stored as tags in `infra/compose/docker-compose.prod.yml` (e.
 
 ## Provisioning a new server
 
-The deploy script assumes the target server already has Docker, a deploy user, and the deploy directory. To prepare a fresh Ubuntu box, run the one-shot setup script over SSH:
+The deploy script assumes the target server already has Docker, a deploy user, and the deploy directory. To prepare a fresh Ubuntu box, run the shipped one-shot command:
 
-Pass your SSH public key via `SSH_PUBKEY` so the deploy user can log in without a password afterwards (it is required):
+```bash
+npm run prod:setup
+```
+
+This wraps `infra/scripts/setup-server.sh`. It reads `SERVER_IP` and `SERVER_USER` from `infra/env/infra.env.prod` (the same source `prod:update` uses), pipes the setup script to the box over SSH as root, and passes your SSH public key so the deploy user can log in without a password afterwards. It prompts for the root password unless you pre-set it, e.g. `ROOT_PASS='...' npm run prod:setup` or `SSH_PUBKEY="$(cat ~/.ssh/id_ed25519.pub)" npm run prod:setup`.
+
+If you prefer to run the setup script by hand instead of the wrapper:
 
 ```bash
 # Fresh box, only root password works yet:
@@ -45,7 +51,7 @@ ssh root@SERVER_IP "SSH_PUBKEY='$(cat ~/.ssh/id_ed25519.pub)' bash -s" \
     < infra/scripts/setup-server.sh
 ```
 
-It is idempotent and installs Docker Engine + compose, creates a deploy user (docker + sudo, key-based SSH), opens UFW for 22/80/443, creates the deploy directory, and adds swap + sysctl tuning. Override defaults via env vars, e.g. `DEPLOY_USER` (default `deploy`), `REMOTE_PATH` (default `/opt/forgestack`), `SWAP_SIZE` (see the script header).
+The setup script is idempotent and installs Docker Engine + compose, creates a deploy user (docker + sudo, key-based SSH), opens UFW for 22/80/443, creates the deploy directory, installs a daily MongoDB backup cron (03:30, dumps to `REMOTE_PATH/backups`), and adds swap + sysctl tuning. Override defaults via env vars, e.g. `DEPLOY_USER` (default `deploy`), `REMOTE_PATH` (default `/opt/forgestack`), `SWAP_SIZE` (see the script header).
 
 After it finishes:
 

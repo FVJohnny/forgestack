@@ -34,7 +34,9 @@ module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   moduleNameMapper: {
     ...pathsToModuleNameMapper(paths, { prefix: '<rootDir>/../../../../' }),
-    '^express$': '<rootDir>/../node_modules/express/index.js',
+    // Pin express to the single hoisted copy at the workspace root (see the
+    // note in service-1's jest.config.js).
+    '^express$': require.resolve('express'),
   },
   testTimeout: 20000,
   globalTeardown: '<rootDir>/../jest.teardown.js',

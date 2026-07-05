@@ -119,6 +119,16 @@
         }
       }
     },
+    "error": {
+      "title": "Coś poszło nie tak",
+      "description": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
+      "retry": "Spróbuj ponownie"
+    },
+    "notFound": {
+      "title": "Nie znaleziono strony",
+      "description": "Strona, której szukasz, nie istnieje lub została przeniesiona.",
+      "backToHome": "Powrót do strony głównej"
+    },
     "auth": {
       "panelKicker": "konsola dewelopera",
       "panelTitle": "Zarządzaj swoimi usługami z jednego kokpitu rozświetlonego ogniem kuźni",

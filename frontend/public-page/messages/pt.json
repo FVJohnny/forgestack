@@ -119,6 +119,16 @@
         }
       }
     },
+    "error": {
+      "title": "Algo deu errado",
+      "description": "Ocorreu um erro inesperado. Tente novamente.",
+      "retry": "Tentar novamente"
+    },
+    "notFound": {
+      "title": "Página não encontrada",
+      "description": "A página que você procura não existe ou foi movida.",
+      "backToHome": "Voltar ao início"
+    },
     "auth": {
       "panelKicker": "o console do desenvolvedor",
       "panelTitle": "Opere seus serviços a partir de um cockpit iluminado pela forja",

@@ -119,6 +119,16 @@
         }
       }
     },
+    "error": {
+      "title": "Etwas ist schiefgelaufen",
+      "description": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.",
+      "retry": "Erneut versuchen"
+    },
+    "notFound": {
+      "title": "Seite nicht gefunden",
+      "description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+      "backToHome": "Zurück zur Startseite"
+    },
     "auth": {
       "panelKicker": "die Entwicklerkonsole",
       "panelTitle": "Steuere deine Services aus einem schmiedeglühenden Cockpit",

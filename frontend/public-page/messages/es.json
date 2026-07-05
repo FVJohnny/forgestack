@@ -119,6 +119,16 @@
         }
       }
     },
+    "error": {
+      "title": "Algo salió mal",
+      "description": "Ocurrió un error inesperado. Inténtalo de nuevo.",
+      "retry": "Reintentar"
+    },
+    "notFound": {
+      "title": "Página no encontrada",
+      "description": "La página que buscas no existe o se ha movido.",
+      "backToHome": "Volver al inicio"
+    },
     "auth": {
       "panelKicker": "la consola del desarrollador",
       "panelTitle": "Opera tus servicios desde una cabina iluminada por la forja",

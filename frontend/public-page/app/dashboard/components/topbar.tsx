@@ -17,7 +17,11 @@ import {
 import { useUser } from '@/lib/contexts/user-context';
 import { useAuth } from '@/lib/contexts/auth-context';
 
-const ENV = process.env.NEXT_PUBLIC_API_URL?.includes('localhost') ? 'local' : 'prod';
+// Next inlines NODE_ENV into the client bundle at build time: 'development'
+// for `next dev` (the dev Docker stack), 'production' for a built/deployed
+// image. This is a reliable signal, unlike substring-sniffing the API URL,
+// which mislabels the containerized stack because it serves under *.localhost.
+const ENV = process.env.NODE_ENV === 'production' ? 'prod' : 'local';
 
 export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
   const t = useTranslations('app.nav');

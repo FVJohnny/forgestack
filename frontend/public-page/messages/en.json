@@ -119,6 +119,16 @@
         }
       }
     },
+    "error": {
+      "title": "Something went wrong",
+      "description": "An unexpected error occurred. Please try again.",
+      "retry": "Try again"
+    },
+    "notFound": {
+      "title": "Page not found",
+      "description": "The page you are looking for does not exist or has moved.",
+      "backToHome": "Back to home"
+    },
     "auth": {
       "panelKicker": "the developer console",
       "panelTitle": "Operate your services from one forge-lit cockpit",

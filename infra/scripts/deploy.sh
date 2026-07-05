@@ -14,6 +14,12 @@ source "$INFRA_DIR/env/infra.env.prod"
 
 # Registry comes from infra.env.prod (DOCKER_REGISTRY, e.g. docker.io/your-username).
 REGISTRY="${DOCKER_REGISTRY:?DOCKER_REGISTRY must be set in infra.env.prod}"
+# Fail fast with a clear message instead of a confusing rsync/ssh/docker-login
+# error later when one of these is missing from infra.env.prod.
+: "${SERVER_USER:?SERVER_USER must be set in infra.env.prod}"
+: "${SERVER_IP:?SERVER_IP must be set in infra.env.prod}"
+: "${DOCKER_USER:?DOCKER_USER must be set in infra.env.prod}"
+: "${DOCKER_PASS:?DOCKER_PASS must be set in infra.env.prod}"
 # NestJS services are discovered from the monorepo: every directory under
 # backend/services is a deployable app with image forgestack-<name>. Adding a
 # service requires NO change to this script.
@@ -292,6 +298,9 @@ deploy() {
     cp "$COMPOSE_FILE" "$STAGING/compose/docker-compose.yml"
     cp "$INFRA_DIR/env/"*.env.prod "$STAGING/env/"
     cp "$INFRA_DIR/env/infra.env.prod" "$STAGING/compose/.env"
+    # The server only reads the compose/.env copy; nothing reads env/infra.env.prod
+    # there, and it holds registry/SSH credentials, so don't ship a second copy.
+    rm -f "$STAGING/env/infra.env.prod"
     cp "$INFRA_DIR/mongo/mongo-startup.sh" "$STAGING/mongo/"
     # Backup script lives at the deploy root so setup-server.sh's cron can call
     # it as `./backup-mongo.sh` (it resolves compose/.env relative to itself).

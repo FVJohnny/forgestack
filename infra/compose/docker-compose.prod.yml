@@ -18,11 +18,16 @@ x-nestjs-service: &nestjs-service
   networks:
     - backend
   healthcheck:
-    test: [ 'CMD-SHELL', 'node -e "require(\"http\").get(\"http://localhost:3000/api/v1\", r => process.exit(r.statusCode === 200 ? 0 : 1)).on(\"error\", () => process.exit(1))"' ]
+    # Gate on readiness, not liveness: /api/v1 returns ok unconditionally,
+    # while /api/v1/ready is 503 until subsystems (e.g. the Kafka consumer
+    # group join) are actually up, so `up -d --wait` and the deploy gate wait
+    # for a service that can really do work. start_period allows for the group
+    # rebalance after an ungraceful restart.
+    test: [ 'CMD-SHELL', 'node -e "require(\"http\").get(\"http://localhost:3000/api/v1/ready\", r => process.exit(r.statusCode === 200 ? 0 : 1)).on(\"error\", () => process.exit(1))"' ]
     interval: 30s
     timeout: 10s
     retries: 3
-    start_period: 30s
+    start_period: 60s
   depends_on:
     kafka:
       condition: service_healthy
@@ -58,6 +63,7 @@ services:
   public-page:
     image: ${DOCKER_REGISTRY}/forgestack-public-page:v10
     restart: unless-stopped
+    mem_limit: 384m
     env_file:
       - ../env/public-page.env.prod
     networks:
@@ -78,6 +84,7 @@ services:
   caddy:
     image: ${DOCKER_REGISTRY}/forgestack-caddy:v3
     restart: unless-stopped
+    mem_limit: 256m
     ports:
       - '80:80'
       - '443:443'
@@ -347,6 +354,7 @@ services:
   promtail:
     image: ${DOCKER_REGISTRY}/forgestack-promtail:v3
     restart: unless-stopped
+    mem_limit: 256m
     volumes:
       # Read-only: promtail only reads container logs, never writes.
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -370,6 +378,7 @@ services:
   portainer:
     image: portainer/portainer-ce:2.39.4
     restart: unless-stopped
+    mem_limit: 256m
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - portainer_data:/data

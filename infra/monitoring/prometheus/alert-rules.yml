@@ -30,18 +30,24 @@ groups:
 
   - name: resources
     rules:
-      - alert: HostLowDisk
-        # cAdvisor exposes filesystem usage. Alert when the root fs is >85% full.
-        expr: |
-          (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) > 0.85
-          or
-          (max by (device) (container_fs_usage_bytes) / max by (device) (container_fs_limit_bytes)) > 0.85
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: 'Low disk space'
-          description: 'A filesystem is over 85% full.'
+      # Host disk usage needs node_exporter, which this stack does NOT run by
+      # default (only cAdvisor is deployed, and it does not reliably expose
+      # host-filesystem or container_fs_* metrics on Docker Desktop). The rule
+      # below is therefore commented out so it is not a silent no-op that looks
+      # like disk is being watched when it is not. To enable it:
+      #   1. Add a node_exporter service to the compose stack with the host root
+      #      bind-mounted (e.g. `/:/host:ro,rslave` + `--path.rootfs=/host`).
+      #   2. Add it as a Prometheus scrape target.
+      #   3. Uncomment this rule.
+      # - alert: HostLowDisk
+      #   expr: |
+      #     (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) > 0.85
+      #   for: 10m
+      #   labels:
+      #     severity: warning
+      #   annotations:
+      #     summary: 'Low disk space'
+      #     description: 'The host root filesystem is over 85% full.'
 
       - alert: ContainerHighMemory
         # Container using >90% of its mem_limit for a sustained window.

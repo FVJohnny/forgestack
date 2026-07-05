@@ -16,6 +16,12 @@ class RecordingHandler implements IIntegrationEventHandler {
   }
 }
 
+class FailingHandler implements IIntegrationEventHandler {
+  async handle(): Promise<void> {
+    throw new Error('handler boom');
+  }
+}
+
 describe('InboxService receiveMessage', () => {
   let repo: Inbox_InMemoryRepository;
   let service: InboxService;
@@ -62,5 +68,29 @@ describe('InboxService receiveMessage', () => {
     // The duplicate must NOT reset status back to pending.
     const after = await repo.findById(new Id(msg.id));
     expect(after?.status.toValue()).toBe(InboxStatus.PROCESSING);
+  });
+});
+
+describe('InboxService event-tracker accounting (item 137)', () => {
+  const drive = async (handler: IIntegrationEventHandler) => {
+    const repo = new Inbox_InMemoryRepository();
+    const service = new InboxService(repo as never);
+    const calls: boolean[] = [];
+    service.setEventTracker((_t, _m, success) => calls.push(success));
+    service.registerEventHandler('users', 'user.created', handler);
+    await service.receiveMessage(message(), 'users');
+    // Invoke the private processing loop directly.
+    await (service as unknown as { processInboxEvents: () => Promise<void> }).processInboxEvents();
+    return calls;
+  };
+
+  it('tracks a successful event once as success', async () => {
+    const calls = await drive(new RecordingHandler());
+    expect(calls).toEqual([true]);
+  });
+
+  it('tracks a failed event once as failure, not also as success', async () => {
+    const calls = await drive(new FailingHandler());
+    expect(calls).toEqual([false]);
   });
 });

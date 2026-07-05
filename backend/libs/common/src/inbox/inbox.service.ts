@@ -207,8 +207,15 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
       `inbox.process_integration_event.${topic}.${eventName}`,
       async () => {
         try {
-          await this.processEvent(event);
-          this.trackEvent?.(topic, message, true);
+          // processEvent handles its own per-handler failures internally and
+          // returns false in that case (having already tracked the failure), so
+          // only track success when it genuinely succeeded. Otherwise a failed
+          // event was double-counted: once as failure (inside processEvent) and
+          // once as success here.
+          const succeeded = await this.processEvent(event);
+          if (succeeded) {
+            this.trackEvent?.(topic, message, true);
+          }
         } catch (error) {
           await this.handleEventFailure(event, message, topic, error);
         }
@@ -248,7 +255,13 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     this.trackEvent?.(topic, message, false);
   }
 
-  private async processEvent(event: InboxEvent): Promise<void> {
+  /**
+   * Returns true when the event was processed successfully (or acked because it
+   * has no handler), false when a handler failed (in which case the failure has
+   * already been recorded via handleEventFailure). The caller uses this to
+   * avoid tracking a success for an event that actually failed.
+   */
+  private async processEvent(event: InboxEvent): Promise<boolean> {
     const eventId = event.id.toValue();
     const eventName = event.eventName.toValue();
     const topic = event.topic.toValue();
@@ -281,7 +294,7 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
       );
       event.markAsProcessed();
       await this.inboxRepository.save(event);
-      return;
+      return true;
     }
 
     TracingService.addEvent('inbox.event.handler_found', {
@@ -315,7 +328,7 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
       // Surface the first error to keep the existing failure-tracking shape;
       // each individual failure has already been logged above.
       await this.handleEventFailure(event, message, topic, errors[0], durationSeconds);
-      return;
+      return false;
     }
 
     TracingService.addEvent('inbox.event.handler_completed', {
@@ -335,6 +348,7 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     this.logger.log(
       `✅ Successfully processed inbox event in ${duration}ms. Topic: ${topic}, Event: ${eventName} ( id: ${eventId})`,
     );
+    return true;
   }
 
   private hasHandler(topic: string, eventName: string): boolean {

@@ -90,6 +90,9 @@ services:
     volumes:
       - ../../infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ../../infra/caddy/dev-only:/etc/caddy/extra:ro
+      # Persist Caddy's local CA so a container recreate does not mint a new
+      # root cert and force a fresh `npm run dev:trust-cert`.
+      - caddy_data_dev:/data
     networks:
       - backend
     depends_on:
@@ -350,6 +353,8 @@ networks:
 # ============================================================================
 
 volumes:
+  # Reverse proxy (local CA persistence)
+  caddy_data_dev:
   # Data stores
   mongodb_data_dev:
   redis_data_dev:

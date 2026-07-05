@@ -306,7 +306,8 @@ services:
       - '--containerd-namespace=moby'
     volumes:
       - /:/rootfs:ro
-      - /var/run:/var/run:rw
+      # ro like dev: cAdvisor only reads the docker socket and runtime state.
+      - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro

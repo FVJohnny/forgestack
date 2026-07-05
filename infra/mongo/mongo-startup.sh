@@ -14,6 +14,12 @@ if [ ! -f "$KEYFILE" ]; then
   chown 999:999 "$KEYFILE"
 fi
 
+# This script runs as root because the compose `command:` override bypasses
+# the image entrypoint's privilege drop (it only fires when arg1 is mongod).
+# Own the data dirs and drop to the mongodb user for every mongod below,
+# matching what the official entrypoint would have done.
+chown -R mongodb:mongodb /data/db /data/configdb 2>/dev/null || true
+
 # Check if this is first run (no users exist yet)
 FIRST_RUN=false
 if [ ! -f "/data/db/.initialized" ]; then
@@ -24,7 +30,7 @@ fi
 if [ "$FIRST_RUN" = true ]; then
   # First run: start WITHOUT auth to create users
   echo "Starting MongoDB without auth for initial setup..."
-  mongod --replSet rs0 --bind_ip_all &
+  gosu mongodb mongod --replSet rs0 --bind_ip_all &
   MONGO_PID=$!
 
   # Wait for mongod to accept connections
@@ -80,6 +86,6 @@ if [ "$FIRST_RUN" = true ]; then
   sleep 2
 fi
 
-# Start MongoDB with auth enabled
+# Start MongoDB with auth enabled, as the mongodb user (not root)
 echo "Starting MongoDB with authentication enabled..."
-exec mongod --replSet rs0 --bind_ip_all --auth --keyFile "$KEYFILE"
+exec gosu mongodb mongod --replSet rs0 --bind_ip_all --auth --keyFile "$KEYFILE"

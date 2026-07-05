@@ -24,8 +24,18 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      # public-page is excluded from the npm workspaces and installs via pnpm,
+      # but Nx runs its lint/typecheck/build/test targets in every run-many.
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/public-page/package.json
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: frontend/public-page
 
       - name: Lint
         run: npm run lint
@@ -66,6 +76,11 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      # public-page installs via pnpm; its vitest suite runs in the run-many below.
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/public-page/package.json
+
       # A single-node replica set with auth, matching the URI the tests use:
       # mongodb://admin:password@localhost:27017/...?replicaSet=rs0&directConnection=true
       # A keyfile is mandatory when auth is enabled together with --replSet.
@@ -100,6 +115,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: frontend/public-page
 
       - name: Test
         # --coverage so the per-project coverageThreshold (the item-61 floor)

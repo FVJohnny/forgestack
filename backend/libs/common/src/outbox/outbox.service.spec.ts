@@ -101,6 +101,33 @@ describe('OutboxService', () => {
     expect(publisher.calls.length).toBeLessThanOrEqual(3);
   });
 
+  it('does not dead-letter when publish succeeded but the persist failed (item 133)', async () => {
+    // Publish always succeeds; the save right after publish throws once.
+    const publisher = new FlakyPublisher(0);
+    const service = buildService(publisher);
+    const event = makeUnprocessedEvent({ maxRetries: 2 });
+    await repository.save(event);
+
+    const realSave = repository.save.bind(repository);
+    let threw = false;
+    jest.spyOn(repository, 'save').mockImplementation(async (e) => {
+      // Let the initial save (before processing) through; throw on the
+      // post-publish save that persists the processed state.
+      if (!threw && e.isProcessed()) {
+        threw = true;
+        throw new Error('db write failed');
+      }
+      return realSave(e);
+    });
+
+    await service.processOutboxEvents();
+
+    // Published exactly once, and NOT dead-lettered (it was delivered).
+    expect(publisher.calls).toHaveLength(1);
+    const stored = await repository.findById(event.id);
+    expect(stored?.isFailed()).toBe(false);
+  });
+
   it('cleanupProcessedEvents deletes only old processed events', async () => {
     const publisher = new FlakyPublisher(0);
     const service = buildService(publisher);

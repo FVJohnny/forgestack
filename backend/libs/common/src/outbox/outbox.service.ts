@@ -107,8 +107,10 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
     return TracingService.withSpan(
       'outbox.process_event',
       async () => {
+        let published = false;
         try {
           await this.publisher.publish(topic, event.payload.toValue());
+          published = true;
 
           const durationSeconds = (Date.now() - startTime) / 1000;
           metrics?.observeOutboxEvent(topic, eventName, durationSeconds, 'published');
@@ -126,6 +128,26 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
 
           this.logger.debug(`Successfully processed outbox event: ${event.id.toValue()}`);
         } catch (error) {
+          if (published) {
+            // The publish SUCCEEDED; only the post-publish bookkeeping save
+            // failed. Do NOT run the retry/dead-letter path: the event was
+            // delivered, and dead-lettering here would log a false "max retries
+            // exceeded" and emit a phantom 'failed' metric for an event that
+            // actually went out. Leave the PROCESSING claim in place; the
+            // stuck-reclaim will release it and a re-publish is safe (the
+            // consumer inbox dedups by message id). Surface the save failure.
+            this.logger.error(
+              `Outbox event ${event.id.toValue()} published but failed to persist processed state; ` +
+                `it will be reclaimed and may be re-published (consumer dedups).`,
+              error as Error,
+            );
+            TracingService.addEvent('outbox.event.persist_after_publish_failed', {
+              'outbox.event_id': event.id.toValue(),
+              'error.message': error instanceof Error ? error.message : 'Unknown error',
+            });
+            return;
+          }
+
           const durationSeconds = (Date.now() - startTime) / 1000;
           metrics?.observeOutboxEvent(topic, eventName, durationSeconds, 'failed');
 

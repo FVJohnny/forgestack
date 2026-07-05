@@ -75,11 +75,14 @@ export class Inbox_MongodbRepository
     const claimedEvents: InboxEvent[] = [];
 
     // Use findOneAndUpdate in a loop for atomic claiming
-    // This ensures no race conditions - each event can only be claimed once
+    // This ensures no race conditions - each event can only be claimed once.
+    // Stamp updatedAt at claim time so reclaimStuckEvents can age events by how
+    // long they have been PROCESSING (not by receivedAt, which never advances
+    // and would insta-reclaim retried/backlogged events still in flight).
     for (let i = 0; i < limit; i++) {
       const doc = await this.collection.findOneAndUpdate(
         { status: InboxStatus.PENDING } as Filter<InboxEventDTO>,
-        { $set: { status: InboxStatus.PROCESSING } },
+        { $set: { status: InboxStatus.PROCESSING, updatedAt: new Date() } },
         {
           sort: { receivedAt: 1 },
           returnDocument: 'after',
@@ -100,12 +103,14 @@ export class Inbox_MongodbRepository
   async reclaimStuckEvents(stuckSince: Date): Promise<number> {
     await this.ensureIndexes();
 
-    // The inbox aggregate has no updatedAt, so use receivedAt as the age
-    // proxy: claiming happens shortly after receipt, so a PROCESSING event
-    // received long ago is genuinely stuck.
+    // Age by updatedAt (stamped at claim time), NOT receivedAt: receivedAt
+    // never advances, so a retried or backlogged event that was claimed late
+    // would be treated as stuck the moment it is >threshold past receipt, even
+    // while a handler is genuinely running it. updatedAt reflects when it was
+    // last claimed.
     const filter: Filter<InboxEventDTO> = {
       status: InboxStatus.PROCESSING,
-      receivedAt: { $lt: stuckSince },
+      updatedAt: { $lt: stuckSince },
     } as Filter<InboxEventDTO>;
 
     const docs = await this.collection.find(filter).toArray();
@@ -114,8 +119,22 @@ export class Inbox_MongodbRepository
     for (const doc of docs) {
       const event = InboxEvent.fromValue(doc as InboxEventDTO);
       event.reclaimFromProcessing();
-      await this.save(event);
-      reclaimed++;
+
+      // Guarded update: only apply if the doc is STILL PROCESSING. Between the
+      // find above and here, the instance that owns the claim may have finished
+      // and saved PROCESSED; without this guard the reclaim would blindly
+      // overwrite it back to PENDING and the handlers would run twice.
+      const result = await this.collection.updateOne(
+        { id: doc.id, status: InboxStatus.PROCESSING } as Filter<InboxEventDTO>,
+        {
+          $set: {
+            status: event.status.toValue(),
+            retryCount: event.retryCount,
+            updatedAt: new Date(),
+          },
+        },
+      );
+      if (result.modifiedCount > 0) reclaimed++;
     }
     return reclaimed;
   }

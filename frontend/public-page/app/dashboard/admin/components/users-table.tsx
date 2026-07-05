@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Ban, CircleCheck, Trash2, Search } from 'lucide-react';
@@ -54,7 +54,12 @@ export function UsersTable() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<SearchUserResult | null>(null);
 
+  // Monotonic sequence so a slow, superseded response (rapid Prev/Next or
+  // filter changes) can never overwrite the newest page.
+  const requestSeq = useRef(0);
+
   const load = useCallback(async () => {
+    const seq = ++requestSeq.current;
     setLoading(true);
     setError(false);
     try {
@@ -64,11 +69,16 @@ export function UsersTable() {
         filterField: appliedFilter ? filterField : undefined,
         filterValue: appliedFilter || undefined,
       });
+      if (seq !== requestSeq.current) return;
       setData(res);
+      // Deleting the last row of the last page leaves `page` past the end
+      // (zero rows, no way back): clamp to the real last page and refetch.
+      const lastPage = Math.max(1, res.totalPages ?? 1);
+      if (page > lastPage) setPage(lastPage);
     } catch {
-      setError(true);
+      if (seq === requestSeq.current) setError(true);
     } finally {
-      setLoading(false);
+      if (seq === requestSeq.current) setLoading(false);
     }
   }, [page, filterField, appliedFilter]);
 
@@ -257,7 +267,7 @@ export function UsersTable() {
         )}
       </div>
 
-      {data && users.length > 0 && (
+      {data && (
         <div className="flex items-center justify-between border-t border-line px-5 py-3">
           <span className="font-mono text-[11px] text-ink-faint tabular">
             {t('page', { current: data.page, total: totalPages })} ·{' '}

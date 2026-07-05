@@ -306,8 +306,12 @@ services:
   loki:
     image: grafana/loki:3.2.1
     restart: unless-stopped
-    command: -config.file=/etc/loki/local-config.yaml
+    # Use the project's config in dev too (bind-mounted), the same one the prod
+    # image bakes, so retention/compactor behave identically and a config edit
+    # is exercised locally instead of only being discovered mid-deploy.
+    command: -config.file=/etc/loki/loki-config.yaml
     volumes:
+      - ../../infra/monitoring/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
       - loki_data:/loki
     networks:
       - backend

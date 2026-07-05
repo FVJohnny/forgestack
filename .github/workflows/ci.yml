@@ -80,10 +80,30 @@ jobs:
       - name: Check shell script syntax
         run: bash -n infra/scripts/*.sh infra/mongo/mongo-startup.sh scripts/*.sh
 
-      - name: Check Prometheus alert rules
+      # Validate every monitoring config baked into the pushed prod images, so
+      # a malformed one fails CI instead of crashing the container mid-deploy.
+      # `check config` covers prometheus.yml AND its referenced alert-rules.yml;
+      # the internal-api-key stand-in was created above so the scrape config
+      # resolves. Image versions match the compose/Dockerfile pins.
+      - name: Check Prometheus config and alert rules
         run: >
-          docker run --rm -v "$PWD/infra/monitoring/prometheus:/cfg:ro"
-          --entrypoint promtool prom/prometheus:v2.54.1 check rules /cfg/alert-rules.yml
+          docker run --rm -v "$PWD/infra/monitoring/prometheus:/etc/prometheus:ro"
+          --entrypoint promtool prom/prometheus:v2.54.1 check config /etc/prometheus/prometheus.yml
+
+      - name: Check Loki config
+        run: >
+          docker run --rm -v "$PWD/infra/monitoring/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro"
+          grafana/loki:3.2.1 -config.file=/etc/loki/loki-config.yaml -verify-config
+
+      - name: Check Tempo config
+        run: >
+          docker run --rm -v "$PWD/infra/monitoring/tempo/tempo.yaml:/etc/tempo.yaml:ro"
+          grafana/tempo:2.6.1 -config.file=/etc/tempo.yaml -config.verify=true
+
+      - name: Check Promtail config
+        run: >
+          docker run --rm -v "$PWD/infra/monitoring/promtail/promtail-config.yaml:/etc/promtail/config.yaml:ro"
+          grafana/promtail:3.2.1 -config.file=/etc/promtail/config.yaml -check-syntax
 
       - name: Validate Caddyfile
         run: >

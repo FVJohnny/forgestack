@@ -45,9 +45,16 @@ export class MongoDBConfigService {
     return {
       retryWrites: true,
       maxPoolSize: Number(process.env.MONGO_MAX_POOL_SIZE) || 20,
+      // How long to wait to find a reachable server, and to open the socket.
+      // 5s is a sane fast-fail for connectivity problems.
       serverSelectionTimeoutMS: Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS) || 5000,
-      socketTimeoutMS: Number(process.env.MONGO_SOCKET_TIMEOUT_MS) || 5000,
       connectTimeoutMS: Number(process.env.MONGO_CONNECT_TIMEOUT_MS) || 5000,
+      // Per-operation socket inactivity timeout. This must NOT be as low as the
+      // connect timeout: it kills any single query, aggregation, batch cleanup
+      // (deleteProcessed over inbox/outbox), or index build that runs longer
+      // than the limit. The driver default is unlimited; 45s is a safe ceiling
+      // that still catches a truly wedged operation.
+      socketTimeoutMS: Number(process.env.MONGO_SOCKET_TIMEOUT_MS) || 45000,
     };
   }
 }

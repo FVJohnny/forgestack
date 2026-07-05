@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from 'express';
 
 import { RequestContextService } from './request-context.service';
 import { TracingService } from './tracing.service';
+import { ACCESS_TOKEN_COOKIE } from '../auth/auth-cookies';
 
 /**
  * Middleware that:
@@ -43,12 +44,17 @@ export class TracingMiddleware implements NestMiddleware {
    * This allows logging the userId even for requests that may fail auth.
    */
   private extractUserIdFromToken(req: Request): string | undefined {
+    // Browsers send the access token in an httpOnly cookie (cookie-parser runs
+    // as app-level middleware, before this Nest middleware, so req.cookies is
+    // populated); Swagger / service-to-service callers use the bearer header.
+    // Read cookie-first or userId enrichment is dead for all browser traffic.
+    const cookieToken = (req.cookies as Record<string, string> | undefined)?.[ACCESS_TOKEN_COOKIE];
     const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
+    const token = cookieToken ?? (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined);
+    if (!token) {
       return undefined;
     }
 
-    const token = authHeader.slice(7);
     try {
       // Decode JWT payload without verification (just base64 decode)
       const parts = token.split('.');

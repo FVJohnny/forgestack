@@ -19,8 +19,11 @@ import { VerifyEmail_Command } from '../commands/verify-email/verify-email.comma
 export class DefaultUserBootstrapService implements OnApplicationBootstrap {
   private readonly logger = new CorrelationLogger(DefaultUserBootstrapService.name);
 
+  // Dev fallbacks, identical to backend/services/service-1/.env.example so the
+  // documented login works whether or not the .env sets them. Production never
+  // uses these: it skips seeding unless both env vars are set (see below).
   private readonly DEFAULT_USER_EMAIL = process.env.DEFAULT_USER_EMAIL ?? 'admin@example.com';
-  private readonly DEFAULT_USER_PASSWORD = process.env.DEFAULT_USER_PASSWORD ?? 'Admin123!';
+  private readonly DEFAULT_USER_PASSWORD = process.env.DEFAULT_USER_PASSWORD ?? 'Admin123!!??';
 
   constructor(
     @Inject(COMMAND_BUS) private readonly commandBus: ICommandBus,

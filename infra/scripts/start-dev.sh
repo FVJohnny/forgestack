@@ -80,6 +80,12 @@ for service_dir in backend/services/*; do
             fi
         else
             echo "  .env already exists for $service_name"
+            # Older .env copies predate PROXY_BASE_PATH; without it Swagger's
+            # "Try it out" calls the frontend instead of this service.
+            if grep -q '^PROXY_BASE_PATH=' "$service_dir/.env.example" 2>/dev/null \
+                && ! grep -q '^PROXY_BASE_PATH=' "$service_dir/.env"; then
+                echo "  ⚠️  $service_dir/.env has no PROXY_BASE_PATH: copy that line from .env.example so Swagger works behind Caddy."
+            fi
         fi
     fi
 done
@@ -149,10 +155,20 @@ echo "✅ Development environment started!"
 echo ""
 echo "🌐 URLs:"
 echo "  Frontend:      https://localhost"
-echo "  API:           https://service1.localhost/api/v1"
-echo "  Grafana:       https://grafana.localhost"
-echo "  Mongo Express: https://mongo.localhost"
+# Every service is served under its own path prefix on the frontend's origin
+# (Caddy's handle_path strips it). Read the prefixes from the Caddyfile so
+# generated services show up too: service-1 -> /svc1, service-2 -> /svc2, ...
+awk '
+    /^[[:space:]]*handle_path \/svc[^ ]*\/\* \{/ { prefix = $2; sub(/\/\*$/, "", prefix); next }
+    prefix != "" && /reverse_proxy/ { split($2, target, ":"); print target[1], prefix; prefix = "" }
+' infra/caddy/Caddyfile | while read -r service prefix; do
+    printf '  %-14s https://localhost%s/api/v1   (Swagger: https://localhost%s/docs)\n' "$service:" "$prefix" "$prefix"
+done
+echo "  Grafana:       https://grafana.localhost   (login: GF_SECURITY_ADMIN_* in infra/compose/docker-compose.dev.yml)"
+echo "  Mongo Express: https://mongo.localhost     (login: MONGO_EXPRESS_USER/PASSWORD, defaults in infra/compose/docker-compose.dev.yml)"
 echo "  Portainer:     https://portainer.localhost"
+echo ""
+echo "🔑 App login: the seeded admin is DEFAULT_USER_EMAIL / DEFAULT_USER_PASSWORD in backend/services/service-1/.env"
 echo ""
 echo "📋 Attaching to service-1 logs in 2s (Ctrl+C to detach)..."
 sleep 2

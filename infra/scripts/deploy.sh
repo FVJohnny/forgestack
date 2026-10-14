@@ -20,6 +20,23 @@ REGISTRY="${DOCKER_REGISTRY:?DOCKER_REGISTRY must be set in infra.env.prod}"
 : "${SERVER_IP:?SERVER_IP must be set in infra.env.prod}"
 : "${DOCKER_USER:?DOCKER_USER must be set in infra.env.prod}"
 : "${DOCKER_PASS:?DOCKER_PASS must be set in infra.env.prod}"
+
+# The host `docker login` must authenticate against, derived from
+# DOCKER_REGISTRY with Docker's own rule: the first path segment is a registry
+# host when it contains a "." or a ":" or is "localhost" (ghcr.io/org ->
+# ghcr.io, <acct>.dkr.ecr.<region>.amazonaws.com/repo -> that host,
+# localhost:5000/x -> localhost:5000); anything else is a Docker Hub namespace
+# (your-username -> docker.io). Logging in to docker.io unconditionally made
+# every push to GHCR/ECR/a private registry fail with "unauthorized".
+registry_login_host() {
+    local first_segment="${1%%/*}"
+    case "$first_segment" in
+        localhost | *.* | *:*) echo "$first_segment" ;;
+        *) echo "docker.io" ;;
+    esac
+}
+REGISTRY_HOST="$(registry_login_host "$REGISTRY")"
+
 # NestJS services are discovered from the monorepo: every directory under
 # backend/services is a deployable app with image forgestack-<name>. Adding a
 # service requires NO change to this script.
@@ -39,6 +56,7 @@ TEMPO_IMAGE="forgestack-tempo"
 
 REMOTE_PATH="${REMOTE_PATH:-/opt/forgestack}"
 
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -50,6 +68,124 @@ BOLD='\033[1m'
 log() { echo -e "${GREEN}==>${NC} $1"; }
 log_warn() { echo -e "${YELLOW}==>${NC} $1"; }
 log_error() { echo -e "${RED}==>${NC} $1"; }
+
+# Strips leading/trailing whitespace (Prometheus trims its credentials_file).
+trim() {
+    local value="$1"
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    printf '%s' "$value"
+}
+
+# Reads KEY=value from an env file into stdout (last assignment wins, optional
+# surrounding quotes removed). Only ever captured into a variable, never echoed.
+read_env_value() {
+    local key=$1
+    local file=$2
+    local value
+    value="$(grep -E "^[[:space:]]*${key}=" "$file" | tail -n 1 | cut -d= -f2- | tr -d '\r')" || true
+    value="$(trim "$value")"
+    case "$value" in
+        \"*\") value="${value#\"}"; value="${value%\"}" ;;
+        \'*\') value="${value#\'}"; value="${value%\'}" ;;
+    esac
+    printf '%s' "$value"
+}
+
+# Values that must never be the production INTERNAL_API_KEY: the public dev
+# key (also in the dev-only internal-api-key.example) and the prod template's
+# placeholder.
+INTERNAL_API_KEY_PLACEHOLDERS=("dev-internal-api-key" "YOUR_INTERNAL_API_KEY")
+if [ -f "$INFRA_DIR/monitoring/prometheus/internal-api-key.example" ]; then
+    INTERNAL_API_KEY_PLACEHOLDERS+=("$(trim "$(cat "$INFRA_DIR/monitoring/prometheus/internal-api-key.example")")")
+fi
+
+# Prometheus authenticates its /metrics scrapes with a key file, and each
+# service checks it against its own INTERNAL_API_KEY. The prod key file is
+# generated from the service env files (see write_prod_internal_api_key), so
+# the local infra/monitoring/prometheus/internal-api-key stays dev-only.
+#
+# This verifies every discovered service's infra/env/<svc>.env.prod sets the
+# SAME, non-placeholder INTERNAL_API_KEY (a mismatch makes the scrapes 401 and
+# every service look down in Grafana) and stores it in PROD_INTERNAL_API_KEY.
+# Runs in the current shell (not a $(...) subshell) so `exit 1` aborts the
+# deploy. Key values are only held in shell variables, never printed.
+PROD_INTERNAL_API_KEY=""
+check_prod_internal_api_key() {
+    if [ ${#SERVICES[@]} -eq 0 ]; then
+        log_error "No services found under backend/services; nothing to take INTERNAL_API_KEY from."
+        exit 1
+    fi
+
+    local svc env_file svc_key placeholder i
+    local missing=() placeholders=() files=() keys=() distinct=()
+    for svc in "${SERVICES[@]}"; do
+        env_file="$INFRA_DIR/env/$svc.env.prod"
+        if [ ! -f "$env_file" ]; then
+            missing+=("$env_file")
+            continue
+        fi
+        svc_key="$(read_env_value INTERNAL_API_KEY "$env_file")"
+        if [ -z "$svc_key" ]; then
+            placeholders+=("$env_file (INTERNAL_API_KEY is empty or missing)")
+            continue
+        fi
+        for placeholder in "${INTERNAL_API_KEY_PLACEHOLDERS[@]}"; do
+            if [ "$svc_key" = "$placeholder" ]; then
+                placeholders+=("$env_file (INTERNAL_API_KEY is still the public dev/example value)")
+                continue 2
+            fi
+        done
+        files+=("$env_file")
+        keys+=("$svc_key")
+    done
+
+    if [ ${#missing[@]} -gt 0 ]; then
+        log_error "Missing service env files (copy each <service>.env.prod.example and fill it in):"
+        for env_file in "${missing[@]}"; do log_error "  $env_file"; done
+        exit 1
+    fi
+    if [ ${#placeholders[@]} -gt 0 ]; then
+        log_error "INTERNAL_API_KEY must be set to a real secret (e.g. openssl rand -hex 32) in:"
+        for env_file in "${placeholders[@]}"; do log_error "  $env_file"; done
+        exit 1
+    fi
+
+    # Group the files by key without printing any key: "key #1", "key #2", ...
+    local labels=() found
+    for i in "${!keys[@]}"; do
+        found=""
+        local j
+        for j in "${!distinct[@]}"; do
+            if [ "${distinct[$j]}" = "${keys[$i]}" ]; then found=$((j + 1)); break; fi
+        done
+        if [ -z "$found" ]; then
+            distinct+=("${keys[$i]}")
+            found=${#distinct[@]}
+        fi
+        labels+=("$found")
+    done
+    if [ ${#distinct[@]} -gt 1 ]; then
+        log_error "INTERNAL_API_KEY differs between the service env files (Prometheus uses ONE key for all scrapes):"
+        for i in "${!files[@]}"; do log_error "  key #${labels[$i]}: ${files[$i]}"; done
+        log_error "Set the same value in all of them."
+        exit 1
+    fi
+
+    PROD_INTERNAL_API_KEY="${distinct[0]}"
+}
+
+# Writes the verified key into the staged Prometheus key file (same format as
+# internal-api-key.example: the key plus a trailing newline). 0644 because the
+# prom/prometheus container runs as `nobody` and reads the read-only bind mount.
+write_prod_internal_api_key() {
+    local target=$1
+    if [ -z "$PROD_INTERNAL_API_KEY" ]; then
+        check_prod_internal_api_key
+    fi
+    (umask 022 && printf '%s\n' "$PROD_INTERNAL_API_KEY" > "$target")
+    chmod 644 "$target"
+}
 
 DEPLOY_START=$(date +%s)
 # Timings are appended to a file so that background builds (run with `&`) can
@@ -307,12 +443,11 @@ deploy() {
     cp "$INFRA_DIR/scripts/backup-mongo.sh" "$STAGING/"
     chmod +x "$STAGING/backup-mongo.sh"
     # Runtime secret for Prometheus scrape auth; mounted by the compose file
-    # instead of being baked into the pushed image.
-    if [ ! -f "$INFRA_DIR/monitoring/prometheus/internal-api-key" ]; then
-        log_error "Missing $INFRA_DIR/monitoring/prometheus/internal-api-key (copy the .example and set a real key)"
-        exit 1
-    fi
-    cp "$INFRA_DIR/monitoring/prometheus/internal-api-key" "$STAGING/monitoring/prometheus/"
+    # instead of being baked into the pushed image. Generated from the services'
+    # (verified, identical) INTERNAL_API_KEY rather than copied from the local
+    # infra/monitoring/prometheus/internal-api-key, which is dev-only.
+    check_prod_internal_api_key
+    write_prod_internal_api_key "$STAGING/monitoring/prometheus/internal-api-key"
 
     log "Transferring files..."
     local transfer_start=$(date +%s)
@@ -329,7 +464,7 @@ deploy() {
         set -e
         cd "$REMOTE_PATH"
 
-        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin docker.io 2>/dev/null
+        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin "$REGISTRY_HOST" 2>/dev/null
 
         # --wait blocks until each data store reports healthy (they all define
         # healthchecks), instead of a fixed sleep that races broker startup.
@@ -394,13 +529,20 @@ show_menu() {
     read -p "Choice: " choice
 }
 
-# Docker login
-echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin docker.io
-
 if [ -n "$1" ]; then
     choice=$1
 else
     show_menu
+fi
+
+if [ "$choice" != "0" ]; then
+    # Fail before spending minutes on builds if the deploy would be rejected
+    # anyway (deploy() re-checks right before shipping the key).
+    check_prod_internal_api_key
+
+    # Docker login against the registry DOCKER_REGISTRY actually points at.
+    log "Logging in to $REGISTRY_HOST as $DOCKER_USER..."
+    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin "$REGISTRY_HOST"
 fi
 
 case $choice in

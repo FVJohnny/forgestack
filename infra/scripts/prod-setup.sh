@@ -32,8 +32,45 @@ log()       { echo -e "${GREEN}==>${NC} $1"; }
 log_warn()  { echo -e "${YELLOW}==>${NC} $1"; }
 log_error() { echo -e "${RED}==>${NC} $1"; }
 
+PROJECT_ROOT="$(cd "$INFRA_DIR/.." && pwd)"
+
+# Every file `npm run prod:update` needs on top of infra.env.prod, as
+# "<file to create>|<template to copy it from>". Only infra.env.prod is needed
+# to provision the server; the rest is listed so nothing surprises you at deploy.
+deploy_prerequisites() {
+    local d svc
+    for d in "$PROJECT_ROOT"/backend/services/*/; do
+        svc="$(basename "$d")"
+        echo "infra/env/$svc.env.prod|infra/env/$svc.env.prod.example"
+    done
+    echo "infra/env/public-page.env.prod|infra/env/public-page.env.prod.example"
+}
+
+print_missing_deploy_prerequisites() {
+    local entry file template missing=0
+    while IFS= read -r entry; do
+        file="${entry%%|*}"
+        template="${entry#*|}"
+        if [ ! -f "$PROJECT_ROOT/$file" ]; then
+            if [ "$missing" -eq 0 ]; then
+                log_warn "Before deploying, also create these (from the repo root):"
+                missing=1
+            fi
+            echo "     cp $template $file   # then fill it in"
+        fi
+    done < <(deploy_prerequisites)
+    if [ "$missing" -eq 1 ]; then
+        echo "   Use the same real INTERNAL_API_KEY (e.g. openssl rand -hex 32) in every service env file;"
+        echo "   prod:update writes it into Prometheus's key file for you."
+    fi
+}
+
 if [ ! -f "$ENV_FILE" ]; then
-    log_error "$ENV_FILE not found. Copy infra.env.prod.example and fill it in first."
+    log_error "infra/env/infra.env.prod not found. Create it first (from the repo root):"
+    echo "     cp infra/env/infra.env.prod.example infra/env/infra.env.prod"
+    echo "   then set at least SERVER_IP and SERVER_USER (the deploy user) in it, and re-run npm run prod:setup."
+    echo ""
+    print_missing_deploy_prerequisites
     exit 1
 fi
 # shellcheck disable=SC1090
@@ -88,6 +125,8 @@ echo ""
 log "✅ Server provisioned. Verify the deploy user can reach Docker:"
 echo "     ssh $DEPLOY_USER@$SERVER_IP 'docker ps'"
 echo ""
+print_missing_deploy_prerequisites
+log "Point DNS at $SERVER_IP: ${DOMAIN:-<DOMAIN>}, www, grafana and portainer subdomains (Caddy needs them for TLS)."
 log "Then deploy the full stack:"
 echo "     npm run prod:update -- 5     # build + push + deploy everything"
 echo "   or interactively: npm run prod:update   (choose 5 = ALL for a first deploy)"

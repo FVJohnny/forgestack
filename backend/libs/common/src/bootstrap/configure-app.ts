@@ -46,9 +46,9 @@ export function configureApp(app: NestExpressApplication, options: AppConfigOpti
   app.use(cookieParser());
 
   // Reject forged cross-site state-changing requests. The auth cookies are
-  // SameSite=None (see auth-cookies.ts), so SameSite alone is not a CSRF
-  // defense; this middleware checks Sec-Fetch-Site / Origin instead. Must run
-  // after cookieParser and before routing.
+  // first-party SameSite=Lax (see auth-cookies.ts), which blocks most but not
+  // all cross-site forgeries, so this middleware adds a Sec-Fetch-Site / Origin
+  // check as defense in depth. Must run after cookieParser and before routing.
   if (enableCsrf) {
     app.use(createCsrfMiddleware());
   }

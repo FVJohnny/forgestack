@@ -1,4 +1,5 @@
 const { generateFiles, joinPathFragments, names } = require('@nx/devkit');
+const { servicePathPrefix } = require('../shared/service-path-prefix');
 
 /**
  * Scaffolds a new bounded context under an existing service at
@@ -106,16 +107,34 @@ async function boundedContextGenerator(tree, options) {
     tree.write(appModulePath, appModule);
   }
 
+  // The starter controller is @Controller('<context>') behind the global
+  // /api/v1 prefix. When the service is routed through Caddy (a handle_path
+  // block proxying to it in the Caddyfile) the full public path is printed;
+  // otherwise it is described relative to the prefix the naming rule gives.
+  const routePath = `/api/v1/${contextNames.fileName}`;
+  const caddy = tree.read('infra/caddy/Caddyfile', 'utf-8') || '';
+  // `service` is validated kebab-case above, so it is regex-safe.
+  const route = new RegExp(
+    `handle_path (\\/[^\\s/]+)\\/\\*\\s*\\{\\s*reverse_proxy ${service}:3000\\b`,
+  ).exec(caddy);
+  const endpoint = route
+    ? `POST https://localhost${route[1]}${routePath}`
+    : `POST ${routePath} (under the service's ${servicePathPrefix(service)}/api/v1 prefix if it is routed through Caddy)`;
+
   return () => {
     console.log('');
     console.log(`✅ Bounded context "${context}" scaffolded in ${service}. Next steps:`);
     console.log('');
     console.log(`  1. npx nx run ${service}:typecheck             # sanity-check the skeleton`);
+    console.log(`  2. ${endpoint} { "message": "hi" }`);
     console.log(
-      `  2. POST /${contextNames.fileName} { "message": "hi" }  → ${commandNames.className}_Command`,
+      `     → ${commandNames.className}_Command (needs a logged-in session: the global JwtAuthGuard applies)`,
     );
-    console.log(`  3. Add an aggregate + repository, queries, and domain/integration events`);
-    console.log(`     following the \`example\` context. Docs: docs/architecture.md`);
+    console.log(`  3. Add an aggregate + repository, queries, and domain/integration events,`);
+    console.log(
+      `     following any existing context under backend/services/*/src/bounded-contexts.`,
+    );
+    console.log(`     Docs: docs/architecture.md`);
     for (const w of warnings) console.log(`  ⚠️  ${w}`);
   };
 }

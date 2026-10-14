@@ -1,0 +1,17 @@
+import { Base_DomainEventHandler } from '@libs/nestjs-common';
+import { GreetingCreated_DomainEvent } from '@bc/example/domain/aggregates/greeting/events/greeting-created.domain-event';
+
+/**
+ * An in-process reaction to the aggregate's domain event. It runs after
+ * CreateGreeting_CommandHandler commits, so it only ever sees greetings that
+ * were stored. Put same-service side effects here (update a read model, start
+ * another command); anything other services need goes through the outbox in
+ * the command handler's transaction instead.
+ */
+export class GreetingCreated_Log_DomainEventHandler extends Base_DomainEventHandler(
+  GreetingCreated_DomainEvent,
+) {
+  async handleEvent(event: GreetingCreated_DomainEvent) {
+    this.logger.log(`Greeting ${event.greetingId.toValue()} created (${event.source})`);
+  }
+}

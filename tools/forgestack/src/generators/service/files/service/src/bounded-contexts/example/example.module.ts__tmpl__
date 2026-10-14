@@ -14,7 +14,8 @@ const { controllers, handlers } = RuntimeAutoDiscovery.discoverAllComponents(__d
  *
  *   POST /greetings ──▶ CreateGreeting_Command ──▶ Greeting.create()
  *   user.created (Kafka, from another service) ──▶ same command
- *   Greeting.create() raises GreetingCreated_DomainEvent ──▶ handler reacts
+ *   one transaction: save the greeting + greeting.created outbox row (Kafka)
+ *   after commit: GreetingCreated_DomainEvent ──▶ in-process handler reacts
  *   GET /greetings ──▶ ListGreetings_Query ──▶ repository
  *
  * Rename it, gut it, or duplicate the folder to start another context.

@@ -1,0 +1,15 @@
+import { Greeting } from '@bc/example/domain/aggregates/greeting/greeting.aggregate';
+import { GreetingCreated_DomainEvent } from '@bc/example/domain/aggregates/greeting/events/greeting-created.domain-event';
+import { GreetingCreated_Log_DomainEventHandler } from './greeting-created_log.domain-event-handler';
+
+describe('GreetingCreated_Log_DomainEventHandler', () => {
+  it('should handle a GreetingCreated domain event', async () => {
+    // Arrange
+    const handler = new GreetingCreated_Log_DomainEventHandler();
+    const greeting = Greeting.random();
+    const event = new GreetingCreated_DomainEvent(greeting.id, greeting.message, greeting.source);
+
+    // Act & Assert
+    await expect(handler.handle(event)).resolves.not.toThrow();
+  });
+});

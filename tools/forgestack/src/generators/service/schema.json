@@ -16,7 +16,7 @@
     },
     "expose": {
       "type": "boolean",
-      "description": "Expose the service through Caddy at <name>.<domain>",
+      "description": "Expose the service through Caddy under a path prefix on the main domain: service-<N> is served at /svc<N> (e.g. https://<domain>/svc3/api/v1), any other name at /svc<name without dashes>",
       "default": true
     }
   },

@@ -6,5 +6,5 @@ export class CreateGreeting_ControllerParams {
   @IsString()
   @IsNotEmpty()
   @MaxLength(200)
-  message: string;
+  message!: string;
 }

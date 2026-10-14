@@ -58,7 +58,11 @@
 	#
 	# handle_path strips the matched prefix before proxying, so each service
 	# still serves its own /api/v1/* internally. Each service gets its own
-	# prefix (/svc1, /svc2, ...); the generator adds one per new service.
+	# prefix, and the service generator adds one per new service using this
+	# rule: a service named service-<N> is served at /svc<N> (service-3 ->
+	# /svc3); any other name at /svc<name without dashes> (billing ->
+	# /svcbilling). Set the same prefix as PROXY_BASE_PATH in the service's env
+	# so its Swagger UI resolves behind the proxy.
 	handle_path /svc1/* {
 		reverse_proxy service-1:3000
 	}

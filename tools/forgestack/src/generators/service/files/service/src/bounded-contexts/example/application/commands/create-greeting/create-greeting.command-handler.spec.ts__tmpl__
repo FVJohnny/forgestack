@@ -1,16 +1,22 @@
-import { DomainValidationException, MockEventBus } from '@libs/nestjs-common';
+import {
+  DomainValidationException,
+  MockEventBus,
+  Outbox_InMemoryRepository,
+} from '@libs/nestjs-common';
 import { Greeting_InMemoryRepository } from '@bc/example/infrastructure/repositories/in-memory/greeting.in-memory-repository';
 import { GreetingCreated_DomainEvent } from '@bc/example/domain/aggregates/greeting/events/greeting-created.domain-event';
+import { GreetingCreated_IntegrationEvent } from '@bc/example/application/integration-events/greeting-created.integration-event';
 import { CreateGreeting_Command } from './create-greeting.command';
 import { CreateGreeting_CommandHandler } from './create-greeting.command-handler';
 
 describe('CreateGreeting_CommandHandler', () => {
-  const setup = (params: { shouldFailRepository?: boolean } = {}) => {
+  const setup = (params: { shouldFailRepository?: boolean; shouldFailOutbox?: boolean } = {}) => {
     const repository = new Greeting_InMemoryRepository(params.shouldFailRepository);
     const eventBus = new MockEventBus();
-    const handler = new CreateGreeting_CommandHandler(repository, eventBus);
+    const outboxRepository = new Outbox_InMemoryRepository(params.shouldFailOutbox);
+    const handler = new CreateGreeting_CommandHandler(repository, eventBus, outboxRepository);
 
-    return { repository, eventBus, handler };
+    return { repository, eventBus, outboxRepository, handler };
   };
 
   it('should persist the greeting and dispatch its domain event', async () => {
@@ -28,6 +34,37 @@ describe('CreateGreeting_CommandHandler', () => {
 
     expect(eventBus.events).toHaveLength(1);
     expect(eventBus.events[0]).toBeInstanceOf(GreetingCreated_DomainEvent);
+  });
+
+  it('should write the greeting.created integration event to the outbox', async () => {
+    // Arrange
+    const { handler, repository, outboxRepository } = setup();
+
+    // Act
+    await handler.execute(new CreateGreeting_Command('Hello there', 'api'));
+
+    // Assert
+    const [greeting] = await repository.findAll();
+    const outboxEvents = await outboxRepository.findAll();
+    expect(outboxEvents).toHaveLength(1);
+    expect(outboxEvents[0].eventName.toValue()).toBe(GreetingCreated_IntegrationEvent.NAME);
+
+    const payload = JSON.parse(outboxEvents[0].payload.toValue());
+    expect(payload.greetingId).toBe(greeting.id.toValue());
+    expect(payload.message).toBe('Hello there');
+    expect(payload.source).toBe('api');
+  });
+
+  it('should roll the greeting back when the outbox write fails', async () => {
+    // Arrange
+    const { handler, repository, eventBus } = setup({ shouldFailOutbox: true });
+
+    // Act & Assert
+    await expect(handler.execute(new CreateGreeting_Command('Hello', 'api'))).rejects.toThrow();
+
+    // Neither the greeting nor any event survives a failed transaction.
+    expect(await repository.findAll()).toHaveLength(0);
+    expect(eventBus.events).toHaveLength(0);
   });
 
   it('should reject an empty message (value-object validation)', async () => {

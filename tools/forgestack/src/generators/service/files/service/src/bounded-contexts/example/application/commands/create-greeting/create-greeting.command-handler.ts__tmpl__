@@ -1,13 +1,21 @@
 import { type IEventBus } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { CreateGreeting_Command } from './create-greeting.command';
-import { Base_CommandHandler, EVENT_BUS, Transaction } from '@libs/nestjs-common';
+import {
+  Base_CommandHandler,
+  EVENT_BUS,
+  Id,
+  OUTBOX_REPOSITORY,
+  type Outbox_Repository,
+  Transaction,
+} from '@libs/nestjs-common';
 import { Greeting } from '@bc/example/domain/aggregates/greeting/greeting.aggregate';
 import { GreetingMessage } from '@bc/example/domain/value-objects';
 import {
   GREETING_REPOSITORY,
   type Greeting_Repository,
 } from '@bc/example/domain/aggregates/greeting/greeting.repository';
+import { GreetingCreated_IntegrationEvent } from '@bc/example/application/integration-events/greeting-created.integration-event';
 
 export class CreateGreeting_CommandHandler extends Base_CommandHandler(CreateGreeting_Command) {
   constructor(
@@ -15,8 +23,10 @@ export class CreateGreeting_CommandHandler extends Base_CommandHandler(CreateGre
     private readonly greetingRepository: Greeting_Repository,
     @Inject(EVENT_BUS)
     eventBus: IEventBus,
+    @Inject(OUTBOX_REPOSITORY)
+    outboxRepository: Outbox_Repository,
   ) {
-    super(eventBus);
+    super(eventBus, outboxRepository);
   }
 
   async handle(command: CreateGreeting_Command) {
@@ -24,12 +34,27 @@ export class CreateGreeting_CommandHandler extends Base_CommandHandler(CreateGre
 
     const greeting = Greeting.create({ message, source: command.source });
 
-    // Persist and dispatch the aggregate's domain events atomically — the
-    // GreetingCreated handler in domain-event-handlers/ runs as a result.
+    // The public greeting.created contract for other services. Plain,
+    // serializable fields only, built here so it can join the transaction.
+    const greetingCreated = new GreetingCreated_IntegrationEvent({
+      id: Id.random().toValue(),
+      occurredOn: new Date(),
+      greetingId: greeting.id.toValue(),
+      message: greeting.message.toValue(),
+      source: greeting.source,
+    });
+
+    // The atomic-outbox rule: the aggregate and the outbox row are written in
+    // ONE transaction, so other services hear about the greeting if and only if
+    // it was stored. The outbox then delivers the event to Kafka reliably.
     await Transaction.run(async (context) => {
       await this.greetingRepository.save(greeting, context);
-      await this.sendDomainEvents(greeting);
+      await this.sendIntegrationEvent(greetingCreated, context);
     });
+
+    // In-process domain events go out only after the commit, so their
+    // handlers (domain-event-handlers/) never react to a rolled-back write.
+    await this.sendDomainEvents(greeting);
 
     this.logger.log(`Greeting created (${command.source}): ${message.toValue()}`);
   }

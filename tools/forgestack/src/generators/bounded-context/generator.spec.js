@@ -69,6 +69,58 @@ describe('bounded-context generator', () => {
     expect(src).toMatch(/TasksBoundedContextModule,\n\s*BillingBoundedContextModule,/);
   });
 
+  describe('next-steps output', () => {
+    const captureOutput = async (tree) => {
+      const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+      try {
+        const callback = await boundedContextGenerator(tree, {
+          name: 'billing',
+          service: 'service-2',
+        });
+        callback();
+        return log.mock.calls.map((args) => args.join(' ')).join('\n');
+      } finally {
+        log.mockRestore();
+      }
+    };
+
+    it('prints the full public path when the service is routed through Caddy', async () => {
+      const tree = setup();
+      tree.write(
+        'infra/caddy/Caddyfile',
+        ['\thandle_path /svc2/* {', '\t\treverse_proxy service-2:3000', '\t}', ''].join('\n'),
+      );
+      const output = await captureOutput(tree);
+      expect(output).toContain('POST https://localhost/svc2/api/v1/billing');
+      // Never point at a context that only exists in generated services.
+      expect(output).not.toContain('`example`');
+    });
+
+    it('uses the prefix actually routed in the Caddyfile', async () => {
+      const tree = setup();
+      tree.write(
+        'infra/caddy/Caddyfile',
+        [
+          '\thandle_path /svc1/* {',
+          '\t\treverse_proxy service-1:3000',
+          '\t}',
+          '\thandle_path /todo/* {',
+          '\t\treverse_proxy service-2:3000',
+          '\t}',
+          '',
+        ].join('\n'),
+      );
+      const output = await captureOutput(tree);
+      expect(output).toContain('POST https://localhost/todo/api/v1/billing');
+    });
+
+    it('falls back to the prefix rule when the route cannot be found', async () => {
+      const tree = setup();
+      const output = await captureOutput(tree);
+      expect(output).toContain("POST /api/v1/billing (under the service's /svc2/api/v1 prefix");
+    });
+  });
+
   it('honours a custom command name', async () => {
     const tree = setup();
     await boundedContextGenerator(tree, {

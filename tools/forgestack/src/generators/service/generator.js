@@ -1,10 +1,11 @@
 const { generateFiles, installPackagesTask, joinPathFragments } = require('@nx/devkit');
+const { servicePathPrefix } = require('../shared/service-path-prefix');
 
 /**
  * Scaffolds a new NestJS service under backend/services/<name> and wires it
  * into everything that can't discover it on its own:
  *   - docker-compose.dev.yml / docker-compose.prod.yml (anchored blocks)
- *   - Caddyfile host + caddy depends_on (unless --expose=false)
+ *   - Caddyfile path route + caddy depends_on (unless --expose=false)
  *   - infra/env/<name>.env.prod(.example)
  *
  * Everything else (Nx, npm workspaces, deploy.sh, check-typescript.sh,
@@ -22,14 +23,24 @@ async function serviceGenerator(tree, options) {
   }
 
   const warnings = [];
+  const expose = options.expose !== false;
+  // Path prefix the service is reached through on the main origin (service-3
+  // → /svc3, billing → /svcbilling). handle_path strips it before proxying, so
+  // the service still serves its own /api/v1 internally. Same-origin routing
+  // keeps the auth cookies first-party (see infra/caddy/Caddyfile).
+  const svcPrefix = servicePathPrefix(name);
+  const templateVars = {
+    name,
+    // PROXY_BASE_PATH in the env templates: only set when behind Caddy.
+    pathPrefix: expose ? svcPrefix : '',
+    routePrefix: svcPrefix,
+    tmpl: '',
+  };
 
   // ---------------------------------------------------------------------
   // 1. Service skeleton from templates
   // ---------------------------------------------------------------------
-  generateFiles(tree, joinPathFragments(__dirname, 'files', 'service'), serviceRoot, {
-    name,
-    tmpl: '',
-  });
+  generateFiles(tree, joinPathFragments(__dirname, 'files', 'service'), serviceRoot, templateVars);
 
   // The local .env starts as a copy of the example.
   tree.write(`${serviceRoot}/.env`, tree.read(`${serviceRoot}/.env.example`, 'utf-8'));
@@ -92,13 +103,7 @@ async function serviceGenerator(tree, options) {
   // ---------------------------------------------------------------------
   // 3. Caddy same-origin path route + caddy depends_on (public services only)
   // ---------------------------------------------------------------------
-  const host = name.replace(/-/g, '');
-  // Path prefix the service is reached through on the main origin, e.g.
-  // /svcbilling. handle_path strips it before proxying, so the service still
-  // serves its own /api/v1 internally. Same-origin routing keeps the auth
-  // cookies first-party (see infra/caddy/Caddyfile).
-  const svcPrefix = `/svc${host}`;
-  if (options.expose !== false) {
+  if (expose) {
     const caddyPath = 'infra/caddy/Caddyfile';
     // Anchor: insert the new handle_path block just before the frontend
     // catch-all inside the main origin block. Match on the catch-all's comment.
@@ -116,6 +121,11 @@ async function serviceGenerator(tree, options) {
     } else if (!caddy || !caddy.includes(caddyMarker)) {
       warnings.push(
         `Could not find the frontend catch-all in ${caddyPath} — add a handle_path ${svcPrefix}/* route for ${name} manually.`,
+      );
+    } else if (!caddy.includes(`reverse_proxy ${name}:3000`)) {
+      // The prefix is taken by another service (e.g. "bil-ling" vs "billing").
+      warnings.push(
+        `${caddyPath} already routes ${svcPrefix}/* to another service — pick a different name or route ${name} manually.`,
       );
     }
 
@@ -138,17 +148,15 @@ async function serviceGenerator(tree, options) {
   // ---------------------------------------------------------------------
   // 4. Production env template (+ a local copy deploy.sh can rsync)
   // ---------------------------------------------------------------------
-  generateFiles(tree, joinPathFragments(__dirname, 'files', 'env'), 'infra/env', {
-    name,
-    tmpl: '',
-  });
+  generateFiles(tree, joinPathFragments(__dirname, 'files', 'env'), 'infra/env', templateVars);
   tree.write(
     `infra/env/${name}.env.prod`,
     tree.read(`infra/env/${name}.env.prod.example`, 'utf-8'),
   );
 
   return () => {
-    // Link the new workspace package (equivalent of running `npm i`).
+    // Link the new workspace package (equivalent of running `npm i`), so the
+    // steps below never need a separate install.
     installPackagesTask(tree, true);
 
     console.log('');
@@ -158,17 +166,21 @@ async function serviceGenerator(tree, options) {
     console.log(
       `  2. npm run dev:restart ${name} caddy      # or npm run dev:start for the full stack`,
     );
-    if (options.expose !== false) {
+    if (expose) {
       console.log(
-        `     → https://localhost${svcPrefix}/api/v1/greetings (GET list / POST {message})`,
+        `     → API:     https://localhost${svcPrefix}/api/v1/greetings (GET list / POST {message})`,
       );
+      console.log(`     → Swagger: https://localhost${svcPrefix}/docs`);
+    } else {
+      console.log(`     → Not exposed through Caddy (--expose=false): reachable only inside the`);
+      console.log(`       Docker network at http://${name}:3000/api/v1`);
     }
     console.log(
       `  3. Fill in infra/env/${name}.env.prod for production (secrets are placeholders)`,
     );
-    if (options.expose !== false) {
+    if (expose) {
       console.log(
-        `  4. Prod: the service is served at <your-domain>${svcPrefix}/*; rebuild caddy on next deploy`,
+        `  4. Prod: the API is served at https://<your-domain>${svcPrefix}/api/v1; rebuild caddy on next deploy`,
       );
     }
     console.log('');

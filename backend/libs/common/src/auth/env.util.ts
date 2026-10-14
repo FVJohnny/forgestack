@@ -16,14 +16,36 @@ export function requiredEnv(name: string): string {
 // admin tokens. 32 characters is the practical floor for a 256-bit HMAC key.
 export const MIN_SECRET_LENGTH = 32;
 
+// Matches the "change in production" marker in any casing and with any (or no)
+// separator: CHANGE_IN_PRODUCTION, change-in-production, ChangeInProduction...
+const PLACEHOLDER_MARKER = /change[-_ ]?in[-_ ]?production/i;
+
+// Every signing-secret value this public repo ships in its env examples,
+// generator templates and jest setups. They are publicly known, so none of them
+// may sign tokens in production, whatever their length or casing. Keep this in
+// sync when adding a new example value.
+export const SHIPPED_EXAMPLE_SECRETS: readonly string[] = [
+  'dev-jwt-secret-change-in-production',
+  'dev-refresh-secret-change-in-production',
+  'YOUR_JWT_SECRET_CHANGE_IN_PRODUCTION',
+  'YOUR_JWT_REFRESH_SECRET_CHANGE_IN_PRODUCTION',
+  'test-jwt-secret',
+  'test-jwt-refresh-secret',
+];
+
+const SHIPPED_EXAMPLE_SECRETS_LOWER = new Set(
+  SHIPPED_EXAMPLE_SECRETS.map((secret) => secret.toLowerCase()),
+);
+
 /**
  * Reads a required signing secret and, in production, rejects values that are
  * too short or still set to a shipped placeholder. The env examples ship
- * strings like JWT_SECRET=YOUR_JWT_SECRET_CHANGE_IN_PRODUCTION, and those
- * placeholders are committed to this public repo, so a forker who deploys
- * without changing them would be signing tokens with a publicly known key.
- * This guard makes that a hard boot failure instead of a silent hole. Dev and
- * test only require presence (they set short secrets via .env and jest.env.js).
+ * strings like JWT_SECRET=YOUR_JWT_SECRET_CHANGE_IN_PRODUCTION (prod) and
+ * dev-jwt-secret-change-in-production (dev), and those values are committed to
+ * this public repo, so a forker who deploys without changing them would be
+ * signing tokens with a publicly known key. This guard makes that a hard boot
+ * failure instead of a silent hole. Dev and test only require presence (they
+ * set short secrets via .env and jest.env.js).
  */
 export function requiredSecret(name: string): string {
   const value = requiredEnv(name);
@@ -36,12 +58,17 @@ export function requiredSecret(name: string): string {
         `Generate a strong secret, for example with: openssl rand -base64 48`,
     );
   }
-  // Reject anything that still contains the CHANGE_IN_PRODUCTION marker the env
-  // examples ship, so a copy-paste of the template fails loudly at boot.
-  if (value.includes('CHANGE_IN_PRODUCTION')) {
+  // Reject the exact example values and anything that still carries the
+  // "change in production" marker (any casing), so a copy-paste of the dev or
+  // prod template fails loudly at boot.
+  const trimmed = value.trim();
+  if (
+    SHIPPED_EXAMPLE_SECRETS_LOWER.has(trimmed.toLowerCase()) ||
+    PLACEHOLDER_MARKER.test(trimmed)
+  ) {
     throw new Error(
-      `${name} is still set to the placeholder from the env example. ` +
-        `Set a real secret before deploying to production.`,
+      `${name} is still set to a placeholder from the env examples. ` +
+        `Set a real secret before deploying to production, for example with: openssl rand -base64 48`,
     );
   }
   return value;

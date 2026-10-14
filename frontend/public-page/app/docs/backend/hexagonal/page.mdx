@@ -128,7 +128,7 @@ export class SendEmail_CommandHandler extends Base_CommandHandler(SendEmail_Comm
 
 The domain defines a repository *interface*
 in terms of aggregates and value objects; infrastructure provides a
-technology-specific *adapter* that implements it, like MongoDB or PostgreSQL. The
+technology-specific *adapter* that implements it, like MongoDB (or, later, PostgreSQL). The
 domain never imports a database driver, and swapping the datastore means
 writing a new adapter, changing nothing in the domain logic.
 

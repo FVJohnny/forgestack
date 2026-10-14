@@ -1,7 +1,8 @@
 # Contributing to ForgeStack
 
 Thanks for your interest in contributing! This guide covers the basics for
-getting set up and submitting changes.
+getting set up and submitting changes. Questions are welcome in
+[GitHub Discussions](https://github.com/FVJohnny/forgestack/discussions).
 
 ## Getting started
 
@@ -12,23 +13,44 @@ npm run dev:start
 This checks prerequisites (it verifies Node matches `.nvmrc` and can install
 Docker if it is missing, but never auto-installs Node), installs git hooks,
 creates `.env` files from the examples, and brings up the full stack via
-Docker Compose. See the [README](README.md) and [`docs/`](docs/) for details.
+Docker Compose. See the [README](README.md#getting-started) for the
+prerequisites, local URLs and logins, and [`docs/`](docs/) for details.
+
+The checks below run Nx targets for every project, including the frontend,
+which installs with pnpm. Install its dependencies once:
+
+```bash
+corepack enable
+pnpm -C frontend/public-page install
+```
 
 ## Development workflow
 
 - **Branch** off `main` for your change.
 - Make focused commits (see commit conventions below).
-- Before opening a PR, make sure the checks pass:
+- Before opening a PR, make sure the same checks CI runs pass:
 
   ```bash
   npm run typecheck
   npm run lint
   npm run test
+  npm run test:eslint-rules                             # tests for the custom ESLint rules
+  npm --prefix frontend/public-page run check:locales   # every locale file has the same keys
+  npm run build
   ```
 
-  Note: the mongodb and redis lib suites hit real datastores, so `npm run
-  test` needs the dev stack running (`npm run dev:start`). Without it those
-  suites fail with connection errors.
+  `npm run test` needs MongoDB and Redis on localhost: the mongodb and redis
+  repository contract tests hit real datastores and fail with connection
+  errors without them. Keep the dev stack running (`npm run dev:start`), or
+  start just those two:
+
+  ```bash
+  docker compose -f infra/compose/docker-compose.dev.yml up -d mongodb redis
+  ```
+
+- The pre-commit hook runs lint-staged on the staged files, then typecheck and
+  tests for the affected projects, so MongoDB and Redis should be up when you
+  commit too.
 
 ## Commit conventions
 
@@ -51,15 +73,16 @@ A good PR:
 - Links any related issue.
 - Calls out new env vars, migrations, or breaking changes.
 - Includes screenshots for UI changes.
-- Has `typecheck`, `lint` and `test` all green.
+- Has all of the checks above green.
 
 ## Architecture & style
 
 ForgeStack follows DDD + CQRS with a hexagonal layout, and several custom
 ESLint rules enforce its boundaries. Before adding code, skim
 [`docs/architecture.md`](docs/architecture.md) and
-[`docs/code-style.md`](docs/code-style.md) so your change fits the existing
-patterns.
+[`docs/code-style.md`](docs/code-style.md) (file and class naming is
+load-bearing) so your change fits the existing patterns. The
+[docs site](https://forgestack.fvjohnny.com/docs) covers each pattern in depth.
 
 ## Reporting security issues
 

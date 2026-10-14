@@ -5,6 +5,8 @@ title: '[Bug] '
 labels: bug
 ---
 
+<!-- Security issue? Please report it privately instead: https://github.com/FVJohnny/forgestack/security/advisories/new -->
+
 ## Description
 
 <!-- A clear description of the bug. -->
@@ -21,10 +23,13 @@ labels: bug
 
 ## Actual behavior
 
-<!-- What actually happened (include error output / logs). -->
+<!-- What actually happened (include error output / logs, e.g. from `npm run dev:logs`). -->
 
 ## Environment
 
+- Where it happens: <!-- local dev stack / production deploy / CI -->
 - ForgeStack commit / version:
-- Node version:
-- OS:
+- OS (and version; WSL2 if on Windows):
+- Docker version (`docker --version`, `docker compose version`):
+- Node version (`node -v`):
+- Browser (for frontend issues):

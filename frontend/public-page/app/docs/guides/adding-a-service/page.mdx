@@ -5,8 +5,10 @@ is used as an example on this guide:
 
 ```bash
 npx nx g @forgestack/tools:service billing   # generate new service called "billing"
-npm i                                        # link the new package into the workspace
 ```
+
+The generator also links the new package into the npm workspace, so there is
+no separate `npm i` to run.
 
 The generator takes two flags:
 
@@ -24,19 +26,22 @@ one of every building block a bounded context is made of:
 - **A [value object](/docs/backend/ddd#value-objects)**: `GreetingMessage`,
   with validation.
 - **A [command](/docs/backend/cqrs#commands)**: `CreateGreeting_Command` and
-  its `CreateGreeting_CommandHandler`.
+  its `CreateGreeting_CommandHandler`, which saves the greeting and writes the
+  public `GreetingCreated_IntegrationEvent` to the
+  [outbox](/docs/backend/events#the-outbox-publish-side) in one transaction,
+  so other services hear about a greeting if and only if it was stored.
 - **A [query](/docs/backend/cqrs#queries)**: `ListGreetings_Query` and its
   `ListGreetings_QueryHandler`.
 - **[Controllers](/docs/backend/cqrs#controllers)** that dispatch them through
   the buses: `CreateGreeting_Controller` (`POST /api/v1/greetings`) and
   `ListGreetings_Controller` (`GET /api/v1/greetings`).
 - **A [domain-event handler](/docs/backend/events#domain-event-handlers)**:
-  `GreetingCreated_PublishIntegrationEvent_DomainEventHandler`, which turns
-  the internal event into a public `GreetingCreated_IntegrationEvent` and
-  publishes it through the outbox for other services to consume.
+  `GreetingCreated_Log_DomainEventHandler`, a small in-process reaction that
+  runs after the command's transaction commits. Put same-service side effects
+  here.
 - **An [integration-event handler](/docs/backend/events#integration-event-handlers)**:
   `UserCreated_IntegrationEventHandler`, consuming another service's
-  [`user.created` integration event](/docs/backend/events#integration-events--the-contract-between-contexts)
+  [`user.created` integration event](/docs/backend/events#integration-events-the-contract-between-contexts)
   from Kafka. The new service greets every registered user out of the box.
 - **[Repositories](/docs/backend/repositories)**: `Greeting_MongodbRepository`
   and `Greeting_InMemoryRepository`, behind the same `Greeting_Repository` port interface.
@@ -46,31 +51,56 @@ one of every building block a bounded context is made of:
 Rename or get rid of the `example` context once you start building real ones.
 
 Beyond the code, the generator wires the service into the dev and prod compose
-files, adds the Caddy host and creates the env files.
+files, adds a Caddy route for it and creates the env files.
+
+## Where the service is served
+
+Every exposed service lives on the **same origin as the frontend**, under its
+own path prefix. Caddy strips the prefix before proxying, so the service itself
+still serves `/api/v1/...`. The prefix follows one rule:
+
+| Service name | Path prefix | Local API URL |
+| --- | --- | --- |
+| `service-<N>` (e.g. `service-3`) | `/svc<N>` | `https://localhost/svc3/api/v1` |
+| any other name (e.g. `billing`, `user-profile`) | `/svc` + the name without dashes | `https://localhost/svcbilling/api/v1`, `https://localhost/svcuserprofile/api/v1` |
+
+The generator prints the exact URLs when it finishes. Because nothing new is
+added at the DNS level (no subdomain per service), a new service needs no DNS
+records and no new certificate, and the auth cookies stay first-party, so the
+browser sends them to every service automatically.
 
 ## What the generator sets up (and where to edit it)
 
 | Piece | Where | Notes |
 | --- | --- | --- |
 | Service code | `backend/services/<name>/` | Configs, jest, and the `example` starter bounded context |
-| Local config | `backend/services/<name>/.env` (+ `.env.example`) | `SERVICE_NAME`, `KAFKA_SERVICE_ID` and the Mongo database are unique per service |
+| Local config | `backend/services/<name>/.env` (+ `.env.example`) | `SERVICE_NAME`, `KAFKA_SERVICE_ID` and the Mongo database are unique per service; `PROXY_BASE_PATH` is the path prefix |
 | Dev container | `infra/compose/docker-compose.dev.yml` | One small block to deploy the service locally |
 | Prod container | `infra/compose/docker-compose.prod.yml` | One small service block to deploy in prod; image tag `forgestack-<name>:v1` |
 | Prod config | `infra/env/<name>.env.prod` (+ `.example`) | Secrets are placeholders (fill them in before deploying) |
-| Public hostname | `infra/caddy/Caddyfile` | `<name>.<domain>` → `<name>:3000` to expose it through Caddy |
+| Route | `infra/caddy/Caddyfile` | A `handle_path /svc<...>/*` block → `<name>:3000` on the main site (skipped with `--expose=false`) |
 
 That table is the complete list. Everything else (builds, deploys,
 type-checks, lint, metrics, logs, traces) discovers the new service
 automatically.
 
+With `--expose=false` there is no Caddy route: the service is reachable only
+inside the Docker network (`http://<name>:3000/api/v1`) and through the events
+it consumes and publishes.
+
 ## After generating
 
-- **Dev**: start the stack (`npm run dev:start`), or `npm run dev:restart <name>
-  caddy` if it's already running. Caddy re-reads its config only on restart.
-  `GET /api/v1/greetings` on the new hostname confirms the wiring.
-- **Prod**: fill in `infra/env/<name>.env.prod`, point `<name>.<your-domain>`
-  DNS at the server, and use. `npm run prod:update` to deploy it (make sure to 
-  include Caddy in the deployment).
+- **Dev**: start the stack (`npm run dev:start`), or run
+  `npm run dev:restart <name> caddy` if it's already running (Caddy re-reads
+  its config only when it restarts). Then
+  `GET https://localhost/svcbilling/api/v1/greetings` confirms the wiring, and
+  the service's Swagger UI is at `https://localhost/svcbilling/docs`.
+- **Prod**: fill in `infra/env/<name>.env.prod`, using the same `JWT_SECRET`,
+  `JWT_REFRESH_SECRET` and `INTERNAL_API_KEY` as the other services. No DNS
+  change is needed. Deploy with `npm run prod:update` and choose **5) Update
+  ALL** (or **2** then **3**), so both the new service image and the Caddy
+  image, which bakes in the Caddyfile, are rebuilt. The API is then served at
+  `https://<your-domain>/svcbilling/api/v1`.
 
 To call the new service from the website, see
 [Calling Backend Services](/docs/frontend/backend-services).

@@ -7,6 +7,20 @@ when an architectural rule is broken. The architecture is executable.
 
 ## What gets enforced
 
+All of them run in `npm run lint` and fail it on a violation. These are the
+rule ids registered in the root `eslint.config.mjs`:
+
+| Rule | What it enforces |
+| --- | --- |
+| hexagonal-architecture | layer dependency direction (a `no-restricted-imports` config, not a named rule) |
+| `bounded-context/no-cross-imports` | no imports between bounded contexts (except `shared`) |
+| `cqrs/handler-collocation` | handlers import their command/query/event from the same folder |
+| `cqrs/no-direct-decorators` | no raw `@CommandHandler` / `@QueryHandler` / `@EventsHandler` |
+| `handler/naming` | handler class names end in the suffix that matches their file |
+| `entity-domain/no-direct-entity-mutation` | aggregate state changes only through its own methods |
+| `value-object/naming` | `.vo.ts` files hold value objects, and value objects live in `.vo.ts` files |
+| `aggregate/must-extend-base` and seven more `*/must-extend-base` rules | each building block extends its base class (table below) |
+
 ### Layer boundaries
 
 `hexagonal-architecture` (a `no-restricted-imports` config, not a single named
@@ -37,9 +51,16 @@ const BC_ALIAS_REGEX = /^@bc\/([^/]+)/;
 - `cqrs/handler-collocation`: a `*.command-handler.ts` must import its command
   from the **same directory** (likewise queries; domain-event handlers import the
   event from `domain/.../events`). Keeps each use case self-contained.
-- `handler/naming`: handler classes must end with the right suffix:
-  `_CommandHandler`, `_QueryHandler`, `_DomainEventHandler`,
-  `_IntegrationEventHandler`.
+- `handler/naming`: handler classes must end with the right suffix for their
+  file: `_CommandHandler` in `*.command-handler.ts`, `_QueryHandler` in
+  `*.query-handler.ts`, `_DomainEventHandler` in `*.domain-event-handler.ts`,
+  `_IntegrationEventHandler` in `*.integration-event-handler.ts`.
+- `cqrs/no-direct-decorators`: NestJS's `@CommandHandler`, `@QueryHandler`
+  and `@EventsHandler` decorators are forbidden outside the framework's own
+  CQRS code. Extend `Base_CommandHandler(Command)`,
+  `Base_QueryHandler(Query)` or `Base_DomainEventHandler(Event)` instead: the
+  base registers the handler *and* adds the tracing, metrics and logging a raw
+  decorator would silently skip.
 
 ### Base-class conformance
 
@@ -50,13 +71,14 @@ accidentally missing:
 | Rule                                  | File suffix            | Must extend / implement                                     |
 | ------------------------------------- | ---------------------- | ----------------------------------------------------------- |
 | `aggregate/must-extend-base`          | `*.aggregate.ts`       | `SharedAggregate`                                           |
-| `aggregate-dto/must-extend-base`      | aggregate DTOs         | `SharedAggregateDTO`                                        |
+| `aggregate-dto/must-extend-base`      | `*.dto.ts` under `domain/aggregates/` | `SharedAggregateDTO`                         |
 | `value-object/naming`                 | `*.vo.ts`              | the value-object interface (and VOs must live in `*.vo.ts`) |
 | `command-handler/must-extend-base`    | `*.command-handler.ts` | `Base_CommandHandler(Command)`                              |
 | `query-handler/must-extend-base`      | `*.query-handler.ts`   | `Base_QueryHandler(Query)<Response>()`                      |
 | `domain-event/must-extend-base`       | `*.domain-event.ts`    | `Base_DomainEvent`                                          |
 | `domain-event-handler/must-extend-base` | domain-event handlers | `Base_DomainEventHandler(Event)`                           |
-| `repository/must-extend-base`         | concrete repositories  | `Base_MongoRepository` (or a `Repository` interface)        |
+| `integration-event/must-extend-base`  | `*.integration-event.ts` | `Base_IntegrationEvent`                                   |
+| `repository/must-extend-base`         | `*.repository.ts` (the port interface) | `Repository<Aggregate, Id>`                 |
 
 ### Aggregate immutability
 

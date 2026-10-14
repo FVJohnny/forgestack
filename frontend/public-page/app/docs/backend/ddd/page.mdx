@@ -134,8 +134,8 @@ The aggregate records the event at the moment of the change (the
 `user.apply(...)` call above). 
 
 Once the command handler has saved the
-aggregate, it dispatches the recorded events, and handlers in the same context
-react to them. 
+aggregate and the transaction has committed, it dispatches the recorded events,
+and handlers in the same context react to them. 
 
 Every domain event must extend `Base_DomainEvent`:
 

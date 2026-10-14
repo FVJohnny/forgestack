@@ -13,7 +13,7 @@ welcome email, update a projection, notify another team's service) without
 touching the code that emitted the event. Things stay decoupled.
 
 This matters most at the seams between [bounded
-contexts](/docs/architecture#bounded-contexts-are-separate-systems). Each context
+contexts](/docs/backend). Each context
 is its own little system. Several may share a process today, but any of them
 should be splittable into its own microservice later. They collaborate **only
 through events**, never by importing each other or sharing a database, so that
@@ -100,34 +100,39 @@ extends `Base_DomainEventHandler(SomeEvent)`, and is named
 with three consequences has three small handlers instead of one big one:
 
 ```ts
-// …/domain-event-handlers/greeting-created/greeting-created_publish-integration-event.domain-event-handler.ts
-export class GreetingCreated_PublishIntegrationEvent_DomainEventHandler extends Base_DomainEventHandler(
-  GreetingCreated_DomainEvent,
+// …/domain-event-handlers/user-registered/user-registered_create-email-verification.domain-event-handler.ts
+export class UserRegistered_CreateEmailVerification_DomainEventHandler extends Base_DomainEventHandler(
+  UserRegistered_DomainEvent,
 ) {
-  constructor(@Inject(OUTBOX_REPOSITORY) private readonly outboxRepository: Outbox_Repository) {
+  constructor(@Inject(COMMAND_BUS) private readonly commandBus: ICommandBus) {
     super();
   }
 
-  async handleEvent(event: GreetingCreated_DomainEvent) {
-    const integrationEvent = new GreetingCreated_IntegrationEvent({
-      id: Id.random().toValue(),
-      occurredOn: new Date(),
-      greetingId: event.greetingId.toValue(),
-      message: event.message.toValue(), // domain objects flatten to plain fields
-      source: event.source,
-    });
-
-    await this.outboxRepository.save(OutboxEvent.create(integrationEvent));
+  async handleEvent(event: UserRegistered_DomainEvent) {
+    await this.commandBus.execute(
+      new CreateEmailVerification_Command({
+        userId: event.aggregateId.toValue(),
+        email: event.email.toValue(),
+        emailAlreadyVerified: event.emailVerified || event.authProvider === 'google',
+      }),
+    );
   }
 }
 ```
 
 Handlers run when the command handler that mutated the aggregate calls
-`sendDomainEvents()`. The one above shows the most important reaction:
-**building the integration event and writing it to the outbox**. The
-domain-event handler is the bridge between the internal event and the public
-contract. Dispatching a follow-up command through the command bus is the other
-common shape.
+`sendDomainEvents()`, which it does **after its transaction has committed**, so
+an in-process reaction never acts on a change that was rolled back. The
+handler above shows the most common shape: dispatching a follow-up command
+through the command bus (that command then writes `UserCreated` to the outbox
+in its own transaction). Other same-service side effects, such as updating a
+read model, belong here too; the generated `example` context's
+`GreetingCreated_Log_DomainEventHandler` simply logs the new greeting.
+
+Domain-event handlers are **not** how events leave the service. Anything other
+contexts or services need is written to the outbox by the command handler,
+inside the same transaction as the state change (see
+[the outbox](#the-outbox-publish-side)).
 
 ### Integration-event handlers
 
@@ -150,10 +155,11 @@ export class UserCreated_IntegrationEventHandler {
 ```
 
 The decorator is all the registration there is. The Kafka listener subscribes
-to the topics that have handlers, and the inbox delivers each event to
-`handleEvent` exactly once (see [the inbox](#the-inbox-consume-side)). Keep the
+to the topics that have handlers, and the inbox deduplicates each event before
+calling `handleEvent` (see [the inbox](#the-inbox-consume-side)). Keep the
 handler thin: translate the event into one of the context's own commands and
-let the application layer do the work.
+let the application layer do the work. Make it **idempotent**: if any handler
+for an event fails, the inbox retries the event and runs its handlers again.
 
 ## Getting it reliable
 
@@ -175,44 +181,55 @@ fit together.
 ## The flow end to end
 
 ```
-1. Command mutates an aggregate, which emits a DOMAIN event.
-2. A domain-event handler builds an INTEGRATION event and writes it
-   to the OUTBOX — in the same DB transaction as the state change.
-3. A relay reads unprocessed outbox rows and PUBLISHES them to Kafka.
-4. Consumers receive the message into their INBOX (which dedupes it).
-5. The inbox dispatches it to the registered handler exactly once.
+1. A command mutates an aggregate, which records DOMAIN events.
+2. In ONE DB transaction, the command handler saves the change and writes
+   the INTEGRATION event to the OUTBOX.
+3. After the commit, it publishes the domain events to their in-process
+   handlers.
+4. A relay reads unprocessed outbox rows and PUBLISHES them to Kafka.
+5. Consumers receive the message into their INBOX (which dedupes it).
+6. The inbox dispatches it to the registered handlers, retrying on failure.
 ```
 
-Steps 1–2 commit atomically, so you can never publish an event for a change that
-rolled back, nor lose one for a change that committed.
+Step 2 commits atomically, so you can never publish an event for a change that
+rolled back, nor lose one for a change that committed. Step 3 comes after the
+commit for the same reason: in-process reactions only see changes that
+actually happened.
 
 ## The outbox (publish side)
 
-A domain-event handler creates the integration event and saves it to the outbox.
-`OutboxEvent.create()` snapshots the event as a JSON payload and tracks retry
-state:
+The command handler that changes the state writes the integration event to the
+outbox **inside the same transaction**, through the base class's
+`sendIntegrationEvent(event, context)`. Deleting a user is the worked example:
+the removal and the `UserDeleted` outbox row commit together or not at all, and
+the in-process domain events go out only after the commit:
 
 ```ts
-// …/domain-event-handlers/user-deleted/…publish-integration-event…ts
-export class UserDeleted_PublishIntegrationEvent_DomainEventHandler
-  extends Base_DomainEventHandler(UserDeleted_DomainEvent) {
+// …/commands/delete-user/delete-user.command-handler.ts (essence)
+async handle(command: DeleteUser_Command) {
+  const user = await this.userRepository.findById(new Id(command.userIdToDelete));
+  if (!user) throw new NotFoundException('User', command.userIdToDelete);
 
-  async handleEvent(event: UserDeleted_DomainEvent) {
-    const user = await this.userRepository.findById(event.aggregateId);
-    if (!user) return;
+  user.delete(); // records the in-process domain events
 
-    const integrationEvent = new UserDeleted_IntegrationEvent({
-      id: Id.random().toValue(),
-      occurredOn: new Date(),
-      userId: event.aggregateId.toValue(),
-      email: user.email.toValue(),
-    });
+  const integrationEvent = new UserDeleted_IntegrationEvent({
+    id: Id.random().toValue(),
+    occurredOn: new Date(),
+    userId: user.id.toValue(),
+    email: user.email.toValue(), // the row is gone by the time consumers run
+  });
 
-    const outboxEvent = OutboxEvent.create(integrationEvent);
-    await this.outboxRepository.save(outboxEvent);
-  }
+  await Transaction.run(async (context) => {
+    await this.userRepository.remove(user.id, context);
+    await this.sendIntegrationEvent(integrationEvent, context); // same transaction
+  });
+
+  await this.sendDomainEvents(user); // only after the commit
 }
 ```
+
+`sendIntegrationEvent` wraps the event in an `OutboxEvent`, which snapshots it
+as a JSON payload and tracks retry state.
 
 The `OutboxEvent` aggregate owns its lifecycle (retry counting, max retries,
 and the processed flag) as behaviour, not setters:
@@ -233,10 +250,13 @@ export class OutboxEvent extends SharedAggregate {
 }
 ```
 
-When a command needs to publish *as part of* its own transaction, the base
-command handler exposes `sendIntegrationEvent(event, context)`, which writes the
-outbox row using the command's transaction context, keeping state and event
-atomic.
+The generated `example` context follows the same rule:
+`CreateGreeting_CommandHandler` builds `GreetingCreated_IntegrationEvent`
+itself, saves the greeting and calls `sendIntegrationEvent` inside one
+`Transaction.run`, and sends its domain events after the commit. Don't save an
+`OutboxEvent` from a domain-event handler: that write would not be part of the
+command's transaction, so the event could be lost, or announced for a change
+that rolled back.
 
 ## Kafka (transport)
 
@@ -265,9 +285,9 @@ await consumer.run({
 
 ## The inbox (consume side)
 
-The inbox guarantees each message is processed **exactly once**. Incoming
-messages are recorded as `InboxEvent`s with a status that transitions through a
-small state machine; duplicates are detected and dropped:
+The inbox makes sure a redelivered message is **not processed twice**.
+Incoming messages are recorded as `InboxEvent`s with a status that transitions
+through a small state machine; duplicates are detected and dropped:
 
 ```ts
 // libs/common/src/inbox/domain/inbox.aggregate.ts
@@ -296,9 +316,12 @@ an inbox service, the listener dispatches directly (useful in tests).
 
 <Callout type="tip" title="Why outbox + inbox together">
   The outbox stops you from *losing or phantom-publishing* events. The inbox
-  stops you from *processing the same event twice*. Together they turn Kafka's
-  at-least-once delivery into effectively exactly-once business processing,
-  without distributed transactions.
+  stops you from *processing the same delivery twice*. Together they give you
+  at-least-once delivery with deduplication, which is effectively-once
+  processing without distributed transactions. It is not a strict
+  exactly-once guarantee: handlers run and the event is marked processed in
+  separate steps, so a crash or a failing sibling handler in between means the
+  handlers run again. Write integration-event handlers to be idempotent.
 </Callout>
 
 ## Anatomy of an integration event
@@ -369,7 +392,7 @@ back to the producer's trace in Tempo.
 ## Adding your own event
 
 1. Define an integration event extending `Base_IntegrationEvent` (with `toEventJSON` / `fromJSON`).
-2. In the producing context, add a domain-event handler that builds it and saves an `OutboxEvent`.
+2. In the producing command handler, build it and write it with `sendIntegrationEvent(event, context)` inside the same `Transaction.run` as the state change.
 3. In the consuming context, register a handler for the topic/event name; the inbox delivers it.
 
 Next: **[Testing](/docs/backend/testing)**.

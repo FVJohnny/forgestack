@@ -9,9 +9,9 @@ systems. Here's what you get out of the box:
 - One or more **NestJS** backend services built around solid patterns:
   Domain-Driven Design, CQRS, Hexagonal Architecture, and an event-driven setup
   where bounded contexts talk to each other asynchronously over **Kafka**.
-- **MongoDB** for storage and **Redis** for caching, both wired up (with
-  **PostgreSQL** support coming soon). The backend uses ports and adapters, so
-  swapping a datastore later doesn't ripple through your code.
+- **MongoDB** for storage and **Redis** for caching, both wired up
+  (**PostgreSQL** support is planned, not shipped yet). The backend uses ports
+  and adapters, so swapping a datastore later doesn't ripple through your code.
 - An **observability stack** that tracks resource usage, API health,
   command/query throughput, domain and integration events, and more, with logs
   and traces to go with it.
@@ -23,6 +23,23 @@ fighting the usual headaches of a scalable distributed system.
 
 These docs walk through every part of the system: how it's put together, the
 patterns it sticks to, and how to grow it into your own product.
+
+## Run it locally
+
+You need macOS or Linux (on Windows, WSL2), Docker, and Node 22:
+
+```bash
+git clone https://github.com/FVJohnny/forgestack.git && cd forgestack
+nvm install          # Node 22, pinned in .nvmrc
+npm run dev:start    # the first start takes several minutes
+```
+
+Then open `https://localhost` and sign in with the seeded dev admin
+(`DEFAULT_USER_EMAIL` / `DEFAULT_USER_PASSWORD` in
+`backend/services/service-1/.env`). The
+[README](https://github.com/FVJohnny/forgestack#readme) lists the
+prerequisites and every local URL and login; the
+[Deployment](/docs/deployment#first-deploy-checklist) page covers production.
 
 
 ## What's inside

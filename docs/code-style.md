@@ -1,15 +1,51 @@
 # Code Style
 
-> This is a quick in-repo reference. The canonical docs live on the docs site at `/docs/backend/eslint-rules` (served by the frontend at `/docs`). See the [README Documentation section](../README.md#documentation).
+> Quick in-repo reference. The canonical pages are **[Enforced Boundaries](https://forgestack.fvjohnny.com/docs/backend/eslint-rules)** and **[Project Structure](https://forgestack.fvjohnny.com/docs/project-structure#naming-as-a-contract)** on the docs site; when the two disagree, the docs site wins.
 
 ## Formatting
 
-- TypeScript, 2-space indentation, single quotes, trailing commas, print width 100 (`.prettierrc`)
-- PascalCase for classes/filenames, camelCase for methods, `UPPER_SNAKE_CASE` for env constants
+- TypeScript, 2-space indentation, single quotes, trailing commas, print width 100 (`.prettierrc`). `npm run lint` checks it and the pre-commit hook fixes staged files.
+- camelCase for methods and variables, `UPPER_SNAKE_CASE` for env vars and injection tokens (`TASK_REPOSITORY`).
+
+## Naming (backend)
+
+Names follow the role a file plays, and they are load-bearing: the lint rules pick which base class a file must extend by its suffix, and the runtime auto-discovery finds handlers and controllers by suffix too. A misnamed handler is either a lint error or silently not registered.
+
+### Files: kebab-case plus a role suffix
+
+`<name>.<role>.ts`, in one folder per use case. For example, `application/commands/create-task/` holds `create-task.command.ts`, `create-task.command-handler.ts` and its spec.
+
+| Layer          | Suffixes                                                                                                                            |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| domain         | `.aggregate.ts`, `.vo.ts`, `.dto.ts`, `.domain-event.ts`, `.repository.ts` (the port), `.service.ts` (a port)                       |
+| application    | `.command.ts`, `.command-handler.ts`, `.query.ts`, `.query-handler.ts`, `.query-response.ts`, `.domain-event-handler.ts`            |
+| infrastructure | `.mongodb-repository.ts`, `.in-memory-repository.ts`, `.<technology>-service.ts` (e.g. `.smtp-service.ts`, `.in-memory-service.ts`) |
+| interfaces     | `.controller.ts`, `.params.ts`, `.controller-response.ts`, `.integration-event-handler.ts`                                          |
+| shared libs    | `.integration-event.ts` (the cross-context contracts in `backend/libs/common`)                                                      |
+
+A domain-event handler that does one thing is named after the event and the action: `user-registered_create-email-verification.domain-event-handler.ts`.
+
+### Classes: `Name_Role`
+
+Classes are PascalCase, with the role appended after an underscore so it matches the file suffix:
+
+| Role                        | Example                                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------------- |
+| Command / handler           | `CreateTask_Command`, `CreateTask_CommandHandler`                                                 |
+| Query / handler / result    | `ListTasks_Query`, `ListTasks_QueryHandler`, `ListTasks_QueryResponse`                            |
+| Domain event / handler      | `UserRegistered_DomainEvent`, `UserRegistered_CreateEmailVerification_DomainEventHandler`         |
+| Integration event / handler | `UserCreated_IntegrationEvent`, `UserCreated_IntegrationEventHandler`                             |
+| Controller / input          | `CreateTask_Controller`, `CreateTask_ControllerParams`                                            |
+| Port (interface) + token    | `Task_Repository` + `TASK_REPOSITORY`, `Email_Service` + `EMAIL_SERVICE`                          |
+| Adapter                     | `Task_MongodbRepository`, `Task_InMemoryRepository`, `Email_SmtpService`, `Email_InMemoryService` |
+
+Business concepts keep plain business names: aggregates (`Task`, `User`), value objects (`TaskTitle`, `Email`) and their DTOs (`TaskDTO`). A context's module is `<Context>BoundedContextModule` in `<context>.module.ts`.
+
+`handler/naming` enforces the handler suffixes, `cqrs/handler-collocation` the one-folder-per-use-case layout, `value-object/naming` the `.vo.ts` rule, and the `*/must-extend-base` rules the base class behind each suffix.
 
 ## Where things live
 
-- Reusable DTOs and domain primitives belong in `backend/libs`, exported from `index.ts`
+- Reusable DTOs and domain primitives belong in `backend/libs`, exported from `index.ts`.
 
 ## TypeScript rules
 

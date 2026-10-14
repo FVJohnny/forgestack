@@ -44,8 +44,8 @@ order:
 3. `handle`: do the work.
 
 `handle` orchestrates but does not decide: a typical command handler  builds value objects, calls the
-aggregate (where the business rules run), persists inside a transaction, and
-dispatches the aggregate's domain events:
+aggregate (where the business rules run), persists inside a transaction, and,
+once that has committed, dispatches the aggregate's domain events:
 
 ```ts
 // …/commands/register-user/register-user.command-handler.ts
@@ -66,10 +66,13 @@ export class RegisterUser_CommandHandler extends Base_CommandHandler(RegisterUse
     // the aggregate creates the user: the business rules run inside it
     const user = await User.create({ email, password }, this.uniquenessChecker);
 
-    // persist through the repository port
-    await this.userRepository.save(user);
+    // persist through the repository port, inside a transaction
+    await Transaction.run(async (context) => {
+      await this.userRepository.save(user, context);
+    });
 
-    // dispatch the domain events the aggregate recorded
+    // only after the commit: dispatch the domain events the aggregate recorded,
+    // so no handler reacts to a user that was never saved
     await this.sendDomainEvents<User>(user);
   }
 
@@ -179,7 +182,10 @@ The conventions:
 - **Controllers use the command bus and the query bus** (injected via the
   `COMMAND_BUS` and `QUERY_BUS` tokens) to dispatch commands and queries; the
   bus finds the handler, so the controller never sees one directly.
-- **Swagger decorators** feed the docs UI every service serves at `/docs`.
+- **Swagger decorators** feed the docs UI every service serves at `/docs`,
+  which Caddy exposes under the service's prefix: `https://localhost/svc1/docs`
+  and `https://localhost/svc2/docs` in dev. Swagger is off in production unless
+  `SWAGGER_ENABLED=true`.
 
 
 ## What you get with this base classes

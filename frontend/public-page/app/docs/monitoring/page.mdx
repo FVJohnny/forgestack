@@ -14,7 +14,8 @@ service-1 ──metrics──▶ Prometheus ──┐
 ## Traces: OpenTelemetry → Tempo
 
 OpenTelemetry is initialised before the app bootstraps. Auto-instrumentation
-covers HTTP, Express, NestJS, MongoDB, PostgreSQL and Kafka, and the CQRS bases
+covers HTTP, Express, NestJS, MongoDB and Kafka (the PostgreSQL `pg`
+instrumentation is enabled too, ready for when a Postgres adapter exists), and the CQRS bases
 add a span around every command, query and event handler (named after the class).
 Spans are exported via OTLP to **Tempo**.
 
@@ -61,6 +62,15 @@ scrape_configs:
 ```
 
 New services are picked up automatically. The scrape config never changes.
+The key Prometheus sends must equal every service's `INTERNAL_API_KEY`; if they
+drift, scraping is rejected and the NestJS dashboards go empty. In dev the key
+is `infra/monitoring/prometheus/internal-api-key` (created from its example by
+`npm run dev:start`). In production, `deploy.sh` checks that all services share
+one `INTERNAL_API_KEY` and writes Prometheus's key file from it.
+
+cAdvisor needs a Linux host: on Docker Desktop for macOS it can't read the
+container runtime, so the `docker-containers` dashboard stays empty in local
+dev. It works on the Linux production server.
 
 The CQRS bases emit per-command/query/event **duration histograms** and
 **success/error counters**, so throughput and latency are available without
@@ -101,7 +111,10 @@ is generated.
 - `inbox-outbox-metrics`: outbox publish and inbox processing counts & latency.
 - `docker-containers`: per-container CPU, memory, network (from cAdvisor).
 
-In dev, Grafana is at `https://grafana.localhost` (admin/admin by default).
+In dev, Grafana is at `https://grafana.localhost` (admin/admin by default); in
+production it is at `https://grafana.<your-domain>`, with the password from
+`GRAFANA_ADMIN_PASSWORD`. Grafana is the only monitoring UI exposed through
+Caddy: Prometheus, Loki and Tempo stay inside the Docker network.
 
 <Callout type="tip" title="One pane of glass">
   Start from a slow request in the NestJS dashboard, jump to its trace in Tempo,

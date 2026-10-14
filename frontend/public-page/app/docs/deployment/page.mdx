@@ -44,7 +44,10 @@ provisions Let's Encrypt certificates automatically.
   handle_path /svc2/* { reverse_proxy service-2:3000 }
   handle { reverse_proxy public-page:3000 }
 }
-{$PROTOCOL:http}://grafana.{$DOMAIN:localhost} { import tls-{$TLS_ENV:dev}; reverse_proxy grafana:3000 }
+# (each site below also imports tls-{$TLS_ENV:dev})
+{$PROTOCOL:http}://www.{$DOMAIN:localhost}       { redir {$PROTOCOL:http}://{$DOMAIN:localhost}{uri} permanent }
+{$PROTOCOL:http}://grafana.{$DOMAIN:localhost}   { reverse_proxy grafana:3000 }
+{$PROTOCOL:http}://portainer.{$DOMAIN:localhost} { import admin-auth-{$TLS_ENV:dev}; reverse_proxy portainer:9000 }
 
 # Dev-only sites (e.g. mongo.<domain> for Mongo Express) load from
 # infra/caddy/dev-only/, mounted at /etc/caddy/extra in the dev compose.
@@ -55,7 +58,15 @@ import /etc/caddy/extra/*.caddy
 Everything the browser touches is served on one origin: the app at the root, and
 each service under a path prefix (`/svc1`, `/svc2`, ...) that Caddy strips before
 proxying, so each service still serves its own `/api/v1`. This keeps the auth
-cookies first-party. Operator surfaces like Grafana keep their own subdomain.
+cookies first-party. A service generated later gets its prefix by one rule:
+`service-<N>` is served at `/svc<N>`, any other name at `/svc` plus the name
+without dashes (see [Adding a Service](/docs/guides/adding-a-service)).
+
+Operator surfaces keep their own subdomain: Grafana, and Portainer behind basic
+auth in production. Prometheus, Loki and Tempo are not routed at all; they are
+only reachable inside the Docker network, through Grafana. In dev, Swagger is
+served per service at `/svc1/docs`, `/svc2/docs`, …; it is off in production
+unless a service sets `SWAGGER_ENABLED=true`.
 
 <Callout type="tip" title="The *.localhost dev domain">
   Browsers resolve any <code>*.localhost</code> name to 127.0.0.1 with no
@@ -68,8 +79,20 @@ cookies first-party. Operator surfaces like Grafana keep their own subdomain.
 
 The dev stack runs the frontend and backend with hot reload (source is
 bind-mounted; `next dev` and the Nest watcher pick up changes). A
-`start-dev` script ensures prerequisites, generates `.env` files from the
-examples, and brings the stack up.
+`start-dev` script (`npm run dev:start`) ensures prerequisites, generates `.env`
+files from the examples, brings the stack up, and prints the local URLs:
+
+| What | URL | Login |
+| --- | --- | --- |
+| App | `https://localhost` | the seeded admin (`DEFAULT_USER_EMAIL` / `DEFAULT_USER_PASSWORD` in service-1's `.env`) |
+| APIs | `https://localhost/svc1/api/v1`, `https://localhost/svc2/api/v1` | the auth cookies |
+| Swagger | `https://localhost/svc1/docs`, `https://localhost/svc2/docs` | none |
+| Grafana | `https://grafana.localhost` | `admin` / `admin` |
+| Mongo Express | `https://mongo.localhost` | `admin` / `admin` |
+| Portainer | `https://portainer.localhost` | create the admin on first visit |
+
+With `SMTP_HOST` empty (the dev default), service-1 prints the emails it would
+send (welcome and password-reset emails) to its logs instead.
 
 <Callout type="warning" title="env_file isn't hot-reloaded">
   Editing a service's <code>.env</code> requires recreating that container
@@ -90,10 +113,53 @@ examples, and brings the stack up.
 4. Syncs the compose + config files to the server over rsync.
 5. Runs `docker compose up -d` on the server via SSH.
 
-A separate `setup-server.sh` provisions a fresh Ubuntu host idempotently:
-installs Docker + the compose plugin, creates a non-root deploy user with SSH-key
-auth, opens the firewall for SSH/HTTP/HTTPS, ensures swap, and creates the deploy
-directory (`/opt/forgestack`).
+A separate `setup-server.sh` (run through `npm run prod:setup`) provisions a
+fresh Ubuntu host idempotently: installs Docker + the compose plugin, creates a
+non-root deploy user in the `docker` group with SSH-key auth and **no sudo**,
+hardens SSH (key-only logins), enables fail2ban and unattended security
+upgrades, opens the firewall for SSH/HTTP/HTTPS only, ensures swap, creates the
+deploy directory (`/opt/forgestack`) and installs a daily MongoDB backup cron.
+
+The registry can be any registry (Docker Hub, GHCR, ECR, …): images are pushed
+as `${DOCKER_REGISTRY}/forgestack-<name>:vN`, and the script logs in to the
+registry host taken from `DOCKER_REGISTRY`. Image tags are tracked in
+`docker-compose.prod.yml`, so commit it after each deploy.
+
+## First deploy checklist
+
+Do these in order, from the repo root on your machine. You need a fresh Ubuntu
+server (as a rough guide, at least 4 GB of RAM; the setup adds 4 GB of swap,
+and 8 GB is comfortable), a domain, a registry account and an SSH key.
+
+1. **Fill in the infra env file.** Copy each `infra/env/*.env.prod.example`
+   to `*.env.prod`, then fill in `infra.env.prod`: domain, registry, server IP,
+   `SERVER_USER` (the deploy user that step 2 creates, e.g. `deploy`), and the
+   datastore, Grafana and Portainer credentials. Use strong, generated secrets
+   (`openssl rand -base64 48`).
+2. **Provision the server** with `npm run prod:setup`, then verify SSH as the
+   deploy user (`ssh deploy@<server-ip> 'docker ps'`).
+3. **Fill in the service and frontend env files.** `JWT_SECRET` and
+   `JWT_REFRESH_SECRET` must be **identical in every service**, since
+   service-2 verifies the tokens service-1 issues. Use **one shared, real
+   `INTERNAL_API_KEY`** in every service's prod env file: `deploy.sh` checks
+   this (and rejects the example values) and configures Prometheus with that
+   key. The Mongo and Redis passwords must match `infra.env.prod`.
+4. **Point DNS at the server.** A records for your domain, `www.`, `grafana.`
+   and `portainer.`. Caddy needs them resolving to issue the TLS
+   certificates.
+5. **Deploy** with `npm run prod:update -- 5` (Update ALL), so the proxy and
+   monitoring images are built and pushed too.
+6. **Create the first admin.** Either set `DEFAULT_USER_EMAIL` and
+   `DEFAULT_USER_PASSWORD` in `service-1.env.prod` before the first deploy
+   (service-1 seeds a verified admin only into an empty database, and only
+   when both are set), or register on the site and set your user's `role` to
+   `admin` in the `auth_users` collection with `mongosh` on the server, then
+   sign in again.
+
+This is the same order `npm run prod:setup` prints as its next steps. The
+step-by-step version, with commands, is in
+[`docs/deployment.md`](https://github.com/FVJohnny/forgestack/blob/main/docs/deployment.md#first-deploy-checklist)
+in the repository.
 
 ## Environment configuration
 
@@ -108,17 +174,21 @@ TLS_ENV=prod
 DOCKER_REGISTRY=docker.io/your-username
 
 # service-1.env.prod (excerpt)
-JWT_SECRET=...                 # required
-JWT_REFRESH_SECRET=...         # required (distinct from JWT_SECRET)
+JWT_SECRET=...                 # required, 32+ chars, same in every service
+JWT_REFRESH_SECRET=...         # required, 32+ chars, same in every service
+INTERNAL_API_KEY=...           # same in every service; deploy.sh gives it to Prometheus
 MONGODB_URI=mongodb://admin:your-mongo-password@mongodb:27017/app?replicaSet=rs0&authSource=admin
 KAFKA_BROKERS=kafka:9092
 OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
 ```
 
 <Callout type="warning" title="Secrets stay out of git">
-  Real <code>.env.prod</code> files (JWT secrets, DB and registry credentials)
-  are gitignored. Only the <code>*.example</code> templates are committed. Fill
-  them in on the server, never commit the populated versions.
+  Real <code>.env.prod</code> files (JWT secrets, the internal API key, DB and
+  registry credentials) are gitignored. Only the <code>*.example</code>
+  templates are committed. Fill them in on your machine
+  (the deploy script copies them to the server) and never commit the populated
+  versions. In production a service refuses to boot with a JWT secret shorter
+  than 32 characters or still set to an example value.
 </Callout>
 
 ## Making it yours
@@ -126,7 +196,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
 To turn ForgeStack into your product:
 
 1. Rename the service(s) and set your `DOMAIN`, registry and secrets in the env
-   files.
+   files (see [Make It Yours](/docs/guides/make-it-yours)).
 2. Build your bounded contexts following the [Backend](/docs/backend) patterns.
    The lint rules will keep you on the rails.
 3. Add datastores or external adapters behind ports as needed.

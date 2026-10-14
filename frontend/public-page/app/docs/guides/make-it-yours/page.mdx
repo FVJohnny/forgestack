@@ -1,8 +1,8 @@
 # Make It Yours
 
-This template ships as a working demo (the `auth` and `notifications` contexts,
-a `tasks` service, and a `public-page` frontend). Here is how to turn it
-into your own product.
+This template ships as a working demo: `service-1` with the `auth` and
+`notifications` bounded contexts, `service-2` with the `tasks` bounded context,
+and the `public-page` frontend. Here is how to turn it into your own product.
 
 ## 1. Rebrand
 
@@ -18,16 +18,17 @@ Search the repo for `ForgeStack` and `forgestack` and replace what you want.
 
 ## 2. Set your domain and TLS
 
-Local dev uses `localhost` hostnames behind Caddy with a local CA. For
-production, set your real domain and registry in `infra/env/infra.env.prod`
-(copy it from `infra.env.prod.example`):
+Local dev needs no domain: everything is served on `localhost` behind Caddy
+with a local CA. For production, set your real domain and registry in
+`infra/env/infra.env.prod` (copy it from `infra.env.prod.example`):
 
 - `DOMAIN` is your apex domain. Caddy serves everything on that one origin: the
   app at `DOMAIN` and each service under a path prefix (`DOMAIN/svc1`,
   `DOMAIN/svc2`, and so on), with automatic Let's Encrypt certificates. Same-origin
   routing keeps the auth cookies first-party.
 - `DOCKER_REGISTRY` is where built images are pushed and pulled
-  (for example `docker.io/your-username`).
+  (for example `docker.io/your-username` or `ghcr.io/your-org`). Any registry
+  works: the deploy script logs in to the registry host it finds in this value.
 - Fill in the database, Redis, Grafana, and `CADDY_BASIC_AUTH_HASH` secrets in
   the same file. Caddy refuses to start in production without the basic-auth
   hash, since Portainer sits behind it.
@@ -36,7 +37,7 @@ production, set your real domain and registry in `infra/env/infra.env.prod`
 
 - **Services**: `service-1` and `service-2` are examples. Keep one, rename it,
   or generate your own with `npx nx g @forgestack/tools:service <name>`.
-- **Bounded contexts**: `auth` and `notifications` are the demo domains.
+- **Bounded contexts**: `auth`, `notifications` and `tasks` are the demo domains.
   Generate your own with
   `npx nx g @forgestack/tools:bounded-context <name> --service=<service>`
   (see [Adding a Service](/docs/guides/adding-a-service) and the generator).
@@ -47,13 +48,18 @@ production, set your real domain and registry in `infra/env/infra.env.prod`
 ## 4. Provision a server (one command)
 
 `npm run prod:setup` provisions a fresh Ubuntu VPS end to end: it installs
-Docker, creates a non-root deploy user with your SSH key, hardens SSH, opens the
-firewall, configures Docker log rotation, sets up swap, and registers the daily
-Mongo backup cron. It reads `SERVER_IP` and `SERVER_USER` from
-`infra/env/infra.env.prod`, and prompts for the server's root password on the
-first run (or pass `ROOT_PASS=...` to run it non-interactively).
+Docker, creates a non-root deploy user (no sudo) with your SSH key, hardens SSH,
+enables fail2ban and unattended security upgrades, opens the firewall,
+configures Docker log rotation, sets up swap, and registers the daily Mongo
+backup cron. It reads `SERVER_IP` and `SERVER_USER` from
+`infra/env/infra.env.prod`, so fill that file in first, and prompts for the
+server's root password on the first run (or pass `ROOT_PASS=...` to run it
+non-interactively).
 
-After it finishes, deploy with `npm run prod:update`.
+Then fill in the service and frontend env files, point DNS at the server,
+and deploy with `npm run prod:update -- 5`. The
+[first-deploy checklist](/docs/deployment#first-deploy-checklist) lists every
+step in order, from the env files to the first admin account.
 
 ## Troubleshooting
 
@@ -66,7 +72,11 @@ After it finishes, deploy with `npm run prod:update`.
   start the service is still installing dependencies and building. Watch it with
   `npm run dev:logs` until you see "Nest application successfully started".
 - **Kafka or Mongo fails to start after a recreate**: the dev volumes may hold
-  stale cluster state. `npm run dev:restart:all` does a clean down and up.
+  stale cluster state. `npm run dev:restart:all` does a full down and up (and
+  `dev:start` clears stale ZooKeeper state when Kafka crashed before). It keeps
+  the data volumes; if the problem persists, wipe them with
+  `docker compose -f infra/compose/docker-compose.dev.yml down -v` (this
+  deletes all local data) and run `npm run dev:start` again.
 - **A handler or controller is missing at runtime**: discovery fails loud now,
   so check the boot logs for a load error or a "matches suffix but exports no
   class" warning (usually a rename or a wrong export).

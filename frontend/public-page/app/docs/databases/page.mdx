@@ -18,11 +18,13 @@ The primary store. Configured by `MongoDBConfigService`; the app uses the
   atomically).
 - **Connection pool**: max 20 by default (`MONGO_MAX_POOL_SIZE`), with 5s
   server-selection / socket / connect timeouts.
-- **Auth**: enabled in production via a keyfile and admin user, created on first
-  boot by `infra/mongo/mongo-startup.sh`.
+- **Auth**: always on, with a keyfile and an admin user created on first boot
+  by `infra/mongo/mongo-startup.sh`. Dev uses `admin` / `password` (Mongo is
+  published on `127.0.0.1:27017` only); production uses `MONGO_ADMIN_USER` /
+  `MONGO_ADMIN_PASS` from `infra.env.prod`.
 
 ```env
-MONGODB_URI=mongodb://mongodb:27017/app?replicaSet=rs0
+MONGODB_URI=mongodb://admin:password@mongodb:27017/app?replicaSet=rs0&authSource=admin
 MONGO_MAX_POOL_SIZE=20
 ```
 
@@ -37,8 +39,9 @@ Mongo syntax.
 
 A web UI for browsing collections is included (the "DB Viewer" in the
 architecture diagram), served through Caddy at `https://mongo.localhost` in dev,
-behind basic auth. It is **dev only**: the prod compose file does not include
-it, and the prod Caddy image does not serve the `mongo.` hostname.
+behind basic auth (`admin` / `admin` by default). It is **dev only**: the prod
+compose file does not include it, and the prod Caddy image does not serve the
+`mongo.` hostname.
 
 ## Redis
 
@@ -76,15 +79,17 @@ KAFKA_CONSUMER_HEARTBEAT_INTERVAL=10000
 
 Because the domain depends on a repository **interface**, adding PostgreSQL,
 MySQL, or anything else is a matter of writing a new adapter that implements that
-interface. No handler or domain code changes. The auth context already ships an
+interface. MongoDB is the only primary datastore that ships today; a PostgreSQL
+adapter is on the roadmap. No handler or domain code changes. The auth context already ships an
 **in-memory** repository implementation used in tests, which is the simplest
 demonstration of the same port backed by a different store.
 
 <Callout type="note" title="The diagram's “Databases” cluster">
   The landing-page architecture diagram shows Redis, Mongo and PostgreSQL under
-  "Databases" to signal that the datastore is swappable. Mongo and Redis are
-  wired by default; the ports-and-adapters design is what makes the others
-  drop-in.
+  "Databases", and PGAdmin next to Mongo Express under "DB Viewers". PostgreSQL
+  and PGAdmin are drawn dashed with a "soon" tag: they are planned, not shipped.
+  Only Mongo, Redis and Mongo Express ship today; the ports-and-adapters design
+  is what will make the others drop-in.
 </Callout>
 
 Next: **[Monitoring](/docs/monitoring)**.

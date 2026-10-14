@@ -96,7 +96,8 @@
 	reverse_proxy portainer:9000
 }
 
-# Dev-only sites (DB viewers, …). The dev compose mounts infra/caddy/dev-only
-# here; the prod image ships an empty placeholder, so these hosts simply don't
-# exist in prod.
+# Extra sites. In dev, the compose file mounts infra/caddy/dev-only here (DB
+# viewers, …). In prod it mounts <REMOTE_PATH>/compose/caddy-extra/, so other
+# apps on the same server can be served by dropping *.caddy site blocks there.
+# The image ships an empty placeholder, so nothing extra exists by default.
 import /etc/caddy/extra/*.caddy

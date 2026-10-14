@@ -134,6 +134,10 @@ Or type a service name (e.g. `service-1`) to build and deploy just that service.
 
 Each run builds the selected images as `linux/amd64` with `docker buildx`, pushes them, bumps their tags in `docker-compose.prod.yml`, rsyncs the compose file, env files, Mongo startup script, backup script and the Prometheus key it derives from `INTERNAL_API_KEY` to the server (`REMOTE_PATH`, default `/opt/forgestack`), then runs `docker compose up -d` there: the datastores first, then the apps, waiting for each to report healthy. If an app never becomes healthy, the script stops and prints how to read the logs.
 
+## Serving other sites from the same server
+
+The production Caddy can also front other apps running on the same box. Put one Caddy site block per file in `<REMOTE_PATH>/compose/caddy-extra/` on the server (for example `blog.caddy` with `blog.example.com { reverse_proxy blog:3000 }`), attach that app's container to the `compose_backend` network so Caddy can reach it by name, and recreate Caddy (`docker compose up -d caddy` in `<REMOTE_PATH>/compose`). The prod compose bind-mounts that folder at `/etc/caddy/extra`, which the Caddyfile imports; deploys never write to it, so those sites survive every `prod:update`. Caddy issues their TLS certificates automatically once their DNS points at the server.
+
 ## Version tracking
 
 Image versions are stored as tags in `infra/compose/docker-compose.prod.yml` (e.g. `${DOCKER_REGISTRY}/forgestack-service-1:v42`). Each build increments the version. Commit this file after deploys to track what's running in production; rolling back means redeploying an earlier set of tags.

@@ -107,13 +107,18 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
+      # Extra sites served by this same Caddy: drop *.caddy site blocks into
+      # <REMOTE_PATH>/compose/caddy-extra/ on the server (the Caddyfile imports
+      # /etc/caddy/extra/*.caddy). Empty by default; deploys never touch it.
+      - ./caddy-extra:/etc/caddy/extra:ro
     networks:
       - backend
     healthcheck:
-      # `caddy version` only proves the binary runs. Hit the admin API on
-      # localhost:2019 instead, which is only up once Caddy has loaded its
-      # config and is actually serving.
-      test: ['CMD', 'wget', '-q', '-O', '-', 'http://localhost:2019/config/']
+      # `caddy version` only proves the binary runs. Hit the admin API instead,
+      # which is only up once Caddy has loaded its config and is serving. Use
+      # 127.0.0.1, not localhost: the admin API binds IPv4 loopback only, and
+      # localhost resolves to ::1 first inside the Alpine image.
+      test: ['CMD', 'wget', '-q', '-O', '-', 'http://127.0.0.1:2019/config/']
       interval: 30s
       timeout: 5s
       retries: 3

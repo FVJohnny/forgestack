@@ -49,9 +49,9 @@ provisions Let's Encrypt certificates automatically.
 {$PROTOCOL:http}://grafana.{$DOMAIN:localhost}   { reverse_proxy grafana:3000 }
 {$PROTOCOL:http}://portainer.{$DOMAIN:localhost} { import admin-auth-{$TLS_ENV:dev}; reverse_proxy portainer:9000 }
 
-# Dev-only sites (e.g. mongo.<domain> for Mongo Express) load from
-# infra/caddy/dev-only/, mounted at /etc/caddy/extra in the dev compose.
-# The prod image ships an empty placeholder, so those hosts don't exist there.
+# Extra sites: in dev, infra/caddy/dev-only/ (e.g. mongo.<domain> for Mongo
+# Express); in prod, <REMOTE_PATH>/compose/caddy-extra/ on the server.
+# Both are mounted at /etc/caddy/extra; empty by default.
 import /etc/caddy/extra/*.caddy
 ```
 
@@ -67,6 +67,16 @@ auth in production. Prometheus, Loki and Tempo are not routed at all; they are
 only reachable inside the Docker network, through Grafana. In dev, Swagger is
 served per service at `/svc1/docs`, `/svc2/docs`, …; it is off in production
 unless a service sets `SWAGGER_ENABLED=true`.
+
+### Serving other sites from the same server
+
+The production Caddy can front other apps on the same box too. Drop one site
+block per file into `<REMOTE_PATH>/compose/caddy-extra/` on the server (for
+example `blog.caddy` containing `blog.example.com { reverse_proxy blog:3000 }`),
+attach that app's container to the `compose_backend` network so Caddy reaches it
+by name, and run `docker compose up -d caddy` in `<REMOTE_PATH>/compose`. Deploys
+never write to that folder, so those sites survive every `prod:update`, and Caddy
+issues their certificates once their DNS points at the server.
 
 <Callout type="tip" title="The *.localhost dev domain">
   Browsers resolve any <code>*.localhost</code> name to 127.0.0.1 with no

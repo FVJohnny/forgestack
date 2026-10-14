@@ -47,7 +47,7 @@ services:
 
   service-1:
     <<: *nestjs-service
-    image: ${DOCKER_REGISTRY}/forgestack-service-1:v5
+    image: ${DOCKER_REGISTRY}/forgestack-service-1:v6
     env_file:
       - ../env/service-1.env.prod
     labels:
@@ -57,7 +57,7 @@ services:
 
   service-2:
     <<: *nestjs-service
-    image: ${DOCKER_REGISTRY}/forgestack-service-2:v4
+    image: ${DOCKER_REGISTRY}/forgestack-service-2:v5
     env_file:
       - ../env/service-2.env.prod
     labels:
@@ -66,7 +66,7 @@ services:
       - 'prometheus.scrape=true'
 
   public-page:
-    image: ${DOCKER_REGISTRY}/forgestack-public-page:v10
+    image: ${DOCKER_REGISTRY}/forgestack-public-page:v11
     restart: unless-stopped
     mem_limit: 384m
     env_file:
@@ -87,7 +87,7 @@ services:
   # ==========================================================================
 
   caddy:
-    image: ${DOCKER_REGISTRY}/forgestack-caddy:v3
+    image: ${DOCKER_REGISTRY}/forgestack-caddy:v4
     restart: unless-stopped
     mem_limit: 256m
     ports:
@@ -241,7 +241,7 @@ services:
   # ==========================================================================
 
   prometheus:
-    image: ${DOCKER_REGISTRY}/forgestack-prometheus:v3
+    image: ${DOCKER_REGISTRY}/forgestack-prometheus:v4
     restart: unless-stopped
     mem_limit: 512m
     # Root so docker_sd_configs can read the Docker socket (the image's
@@ -277,7 +277,7 @@ services:
       start_period: 15s
 
   grafana:
-    image: ${DOCKER_REGISTRY}/forgestack-grafana:v3
+    image: ${DOCKER_REGISTRY}/forgestack-grafana:v4
     restart: unless-stopped
     mem_limit: 384m
     # No env_file on purpose: everything Grafana needs is listed below,
@@ -331,7 +331,7 @@ services:
       start_period: 10s
 
   tempo:
-    image: ${DOCKER_REGISTRY}/forgestack-tempo:v3
+    image: ${DOCKER_REGISTRY}/forgestack-tempo:v4
     restart: unless-stopped
     mem_limit: 384m
     user: '0:0'
@@ -347,7 +347,7 @@ services:
       start_period: 15s
 
   loki:
-    image: ${DOCKER_REGISTRY}/forgestack-loki:v3
+    image: ${DOCKER_REGISTRY}/forgestack-loki:v4
     restart: unless-stopped
     mem_limit: 384m
     volumes:
@@ -362,7 +362,7 @@ services:
       start_period: 15s
 
   promtail:
-    image: ${DOCKER_REGISTRY}/forgestack-promtail:v3
+    image: ${DOCKER_REGISTRY}/forgestack-promtail:v4
     restart: unless-stopped
     mem_limit: 256m
     volumes:

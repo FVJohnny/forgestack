@@ -4,21 +4,29 @@ import { UserRole, UserStatus } from '@bc/auth/domain/value-objects';
 import { User_InMemoryRepository } from '@bc/auth/infrastructure/repositories/in-memory/user.in-memory-repository';
 import {
   Id,
+  InfrastructureException,
   InvalidOperationException,
   MockEventBus,
   NotFoundException,
+  Outbox_InMemoryRepository,
   UnauthorizedException,
+  UserDeleted_IntegrationEvent,
 } from '@libs/nestjs-common';
 import { DeleteUser_Command } from './delete-user.command';
 import { DeleteUser_CommandHandler } from './delete-user.command-handler';
 
 describe('DeleteUserCommandHandler', () => {
-  const setup = () => {
+  const setup = (params: { shouldFailOutbox?: boolean } = {}) => {
     const userRepository = new User_InMemoryRepository();
     const eventBus = new MockEventBus();
-    const commandHandler = new DeleteUser_CommandHandler(userRepository, eventBus);
+    const outboxRepository = new Outbox_InMemoryRepository(params.shouldFailOutbox ?? false);
+    const commandHandler = new DeleteUser_CommandHandler(
+      userRepository,
+      eventBus,
+      outboxRepository,
+    );
 
-    return { userRepository, eventBus, commandHandler };
+    return { userRepository, eventBus, outboxRepository, commandHandler };
   };
 
   const createAdmin = (id?: Id) =>
@@ -54,7 +62,7 @@ describe('DeleteUserCommandHandler', () => {
       expect(deleted).toBeNull();
     });
 
-    it('should publish UserDeleted domain event before removing user', async () => {
+    it('should publish the UserDeleted domain event once the user is removed', async () => {
       const { commandHandler, userRepository, eventBus } = setup();
       const admin = createAdmin();
       const target = createRegularUser();
@@ -77,6 +85,56 @@ describe('DeleteUserCommandHandler', () => {
       expect(eventBus.events.some((e) => e.constructor.name === 'UserLogout_DomainEvent')).toBe(
         true,
       );
+    });
+  });
+
+  describe('Atomic UserDeleted integration event', () => {
+    it('writes the UserDeleted integration event (with the email) to the outbox', async () => {
+      const { commandHandler, userRepository, outboxRepository } = setup();
+      const admin = createAdmin();
+      const target = createRegularUser();
+      await userRepository.save(admin);
+      await userRepository.save(target);
+
+      await commandHandler.execute(
+        new DeleteUser_Command({
+          requesterUserId: admin.id.toValue(),
+          userIdToDelete: target.id.toValue(),
+        }),
+      );
+
+      const outboxEvents = await outboxRepository.findAll();
+      expect(outboxEvents).toHaveLength(1);
+      expect(outboxEvents[0].eventName.toValue()).toBe(UserDeleted_IntegrationEvent.metadata.name);
+      const payload = JSON.parse(outboxEvents[0].payload.toValue());
+      expect(payload.userId).toBe(target.id.toValue());
+      // Downstream consumers need the email; the user row is gone by then.
+      expect(payload.email).toBe(target.email.toValue());
+    });
+
+    it('rolls the delete back when the outbox write fails', async () => {
+      const { commandHandler, userRepository, outboxRepository, eventBus } = setup({
+        shouldFailOutbox: true,
+      });
+      const admin = createAdmin();
+      const target = createRegularUser();
+      await userRepository.save(admin);
+      await userRepository.save(target);
+
+      await expect(
+        commandHandler.execute(
+          new DeleteUser_Command({
+            requesterUserId: admin.id.toValue(),
+            userIdToDelete: target.id.toValue(),
+          }),
+        ),
+      ).rejects.toThrow(InfrastructureException);
+
+      // Neither the delete nor the event happened, and no in-process cascade ran.
+      expect(await userRepository.findById(target.id)).not.toBeNull();
+      outboxRepository.shouldFail = false;
+      expect(await outboxRepository.findAll()).toHaveLength(0);
+      expect(eventBus.events).toHaveLength(0);
     });
   });
 

@@ -9,6 +9,10 @@ import {
   NotFoundException,
   UnauthorizedException,
   InvalidOperationException,
+  OUTBOX_REPOSITORY,
+  type Outbox_Repository,
+  Transaction,
+  UserDeleted_IntegrationEvent,
 } from '@libs/nestjs-common';
 import { Inject } from '@nestjs/common';
 import { type IEventBus } from '@nestjs/cqrs';
@@ -21,8 +25,10 @@ export class DeleteUser_CommandHandler extends Base_CommandHandler(DeleteUser_Co
     private readonly userRepository: User_Repository,
     @Inject(EVENT_BUS)
     eventBus: IEventBus,
+    @Inject(OUTBOX_REPOSITORY)
+    outboxRepository: Outbox_Repository,
   ) {
-    super(eventBus);
+    super(eventBus, outboxRepository);
   }
 
   async handle(command: DeleteUser_Command): Promise<void> {
@@ -31,17 +37,30 @@ export class DeleteUser_CommandHandler extends Base_CommandHandler(DeleteUser_Co
       throw new NotFoundException('User', command.userIdToDelete);
     }
 
-    // Call the delete method on the aggregate to emit the domain event. The
-    // event carries the email, so the publish handler does not re-read the user.
+    // Call the delete method on the aggregate to emit the in-process domain
+    // events (email-verification cleanup, token revocation).
     userToDelete.delete();
 
-    // Remove the user first, then publish. If publishing came first and the
-    // remove failed, downstream services would already have been told the user
-    // was deleted while the row still existed. Removing first means the
-    // integration event is only emitted once the row is actually gone.
-    await this.userRepository.remove(userToDelete.id);
+    // Other services (service-2's tasks and the notifications projection) learn
+    // about the deletion through UserDeleted. The outbox row is written in the
+    // SAME transaction as the removal, so either both happen or neither does: a
+    // failed outbox write rolls the delete back instead of leaving downstream
+    // projections orphaned forever. The email travels on the event because the
+    // user row is gone by the time consumers handle it.
+    const userDeletedIntegrationEvent = new UserDeleted_IntegrationEvent({
+      id: Id.random().toValue(),
+      occurredOn: new Date(),
+      userId: userToDelete.id.toValue(),
+      email: userToDelete.email.toValue(),
+    });
 
-    // Send domain events (including UserDeleted_DomainEvent) to trigger cascade deletion
+    await Transaction.run(async (context) => {
+      await this.userRepository.remove(userToDelete.id, context);
+      await this.sendIntegrationEvent(userDeletedIntegrationEvent, context);
+    });
+
+    // Only after the commit: the in-process domain event handlers must not act
+    // on a deletion that was rolled back.
     await this.sendDomainEvents(userToDelete);
 
     this.logger.log(

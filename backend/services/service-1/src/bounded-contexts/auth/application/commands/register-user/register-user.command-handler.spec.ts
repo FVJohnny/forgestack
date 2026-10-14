@@ -156,6 +156,30 @@ describe('RegisterUserCommandHandler', () => {
       await expect(commandHandler.execute(command)).rejects.toThrow(InfrastructureException);
     });
 
+    it('should not publish domain events when the transaction fails to commit', async () => {
+      // UserRegistered kicks off CreateEmailVerification, which writes the
+      // UserCreated outbox row in its own transaction. Publishing before this
+      // commit would announce a user that was then rolled back.
+      const { commandHandler, userRepository, eventBus } = setup();
+      const originalSave = userRepository.save.bind(userRepository);
+      jest.spyOn(userRepository, 'save').mockImplementation(async (user, context) => {
+        await originalSave(user, context);
+        context?.transaction.register('failing-store', {
+          commit: async () => {
+            throw new Error('commit failed');
+          },
+          rollback: async () => {},
+          dispose: async () => {},
+        });
+      });
+      const command = createCommand();
+
+      await expect(commandHandler.execute(command)).rejects.toThrow('commit failed');
+
+      expect(eventBus.events).toHaveLength(0);
+      expect(await userRepository.findByEmail(new Email(command.email))).toBeNull();
+    });
+
     it('should throw AlreadyExistsException when email already exists', async () => {
       // Arrange 1
       const { commandHandler } = setup();

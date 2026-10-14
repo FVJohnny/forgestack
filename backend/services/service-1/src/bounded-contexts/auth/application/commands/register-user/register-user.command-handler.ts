@@ -43,13 +43,17 @@ export class RegisterUser_CommandHandler extends Base_CommandHandler(RegisterUse
       this.uniquenessChecker,
     );
 
-    // Save the user and publish its domain events in the same transaction, the
-    // same way every other user command handler does. The domain event handler
-    // then publishes the integration event to the outbox.
     await Transaction.run(async (context) => {
       await this.userRepository.save(user, context);
-      await this.sendDomainEvents<User>(user);
     });
+
+    // Publish only after the user row has committed. The event bus is
+    // fire-and-forget: UserRegistered starts CreateEmailVerification, which
+    // writes the UserCreated / EmailVerificationCreated outbox rows in its OWN
+    // transaction. Publishing inside the transaction above let those rows
+    // commit even when this transaction then failed, announcing (and building
+    // downstream projections for) a user that does not exist.
+    await this.sendDomainEvents<User>(user);
   }
 
   async authorize(_command: RegisterUser_Command) {

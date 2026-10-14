@@ -140,10 +140,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       - name: Build a NestJS service image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: infra/dockerfiles/Dockerfile.nestjs-service
@@ -159,7 +159,7 @@ jobs:
         run: cp infra/env/public-page.env.prod.example infra/env/public-page.env.prod
 
       - name: Build the frontend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: frontend/public-page/Dockerfile

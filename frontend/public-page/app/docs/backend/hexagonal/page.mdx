@@ -142,7 +142,8 @@ export interface User_Repository extends Repository<User, Id> {
   findByEmail(email: Email): Promise<User | null>;
   findByGoogleId(googleId: string): Promise<User | null>;
   existsByEmail(email: Email): Promise<boolean>;
-  searchByEmail(emailPattern: string, limit: number): Promise<User[]>;
+  findAll(): Promise<User[]>;
+  findByCriteria(criteria: Criteria): Promise<PaginatedRepoResult<User>>;
 }
 ```
 

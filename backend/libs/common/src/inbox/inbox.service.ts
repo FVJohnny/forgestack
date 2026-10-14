@@ -18,7 +18,6 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
   private stuckRecoveryInterval?: NodeJS.Timeout;
   private cleanupInterval?: NodeJS.Timeout;
   private readonly eventHandlers = new Map<string, Map<string, IIntegrationEventHandler[]>>(); // topic -> eventName -> handler
-  private trackEvent?: (topic: string, message: ParsedIntegrationMessage, success: boolean) => void;
 
   // Tunable via env so high-volume deployments can trade latency for load.
   private readonly config = {
@@ -93,12 +92,6 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     const olderThan = new DateVO(new Date(Date.now() - this.config.processedRetentionMs));
     await this.inboxRepository.deleteProcessed(olderThan);
     this.logger.debug('Cleaned up processed inbox events older than the retention window');
-  }
-
-  setEventTracker(
-    tracker: (topic: string, message: ParsedIntegrationMessage, success: boolean) => void,
-  ): void {
-    this.trackEvent = tracker;
   }
 
   async receiveMessage(
@@ -201,23 +194,17 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     const eventId = event.id.toValue();
     const eventName = event.eventName.toValue();
     const topic = event.topic.toValue();
-    const message = JSON.parse(event.payload.toValue()) as ParsedIntegrationMessage;
 
     return TracingService.withSpan(
       `inbox.process_integration_event.${topic}.${eventName}`,
       async () => {
         try {
-          // processEvent handles its own per-handler failures internally and
-          // returns false in that case (having already tracked the failure), so
-          // only track success when it genuinely succeeded. Otherwise a failed
-          // event was double-counted: once as failure (inside processEvent) and
-          // once as success here.
-          const succeeded = await this.processEvent(event);
-          if (succeeded) {
-            this.trackEvent?.(topic, message, true);
-          }
+          // processEvent handles its own per-handler failures internally (they
+          // are recorded through handleEventFailure), so only unexpected errors
+          // land in this catch.
+          await this.processEvent(event);
         } catch (error) {
-          await this.handleEventFailure(event, message, topic, error);
+          await this.handleEventFailure(event, topic, error);
         }
       },
       {
@@ -238,7 +225,6 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
   @WithSpan('inbox.handle_event_failure')
   private async handleEventFailure(
     event: InboxEvent,
-    message: ParsedIntegrationMessage,
     topic: string,
     error: unknown,
     durationSeconds: number = 0,
@@ -257,15 +243,12 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     // Track failed event metric
     const metrics = getInboxOutboxMetrics();
     metrics?.observeInboxEvent(topic, event.eventName.toValue(), durationSeconds, 'failed');
-
-    this.trackEvent?.(topic, message, false);
   }
 
   /**
    * Returns true when the event was processed successfully (or acked because it
    * has no handler), false when a handler failed (in which case the failure has
-   * already been recorded via handleEventFailure). The caller uses this to
-   * avoid tracking a success for an event that actually failed.
+   * already been recorded via handleEventFailure).
    */
   private async processEvent(event: InboxEvent): Promise<boolean> {
     const eventId = event.id.toValue();
@@ -333,7 +316,7 @@ export class InboxService implements OnModuleInit, OnModuleDestroy {
     if (errors.length > 0) {
       // Surface the first error to keep the existing failure-tracking shape;
       // each individual failure has already been logged above.
-      await this.handleEventFailure(event, message, topic, errors[0], durationSeconds);
+      await this.handleEventFailure(event, topic, errors[0], durationSeconds);
       return false;
     }
 

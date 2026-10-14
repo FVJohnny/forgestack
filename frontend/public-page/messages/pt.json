@@ -130,8 +130,8 @@
       "backToHome": "Voltar ao início"
     },
     "auth": {
-      "panelKicker": "o console do desenvolvedor",
-      "panelTitle": "Opere seus serviços a partir de um cockpit iluminado pela forja",
+      "panelKicker": "bem-vindo ao",
+      "panelTitle": "O ponto de partida para o seu próximo produto",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Sessão segura · renovação de token · acesso baseado em papéis",
       "backToHome": "Voltar ao início",
@@ -139,47 +139,40 @@
     },
     "nav": {
       "overview": "Visão Geral",
+      "tasks": "Tarefas",
       "account": "Conta",
       "admin": "Admin",
-      "sectionMain": "Console",
+      "sectionMain": "Menu",
       "logout": "Sair",
       "env": "amb"
     },
     "dashboard": {
-      "title": "Visão Geral do Sistema",
-      "subtitle": "Saúde ao vivo e fluxo de eventos em todo o serviço.",
-      "live": "ao vivo",
-      "refreshedAt": "sincronizado {time}",
-      "health": {
-        "title": "Saúde do Sistema",
-        "ready": "Pronto",
-        "notReady": "Não pronto",
-        "service": "serviço",
-        "environment": "amb",
-        "noChecks": "Nenhuma verificação de saúde reportada.",
-        "loadError": "Não foi possível carregar o status de saúde."
+      "title": "Início",
+      "welcome": "Bem-vindo de volta, {email}",
+      "subtitle": "Sua conta em um relance.",
+      "quickLinks": {
+        "tasks": {
+          "title": "Tarefas",
+          "description": "Sua lista pessoal de tarefas, servida pelo segundo serviço."
+        },
+        "account": {
+          "title": "Conta",
+          "description": "Dados do perfil e senha."
+        },
+        "admin": {
+          "title": "Administração",
+          "description": "Gerencie usuários e o aviso público."
+        }
       },
-      "events": {
-        "title": "Vazão de Eventos",
-        "totalProcessed": "Total de eventos processados",
-        "byType": "Por tipo de evento",
-        "topic": "tópico",
-        "success": "ok",
-        "failure": "erro",
-        "lastProcessed": "último",
-        "none": "Nenhum evento processado ainda.",
-        "loadError": "Não foi possível carregar os dados de eventos.",
-        "never": "nunca"
-      },
-      "analytics": {
-        "title": "Atividade de usuários",
-        "total": "atividades totais",
-        "byType": "por tipo de evento",
-        "lastActivity": "última atividade",
+      "activity": {
+        "title": "Atividade de login recente",
+        "lastLogin": "Último login",
         "never": "nunca",
-        "none": "Ainda sem atividade — registre um usuário e veja os eventos fluírem.",
-        "loadError": "Não foi possível conectar ao service-2.",
-        "source": "alimentado por eventos Kafka"
+        "ips": "Endereços IP conhecidos",
+        "devices": "Dispositivos",
+        "lastSeen": "visto por último",
+        "empty": "Nada registrado ainda.",
+        "loadError": "Não foi possível carregar a atividade de login."
       },
       "account": {
         "title": "Sua Conta",
@@ -189,6 +182,23 @@
       },
       "motd": {
         "label": "Aviso"
+      }
+    },
+    "tasks": {
+      "title": "Tarefas",
+      "subtitle": "Uma lista de tarefas simples para você adaptar.",
+      "placeholder": "O que precisa ser feito?",
+      "add": "Adicionar",
+      "listTitle": "Suas tarefas",
+      "remaining": "{count} pendentes",
+      "complete": "Marcar como concluída",
+      "delete": "Excluir tarefa",
+      "empty": "Nenhuma tarefa ainda. Adicione a primeira acima.",
+      "loadError": "Não foi possível carregar suas tarefas.",
+      "toast": {
+        "createFailed": "Não foi possível criar a tarefa.",
+        "completeFailed": "Não foi possível concluir a tarefa.",
+        "deleteFailed": "Não foi possível excluir a tarefa."
       }
     },
     "account": {
@@ -263,7 +273,7 @@
       "motd": {
         "title": "Mensagem do Dia",
         "label": "Conteúdo do aviso",
-        "placeholder": "Exibido a todos os usuários no console…",
+        "placeholder": "Exibido para todos os usuários conectados…",
         "save": "Salvar aviso",
         "saving": "Salvando…",
         "clear": "Limpar",

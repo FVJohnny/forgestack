@@ -1,4 +1,8 @@
 @import "tailwindcss";
+/* Supplies the animate-in/fade-in/zoom-in/slide-in utilities the Radix dialog,
+   tooltip, and dropdown use for enter/exit animations. Tailwind v4 does not ship
+   these built in. */
+@import "tw-animate-css";
 
 /*
   ============================================================================

@@ -2,13 +2,13 @@
 
 > This is a quick in-repo reference. The canonical docs live on the docs site at `/docs/frontend` (served by the frontend at `/docs`). See the [README Documentation section](../README.md#documentation).
 
-Next.js 16 App Router with React 19, standalone output mode. The shipped app has a landing page, full auth flows, a live dashboard, and an MDX documentation site you can build on.
+Next.js 16 App Router with React 19, standalone output mode. The shipped app has a landing page, full auth flows, a simple signed-in app to build on, and an MDX documentation site. Operational stats live in Grafana, not in the app.
 
 ## Routing
 
 - `/` (landing / entry page)
 - `/login`, `/register`, `/verify-email`, `/forgot-password`, `/reset-password` (auth flows)
-- `/dashboard` (authenticated console: system health, event throughput, account, and admin)
+- `/dashboard` (the signed-in app: home with sign-in activity, tasks backed by service-2, account, and admin)
 - `/docs` (MDX documentation site)
 
 ## State management

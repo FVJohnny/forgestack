@@ -130,8 +130,8 @@
       "backToHome": "Terug naar home"
     },
     "auth": {
-      "panelKicker": "de developer-console",
-      "panelTitle": "Bedien je services vanuit één smeedverlichte cockpit",
+      "panelKicker": "welkom bij",
+      "panelTitle": "Het startpunt voor je volgende product",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Beveiligde sessie · token-vernieuwing · rolgebaseerde toegang",
       "backToHome": "Terug naar home",
@@ -139,47 +139,40 @@
     },
     "nav": {
       "overview": "Overzicht",
+      "tasks": "Taken",
       "account": "Account",
       "admin": "Admin",
-      "sectionMain": "Console",
+      "sectionMain": "Menu",
       "logout": "Uitloggen",
       "env": "omg"
     },
     "dashboard": {
-      "title": "Systeemoverzicht",
-      "subtitle": "Live gezondheid en eventstroom door de service heen.",
-      "live": "live",
-      "refreshedAt": "gesynchroniseerd {time}",
-      "health": {
-        "title": "Systeemgezondheid",
-        "ready": "Gereed",
-        "notReady": "Niet gereed",
-        "service": "service",
-        "environment": "omg",
-        "noChecks": "Geen health checks gerapporteerd.",
-        "loadError": "Kon gezondheidsstatus niet laden."
+      "title": "Start",
+      "welcome": "Welkom terug, {email}",
+      "subtitle": "Je account in één oogopslag.",
+      "quickLinks": {
+        "tasks": {
+          "title": "Taken",
+          "description": "Je persoonlijke takenlijst, geleverd door de tweede service."
+        },
+        "account": {
+          "title": "Account",
+          "description": "Profielgegevens en wachtwoord."
+        },
+        "admin": {
+          "title": "Beheer",
+          "description": "Beheer gebruikers en de openbare mededeling."
+        }
       },
-      "events": {
-        "title": "Event-doorvoer",
-        "totalProcessed": "Totaal verwerkte events",
-        "byType": "Per eventtype",
-        "topic": "topic",
-        "success": "ok",
-        "failure": "fout",
-        "lastProcessed": "laatste",
-        "none": "Nog geen events verwerkt.",
-        "loadError": "Kon eventgegevens niet laden.",
-        "never": "nooit"
-      },
-      "analytics": {
-        "title": "Gebruikersactiviteit",
-        "total": "totale activiteiten",
-        "byType": "per gebeurtenistype",
-        "lastActivity": "laatste activiteit",
+      "activity": {
+        "title": "Recente aanmeldactiviteit",
+        "lastLogin": "Laatste aanmelding",
         "never": "nooit",
-        "none": "Nog geen activiteit — registreer een gebruiker en zie de events stromen.",
-        "loadError": "Kan service-2 niet bereiken.",
-        "source": "gevoed door Kafka-events"
+        "ips": "Bekende IP-adressen",
+        "devices": "Apparaten",
+        "lastSeen": "laatst gezien",
+        "empty": "Nog niets geregistreerd.",
+        "loadError": "Kon aanmeldactiviteit niet laden."
       },
       "account": {
         "title": "Je account",
@@ -189,6 +182,23 @@
       },
       "motd": {
         "label": "Mededeling"
+      }
+    },
+    "tasks": {
+      "title": "Taken",
+      "subtitle": "Een eenvoudige takenlijst om zelf uit te breiden.",
+      "placeholder": "Wat moet er gebeuren?",
+      "add": "Toevoegen",
+      "listTitle": "Je taken",
+      "remaining": "{count} open",
+      "complete": "Markeren als klaar",
+      "delete": "Taak verwijderen",
+      "empty": "Nog geen taken. Voeg hierboven je eerste toe.",
+      "loadError": "Kon je taken niet laden.",
+      "toast": {
+        "createFailed": "Kon de taak niet aanmaken.",
+        "completeFailed": "Kon de taak niet afronden.",
+        "deleteFailed": "Kon de taak niet verwijderen."
       }
     },
     "account": {
@@ -263,7 +273,7 @@
       "motd": {
         "title": "Bericht van de dag",
         "label": "Inhoud van mededeling",
-        "placeholder": "Getoond aan elke gebruiker op de console…",
+        "placeholder": "Zichtbaar voor elke aangemelde gebruiker…",
         "save": "Mededeling opslaan",
         "saving": "Opslaan…",
         "clear": "Wissen",

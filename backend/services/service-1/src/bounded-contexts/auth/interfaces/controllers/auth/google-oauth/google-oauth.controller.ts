@@ -1,6 +1,6 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Res } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Req, Res } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { type ICommandBus, type IQueryBus } from '@nestjs/cqrs';
 import {
   COMMAND_BUS,
@@ -43,6 +43,7 @@ export class GoogleOAuth_Controller {
     description: 'Invalid Google token or email not verified',
   })
   async authenticateWithGoogle(
+    @Req() req: Request,
     @Body() body: GoogleOAuth_ControllerParams,
     @Res({ passthrough: true }) res: Response,
   ) {
@@ -61,8 +62,13 @@ export class GoogleOAuth_Controller {
     await this.commandBus.execute(storeTokensCommand);
 
     // 4. Record login without blocking the response; log failures instead of
-    // leaving an unhandled promise rejection.
-    const recordLoginCommand = new RecordUserLogin_Command({ userId });
+    // leaving an unhandled promise rejection. Capture the IP and User-Agent too,
+    // so Google sign-ins populate the same identity data as password logins.
+    const recordLoginCommand = new RecordUserLogin_Command({
+      userId,
+      ip: req.ip ?? 'unknown',
+      userAgent: req.headers['user-agent'],
+    });
     void this.commandBus.execute(recordLoginCommand).catch((error) => {
       this.logger.error(`Failed to record Google login for user ${userId}`, error as Error);
     });

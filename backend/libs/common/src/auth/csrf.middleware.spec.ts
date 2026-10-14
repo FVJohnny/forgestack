@@ -3,10 +3,10 @@ import type { NextFunction, Request, Response } from 'express';
 import { createCsrfMiddleware } from './csrf.middleware';
 
 /**
- * Item 119: the auth cookies are SameSite=None, so a Sec-Fetch-Site / Origin
- * check is the CSRF defense. These lock in that state-changing cross-site
- * requests are rejected while the legitimate cross-site frontend and safe
- * methods pass.
+ * The auth cookies are SameSite=Lax on a same-origin setup, and this
+ * Sec-Fetch-Site / Origin check is the defense-in-depth CSRF layer on top. These
+ * lock in that state-changing cross-site requests are rejected while an
+ * allowlisted origin and safe methods pass.
  */
 describe('csrf middleware', () => {
   const ORIGINAL = process.env.CORS_ORIGINS;
@@ -30,7 +30,7 @@ describe('csrf middleware', () => {
         method: 'POST',
         path: '/api/v1/auth/logout',
         protocol: 'https',
-        get: (h: string) => (h.toLowerCase() === 'host' ? 'service1.localhost' : undefined),
+        get: (h: string) => (h.toLowerCase() === 'host' ? 'localhost' : undefined),
         headers: {},
         ...req,
       } as unknown as Request,
@@ -52,10 +52,9 @@ describe('csrf middleware', () => {
     expect(res.status).toHaveBeenCalledWith(403);
   });
 
-  it('ALLOWS the allowlisted frontend even when Sec-Fetch-Site is cross-site', () => {
-    // The real frontend calls the API cross-site (localhost -> service1.*), so
-    // the browser sends Sec-Fetch-Site: cross-site with an allowlisted Origin.
-    // This must pass, or the whole app is locked out (the bug this guards).
+  it('ALLOWS an allowlisted origin even when Sec-Fetch-Site is cross-site', () => {
+    // An additional trusted origin (in CORS_ORIGINS) must pass even if the
+    // browser labels it cross-site, or that caller is locked out.
     const { next, res } = run({
       headers: { origin: 'https://app.example.com', 'sec-fetch-site': 'cross-site' },
     });

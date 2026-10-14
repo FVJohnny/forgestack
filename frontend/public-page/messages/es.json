@@ -130,8 +130,8 @@
       "backToHome": "Volver al inicio"
     },
     "auth": {
-      "panelKicker": "la consola del desarrollador",
-      "panelTitle": "Opera tus servicios desde una cabina iluminada por la forja",
+      "panelKicker": "bienvenido a",
+      "panelTitle": "El punto de partida para tu próximo producto",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Sesión segura · renovación de tokens · acceso basado en roles",
       "backToHome": "Volver al inicio",
@@ -139,47 +139,40 @@
     },
     "nav": {
       "overview": "Resumen",
+      "tasks": "Tareas",
       "account": "Cuenta",
       "admin": "Administración",
-      "sectionMain": "Consola",
+      "sectionMain": "Menú",
       "logout": "Cerrar sesión",
       "env": "entorno"
     },
     "dashboard": {
-      "title": "Resumen del sistema",
-      "subtitle": "Estado en vivo y flujo de eventos del servicio.",
-      "live": "en vivo",
-      "refreshedAt": "sincronizado {time}",
-      "health": {
-        "title": "Estado del sistema",
-        "ready": "Listo",
-        "notReady": "No listo",
-        "service": "servicio",
-        "environment": "entorno",
-        "noChecks": "No se reportaron comprobaciones de estado.",
-        "loadError": "No se pudo cargar el estado del sistema."
+      "title": "Inicio",
+      "welcome": "Hola de nuevo, {email}",
+      "subtitle": "Tu cuenta de un vistazo.",
+      "quickLinks": {
+        "tasks": {
+          "title": "Tareas",
+          "description": "Tu lista personal de tareas, servida por el segundo servicio."
+        },
+        "account": {
+          "title": "Cuenta",
+          "description": "Datos del perfil y contraseña."
+        },
+        "admin": {
+          "title": "Administración",
+          "description": "Gestiona usuarios y el aviso público."
+        }
       },
-      "events": {
-        "title": "Rendimiento de eventos",
-        "totalProcessed": "Total de eventos procesados",
-        "byType": "Por tipo de evento",
-        "topic": "tópico",
-        "success": "ok",
-        "failure": "err",
-        "lastProcessed": "último",
-        "none": "Aún no se han procesado eventos.",
-        "loadError": "No se pudieron cargar los datos de eventos.",
-        "never": "nunca"
-      },
-      "analytics": {
-        "title": "Actividad de usuarios",
-        "total": "actividades totales",
-        "byType": "por tipo de evento",
-        "lastActivity": "última actividad",
+      "activity": {
+        "title": "Actividad de inicio de sesión reciente",
+        "lastLogin": "Último inicio de sesión",
         "never": "nunca",
-        "none": "Aún no hay actividad: registra un usuario y observa el flujo de eventos.",
-        "loadError": "No se pudo conectar con service-2.",
-        "source": "alimentado por eventos de Kafka"
+        "ips": "Direcciones IP conocidas",
+        "devices": "Dispositivos",
+        "lastSeen": "visto por última vez",
+        "empty": "Aún no hay nada registrado.",
+        "loadError": "No se pudo cargar la actividad de inicio de sesión."
       },
       "account": {
         "title": "Tu cuenta",
@@ -189,6 +182,23 @@
       },
       "motd": {
         "label": "Aviso"
+      }
+    },
+    "tasks": {
+      "title": "Tareas",
+      "subtitle": "Una lista de tareas sencilla para hacerla tuya.",
+      "placeholder": "¿Qué hay que hacer?",
+      "add": "Añadir",
+      "listTitle": "Tus tareas",
+      "remaining": "{count} pendientes",
+      "complete": "Marcar como hecha",
+      "delete": "Eliminar tarea",
+      "empty": "Aún no hay tareas. Añade la primera arriba.",
+      "loadError": "No se pudieron cargar tus tareas.",
+      "toast": {
+        "createFailed": "No se pudo crear la tarea.",
+        "completeFailed": "No se pudo completar la tarea.",
+        "deleteFailed": "No se pudo eliminar la tarea."
       }
     },
     "account": {
@@ -263,7 +273,7 @@
       "motd": {
         "title": "Mensaje del día",
         "label": "Contenido del aviso",
-        "placeholder": "Visible para todos los usuarios en la consola…",
+        "placeholder": "Se muestra a todos los usuarios con sesión iniciada…",
         "save": "Guardar aviso",
         "saving": "Guardando…",
         "clear": "Limpiar",

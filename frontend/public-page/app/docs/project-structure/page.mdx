@@ -12,7 +12,7 @@ per-project tooling.
 ├── backend/
 │   ├── services/
 │   │   ├── service-1/        NestJS service — the shipped example (auth, notifications)
-│   │   └── service-2/        second example — consumes service-1's events (analytics)
+│   │   └── service-2/        second example — a tasks todo service fed by service-1's user events
 │   └── libs/
 │       ├── common/           CQRS/DDD base classes, auth, outbox/inbox, otel
 │       ├── kafka/            Kafka producer/consumer + integration events
@@ -129,7 +129,7 @@ frontend/public-page/
 │   ├── layout.tsx            root layout (fonts, i18n, providers)
 │   ├── page.tsx              landing
 │   ├── login/ register/ …    auth pages
-│   ├── dashboard/            authenticated console (sidebar + topbar)
+│   ├── dashboard/            the signed-in app (sidebar + topbar)
 │   ├── docs/                 this documentation (MDX)
 │   └── shared/               auth helpers, components, design-system primitives
 ├── i18n/                     next-intl config

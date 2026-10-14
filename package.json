@@ -64,8 +64,8 @@
     "@commitlint/config-conventional": "^20.0.0",
     "@eslint/js": "^9.34.0",
     "@nx/eslint": "21.5.3",
+    "@nx/jest": "21.5.3",
     "@nx/js": "21.5.3",
-    "@nx/node": "21.5.3",
     "@types/jest": "^29.5.14",
     "@typescript-eslint/eslint-plugin": "^8.42.0",
     "@typescript-eslint/parser": "^8.42.0",
@@ -80,7 +80,6 @@
     "nx": "21.5.3",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.1",
-    "tsconfig-paths-jest": "^0.0.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.42.0"
   }

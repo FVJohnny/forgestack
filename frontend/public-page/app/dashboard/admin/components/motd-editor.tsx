@@ -7,7 +7,7 @@ import { Card } from '@/app/shared/ui/card';
 import { Button } from '@/app/shared/ui/button';
 import { Label } from '@/app/shared/ui/label';
 import { adminService } from '@/lib/api/services/admin.service';
-import { dashboardService } from '@/lib/api/services/dashboard.service';
+import { motdService } from '@/lib/api/services/motd.service';
 import type { GetMotdResponse } from '@/lib/api/types';
 
 export function MotdEditor() {
@@ -19,7 +19,7 @@ export function MotdEditor() {
   const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
-    dashboardService
+    motdService
       .getMotd()
       .then((m) => {
         setCurrent(m);
@@ -36,7 +36,7 @@ export function MotdEditor() {
     setSaving(true);
     try {
       await adminService.setMotd(content.trim());
-      const fresh = await dashboardService.getMotd();
+      const fresh = await motdService.getMotd();
       setCurrent(fresh);
       toast.success(t('toast.saved'));
     } catch {

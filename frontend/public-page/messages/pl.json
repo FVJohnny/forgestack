@@ -130,8 +130,8 @@
       "backToHome": "Powrót do strony głównej"
     },
     "auth": {
-      "panelKicker": "konsola dewelopera",
-      "panelTitle": "Zarządzaj swoimi usługami z jednego kokpitu rozświetlonego ogniem kuźni",
+      "panelKicker": "witamy w",
+      "panelTitle": "Punkt wyjścia dla twojego następnego produktu",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Bezpieczna sesja · odświeżanie tokenów · dostęp oparty na rolach",
       "backToHome": "Powrót do strony głównej",
@@ -139,47 +139,40 @@
     },
     "nav": {
       "overview": "Przegląd",
+      "tasks": "Zadania",
       "account": "Konto",
       "admin": "Administracja",
-      "sectionMain": "Konsola",
+      "sectionMain": "Menu",
       "logout": "Wyloguj się",
       "env": "środ."
     },
     "dashboard": {
-      "title": "Przegląd systemu",
-      "subtitle": "Stan na żywo i przepływ zdarzeń w usłudze.",
-      "live": "na żywo",
-      "refreshedAt": "zsynchronizowano {time}",
-      "health": {
-        "title": "Stan systemu",
-        "ready": "Gotowy",
-        "notReady": "Niegotowy",
-        "service": "usługa",
-        "environment": "środ.",
-        "noChecks": "Brak zgłoszonych kontroli stanu.",
-        "loadError": "Nie udało się załadować stanu systemu."
+      "title": "Strona główna",
+      "welcome": "Witaj ponownie, {email}",
+      "subtitle": "Twoje konto w skrócie.",
+      "quickLinks": {
+        "tasks": {
+          "title": "Zadania",
+          "description": "Twoja osobista lista zadań, obsługiwana przez drugą usługę."
+        },
+        "account": {
+          "title": "Konto",
+          "description": "Dane profilu i hasło."
+        },
+        "admin": {
+          "title": "Administracja",
+          "description": "Zarządzaj użytkownikami i publicznym ogłoszeniem."
+        }
       },
-      "events": {
-        "title": "Przepustowość zdarzeń",
-        "totalProcessed": "Łącznie przetworzonych zdarzeń",
-        "byType": "Według typu zdarzenia",
-        "topic": "topic",
-        "success": "ok",
-        "failure": "błąd",
-        "lastProcessed": "ostatnie",
-        "none": "Nie przetworzono jeszcze żadnych zdarzeń.",
-        "loadError": "Nie udało się załadować danych zdarzeń.",
-        "never": "nigdy"
-      },
-      "analytics": {
-        "title": "Aktywność użytkowników",
-        "total": "łączna liczba aktywności",
-        "byType": "według typu zdarzenia",
-        "lastActivity": "ostatnia aktywność",
+      "activity": {
+        "title": "Ostatnia aktywność logowania",
+        "lastLogin": "Ostatnie logowanie",
         "never": "nigdy",
-        "none": "Brak aktywności — zarejestruj użytkownika i obserwuj przepływ zdarzeń.",
-        "loadError": "Nie można połączyć się z service-2.",
-        "source": "zasilane zdarzeniami Kafki"
+        "ips": "Znane adresy IP",
+        "devices": "Urządzenia",
+        "lastSeen": "ostatnio widziano",
+        "empty": "Nic jeszcze nie zarejestrowano.",
+        "loadError": "Nie udało się wczytać aktywności logowania."
       },
       "account": {
         "title": "Twoje konto",
@@ -189,6 +182,23 @@
       },
       "motd": {
         "label": "Ogłoszenie"
+      }
+    },
+    "tasks": {
+      "title": "Zadania",
+      "subtitle": "Prosta lista zadań do własnej rozbudowy.",
+      "placeholder": "Co trzeba zrobić?",
+      "add": "Dodaj",
+      "listTitle": "Twoje zadania",
+      "remaining": "{count} otwarte",
+      "complete": "Oznacz jako wykonane",
+      "delete": "Usuń zadanie",
+      "empty": "Brak zadań. Dodaj pierwsze powyżej.",
+      "loadError": "Nie udało się wczytać zadań.",
+      "toast": {
+        "createFailed": "Nie udało się utworzyć zadania.",
+        "completeFailed": "Nie udało się ukończyć zadania.",
+        "deleteFailed": "Nie udało się usunąć zadania."
       }
     },
     "account": {
@@ -263,7 +273,7 @@
       "motd": {
         "title": "Wiadomość dnia",
         "label": "Treść ogłoszenia",
-        "placeholder": "Wyświetlana każdemu użytkownikowi w konsoli…",
+        "placeholder": "Widoczne dla każdego zalogowanego użytkownika…",
         "save": "Zapisz ogłoszenie",
         "saving": "Zapisywanie…",
         "clear": "Wyczyść",

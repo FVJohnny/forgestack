@@ -13,10 +13,6 @@ export interface RegisterRequest {
   password: string;
 }
 
-export interface VerifyEmailRequest {
-  emailVerificationId: string;
-}
-
 // Tokens are delivered as httpOnly cookies, so the body only carries the id.
 export interface AuthResponse {
   userId: string;
@@ -38,10 +34,6 @@ export interface SearchUserResult {
   userAgents?: string[];
 }
 
-export interface SearchUsersResponse {
-  users: SearchUserResult[];
-}
-
 export interface ListUsersResponse {
   users: SearchUserResult[];
   total: number;
@@ -56,38 +48,34 @@ export interface GetMotdResponse {
   updatedAt: string;
 }
 
-// Dashboard / observability types
-export interface HealthCheck {
-  status: string;
-  [key: string]: unknown;
+// Sign-in activity (auth service): last login plus the known IPs/devices.
+export interface SigninActivityEntry {
+  value: string;
+  firstSeen: string;
+  lastSeen: string;
+  seenCount: number;
 }
 
-export interface DashboardHealthResponse {
-  ready: boolean;
-  checks: Record<string, HealthCheck>;
-  service: string;
-  environment: string;
-  timestamp: string;
+export interface SigninActivityResponse {
+  lastLogin: string | null;
+  ips: SigninActivityEntry[];
+  userAgents: SigninActivityEntry[];
 }
 
-export interface EventTypeStat {
-  eventName: string;
-  topic: string;
-  successCount: number;
-  failureCount: number;
-  lastProcessed?: string;
+// Tasks (service-2): the starter user-facing feature.
+export interface TaskItem {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface DashboardEventsResponse {
-  service: string;
-  totalEventsProcessed: number;
-  timestamp: string;
-  eventsByType: EventTypeStat[];
-}
-
-/** From service-2's analytics context — activity derived from integration events. */
-export interface ActivitySummaryResponse {
+export interface ListTasksResponse {
+  tasks: TaskItem[];
   total: number;
-  byType: Record<string, number>;
-  lastActivityAt: string | null;
+}
+
+export interface CreateTaskRequest {
+  title: string;
 }

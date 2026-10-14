@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { JwtTokenPayload, TokenPayload } from './jwt-auth.types';
 import { v4 as uuid } from 'uuid';
 import type { StringValue } from 'ms';
-import { requiredEnv } from './env.util';
+import { requiredSecret } from './env.util';
 
 // The stack signs with a symmetric secret (HS256). Pinning the algorithm on
 // both sign and verify is defense-in-depth: it stops an attacker from
@@ -20,9 +20,9 @@ export class JwtTokenService {
   private readonly refreshTokenExpiry: StringValue | number;
 
   constructor(private readonly jwtService: JwtService) {
-    this.accessTokenSecret = requiredEnv('JWT_SECRET');
+    this.accessTokenSecret = requiredSecret('JWT_SECRET');
     this.accessTokenExpiry = (process.env.JWT_EXPIRES_IN ?? '5m') as StringValue;
-    this.refreshTokenSecret = requiredEnv('JWT_REFRESH_SECRET');
+    this.refreshTokenSecret = requiredSecret('JWT_REFRESH_SECRET');
     this.refreshTokenExpiry = (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as StringValue;
   }
 

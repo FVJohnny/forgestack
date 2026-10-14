@@ -5,12 +5,10 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { JwtAuthGuard } from '@libs/nestjs-common';
 import { AuthBoundedContextModule } from './bounded-contexts/auth/auth.module';
 import { NotificationsBoundedContextModule } from './bounded-contexts/notifications/notifications.module';
-import { DashboardModule } from './dashboard/dashboard.module';
 import {
   HeartbeatModule,
   TracingModule,
   ErrorHandlingModule,
-  EventTrackerModule,
   SharedCqrsModule,
   ApiRateLimitModule,
 } from '@libs/nestjs-common';
@@ -54,7 +52,6 @@ import { KafkaIntegrationEventsModule } from '@libs/nestjs-kafka';
     ErrorHandlingModule,
     MetricsModule,
     JwtAuthModule,
-    EventTrackerModule,
     // Rate limits are stored in Redis so they hold across all instances.
     ApiRateLimitModule.forRoot(
       { '1minute': { type: 'ip', limit: 100 } },
@@ -64,15 +61,12 @@ import { KafkaIntegrationEventsModule } from '@libs/nestjs-kafka';
     // BOUNDED CONTEXTS
     AuthBoundedContextModule,
     NotificationsBoundedContextModule,
-
-    // DEV-CONSOLE DASHBOARD (browser-facing, JWT-protected reads)
-    DashboardModule,
   ],
   providers: [
     // Secure by default: every route requires a valid session unless it is
     // explicitly marked @Public()/@PublicApi(). This closes the gap where a
     // controller that simply forgot @UseGuards(JwtAuthGuard) shipped as a public
-    // endpoint. Framework ops controllers (health/metrics/mongodb/event-tracker)
+    // endpoint. Framework ops controllers (health/metrics/mongodb)
     // and the genuinely anonymous auth routes carry @Public(); admin routes keep
     // their AdminRoleGuard on top of this.
     { provide: APP_GUARD, useClass: JwtAuthGuard },

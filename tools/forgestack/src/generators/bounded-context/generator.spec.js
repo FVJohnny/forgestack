@@ -12,12 +12,12 @@ describe('bounded-context generator', () => {
   // generator's "insert after the last BC" logic has an anchor.
   const appModule = [
     "import { Module } from '@nestjs/common';",
-    "import { AnalyticsBoundedContextModule } from './bounded-contexts/analytics/analytics.module';",
+    "import { TasksBoundedContextModule } from './bounded-contexts/tasks/tasks.module';",
     '',
     '@Module({',
     '  imports: [',
     '    // BOUNDED CONTEXTS',
-    '    AnalyticsBoundedContextModule,',
+    '    TasksBoundedContextModule,',
     '  ],',
     '})',
     'export class AppModule {}',
@@ -66,7 +66,7 @@ describe('bounded-context generator', () => {
       "import { BillingBoundedContextModule } from './bounded-contexts/billing/billing.module';",
     );
     // Added to the imports array right after the existing BC entry.
-    expect(src).toMatch(/AnalyticsBoundedContextModule,\n\s*BillingBoundedContextModule,/);
+    expect(src).toMatch(/TasksBoundedContextModule,\n\s*BillingBoundedContextModule,/);
   });
 
   it('honours a custom command name', async () => {

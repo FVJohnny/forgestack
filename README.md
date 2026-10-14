@@ -6,9 +6,9 @@
 
 **A solid foundation for production-ready apps.**
 
-ForgeStack is an opinionated, batteries-included starting point for building real applications, not just a backend framework. It ships a hexagonal architecture with Domain-Driven Design (DDD) and CQRS, an outbox/inbox pattern for reliable integration events over Kafka, a Next.js frontend (landing page, auth, docs, and a live dashboard), full observability (metrics, logs, traces), TLS-terminated deploys, and a set of custom ESLint rules that enforce the architectural boundaries so the design stays intact as the codebase grows.
+ForgeStack is an opinionated, batteries-included starting point for building real applications, not just a backend framework. It ships a hexagonal architecture with Domain-Driven Design (DDD) and CQRS, an outbox/inbox pattern for reliable integration events over Kafka, a Next.js frontend (landing page, auth, docs, and a simple signed-in app to build on), full observability in Grafana (metrics, logs, traces), TLS-terminated deploys, and a set of custom ESLint rules that enforce the architectural boundaries so the design stays intact as the codebase grows.
 
-Because the structure is consistent and the boundaries are enforced, the codebase is unusually **legible to both engineers and AI coding agents**: patterns are predictable, so generated code lands in the right place. A demo `auth` → `notifications` event flow shows the end-to-end wiring you can copy for your own bounded contexts.
+Because the structure is consistent and the boundaries are enforced, the codebase is unusually **legible to both engineers and AI coding agents**: patterns are predictable, so generated code lands in the right place. Demo event flows (`auth` → `notifications` within a service, and `auth` → `tasks` across services) show the end-to-end wiring you can copy for your own bounded contexts.
 
 ## Features
 
@@ -20,7 +20,7 @@ Because the structure is consistent and the boundaries are enforced, the codebas
 - **Deploy on the first day**: Docker Compose, a Caddy reverse proxy with automatic TLS, and one-command deploy + server-provisioning scripts.
 - **Pluggable infrastructure**: repository contracts live in the domain and are bound to MongoDB, Redis, or in-memory implementations via NestJS injection tokens, making tests fast and adapters swappable.
 - **Nx monorepo**: shared libraries, per-project targets, caching, and a single dependency graph across backend services and the frontend.
-- **Auth + a frontend**: a Next.js 16 / React 19 app with login, registration, password reset, and a live dashboard (system health + event throughput + admin), internationalized with `next-intl`.
+- **Auth + a frontend**: a Next.js 16 / React 19 app with login, registration, password reset, and a simple signed-in app (home with sign-in activity, a tasks list backed by the second service, account, and admin), internationalized with `next-intl`. Operational stats live in Grafana, not in the app.
 
 ## Monorepo structure
 
@@ -40,7 +40,7 @@ Because the structure is consistent and the boundaries are enforced, the codebas
 │       │       └── shared/         # Cross-context value objects
 │       └── service-2/              # A second service showing cross-SERVICE events
 │           └── src/bounded-contexts/
-│               └── analytics/      # Consumes service-1 events over Kafka
+│               └── tasks/          # Per-user todo list; consumes service-1 user events
 ├── frontend/
 │   └── public-page/                # Next.js 16 / React 19 app (Tailwind, Radix UI, next-intl)
 ├── infra/

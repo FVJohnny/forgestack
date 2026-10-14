@@ -1,147 +1,235 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useFormatter, useTranslations } from 'next-intl';
-import { Badge } from '@/app/shared/ui/badge';
-import { StatusDot } from '@/app/shared/ui/status-dot';
-import { usePolling } from '@/lib/hooks/use-polling';
-import { dashboardService } from '@/lib/api/services/dashboard.service';
-import { analyticsService } from '@/lib/api/services/analytics.service';
-import type {
-  ActivitySummaryResponse,
-  DashboardEventsResponse,
-  DashboardHealthResponse,
-  GetMotdResponse,
-} from '@/lib/api/types';
+import {
+  ArrowUpRight,
+  Globe,
+  ListTodo,
+  MonitorSmartphone,
+  ShieldHalf,
+  UserCog,
+} from 'lucide-react';
+import { Card } from '@/app/shared/ui/card';
+import { Skeleton } from '@/app/shared/ui/skeleton';
+import { motdService } from '@/lib/api/services/motd.service';
+import { accountService } from '@/lib/api/services/account.service';
+import type { GetMotdResponse, SigninActivityResponse } from '@/lib/api/types';
+import { useUser } from '@/lib/contexts/user-context';
 import { PageHeader } from './components/page-header';
-import { HealthPanel } from './components/health-panel';
-import { EventsPanel } from './components/events-panel';
-import { AnalyticsPanel } from './components/analytics-panel';
 import { MotdBanner } from './components/motd-banner';
 import { AccountMiniCard } from './components/account-mini-card';
 
-const EVENTS_POLL_MS = 5000;
-const HEALTH_POLL_MS = 15000;
-
-export default function DashboardOverviewPage() {
+export default function DashboardHomePage() {
   const t = useTranslations('app.dashboard');
-  const format = useFormatter();
+  const { user } = useUser();
 
-  const [health, setHealth] = useState<DashboardHealthResponse | null>(null);
-  const [events, setEvents] = useState<DashboardEventsResponse | null>(null);
-  const [activity, setActivity] = useState<ActivitySummaryResponse | null>(null);
   const [motd, setMotd] = useState<GetMotdResponse | null>(null);
-
-  const [healthError, setHealthError] = useState(false);
-  const [eventsError, setEventsError] = useState(false);
+  const [activity, setActivity] = useState<SigninActivityResponse | null>(null);
   const [activityError, setActivityError] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [syncedAt, setSyncedAt] = useState<Date | null>(null);
 
-  const healthTick = useRef(0);
-
-  const loadEvents = useCallback(async () => {
-    try {
-      const data = await dashboardService.getEvents();
-      setEvents(data);
-      setEventsError(false);
-      setSyncedAt(new Date());
-    } catch {
-      setEventsError(true);
-    }
-  }, []);
-
-  const loadHealth = useCallback(async () => {
-    try {
-      const data = await dashboardService.getHealth();
-      setHealth(data);
-      setHealthError(false);
-    } catch {
-      setHealthError(true);
-    }
-  }, []);
-
-  const loadActivity = useCallback(async () => {
-    try {
-      const data = await analyticsService.getSummary();
-      setActivity(data);
-      setActivityError(false);
-    } catch {
-      setActivityError(true);
-    }
-  }, []);
-
-  // initial load
   useEffect(() => {
     let mounted = true;
     (async () => {
       await Promise.all([
-        loadEvents(),
-        loadHealth(),
-        loadActivity(),
-        dashboardService
+        motdService
           .getMotd()
           .then((m) => mounted && setMotd(m))
           .catch(() => {}),
+        accountService
+          .getSigninActivity()
+          .then((a) => mounted && setActivity(a))
+          .catch(() => mounted && setActivityError(true)),
       ]);
       if (mounted) setLoading(false);
     })();
     return () => {
       mounted = false;
     };
-  }, [loadEvents, loadHealth, loadActivity]);
+  }, []);
 
-  // poll events + activity fast; poll health on every 3rd tick (~15s)
-  usePolling(
-    async () => {
-      await Promise.all([loadEvents(), loadActivity()]);
-      healthTick.current += 1;
-      if (healthTick.current % Math.round(HEALTH_POLL_MS / EVENTS_POLL_MS) === 0) {
-        await loadHealth();
-      }
-    },
-    EVENTS_POLL_MS,
-    true,
-  );
+  const isAdmin = user?.role === 'admin';
 
   return (
     <div>
       <PageHeader
         title={t('title')}
-        subtitle={t('subtitle')}
-        actions={
-          <div className="flex items-center gap-3">
-            <Badge variant="live">
-              <StatusDot status="live" />
-              {t('live')}
-            </Badge>
-            {syncedAt && (
-              <span className="hidden font-mono text-[11px] text-ink-faint sm:inline">
-                {t('refreshedAt', {
-                  time: format.dateTime(syncedAt, {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                  }),
-                })}
-              </span>
-            )}
-          </div>
-        }
+        subtitle={user?.email ? t('welcome', { email: user.email }) : t('subtitle')}
       />
 
       <MotdBanner motd={motd} />
 
+      <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <QuickLink
+          href="/dashboard/tasks"
+          Icon={ListTodo}
+          title={t('quickLinks.tasks.title')}
+          description={t('quickLinks.tasks.description')}
+        />
+        <QuickLink
+          href="/dashboard/account"
+          Icon={UserCog}
+          title={t('quickLinks.account.title')}
+          description={t('quickLinks.account.description')}
+        />
+        {isAdmin && (
+          <QuickLink
+            href="/dashboard/admin"
+            Icon={ShieldHalf}
+            title={t('quickLinks.admin.title')}
+            description={t('quickLinks.admin.description')}
+          />
+        )}
+      </div>
+
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="space-y-5 lg:col-span-2">
-          <HealthPanel data={health} loading={loading} error={healthError} />
-          <EventsPanel data={events} loading={loading} error={eventsError} />
+        <div className="lg:col-span-2">
+          <SigninActivityCard data={activity} loading={loading} error={activityError} />
         </div>
-        <div className="space-y-5">
+        <div>
           <AccountMiniCard />
-          <AnalyticsPanel data={activity} loading={loading} error={activityError} />
         </div>
       </div>
+    </div>
+  );
+}
+
+function QuickLink({
+  href,
+  Icon,
+  title,
+  description,
+}: {
+  href: string;
+  Icon: typeof ListTodo;
+  title: string;
+  description: string;
+}) {
+  return (
+    <Link href={href} className="group">
+      <Card className="enter h-full gap-2 px-5 py-4 transition-colors group-hover:border-primary/40">
+        <div className="flex items-center justify-between">
+          <Icon className="size-5 text-primary" />
+          <ArrowUpRight className="size-4 text-ink-faint transition-colors group-hover:text-primary" />
+        </div>
+        <h2 className="font-mono text-[13px] font-semibold uppercase tracking-[0.12em] text-ink">
+          {title}
+        </h2>
+        <p className="text-[13px] leading-relaxed text-ink-dim">{description}</p>
+      </Card>
+    </Link>
+  );
+}
+
+function SigninActivityCard({
+  data,
+  loading,
+  error,
+}: {
+  data: SigninActivityResponse | null;
+  loading: boolean;
+  error: boolean;
+}) {
+  const t = useTranslations('app.dashboard.activity');
+  const format = useFormatter();
+
+  const formatWhen = (iso: string) =>
+    format.dateTime(new Date(iso), {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  return (
+    <Card className="enter gap-0 py-0" style={{ animationDelay: '60ms' }}>
+      <div className="border-b border-line px-5 py-4">
+        <h2 className="font-mono text-[13px] font-semibold uppercase tracking-[0.12em] text-ink">
+          {t('title')}
+        </h2>
+      </div>
+
+      {loading ? (
+        <div className="space-y-3 px-5 py-4">
+          <Skeleton className="h-4 w-56" />
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+      ) : error || !data ? (
+        <p className="px-5 py-4 text-[13px] text-ink-dim">{t('loadError')}</p>
+      ) : (
+        <div className="divide-y divide-line">
+          <div className="flex items-center justify-between gap-4 px-5 py-3.5">
+            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-ink-faint">
+              {t('lastLogin')}
+            </span>
+            <span className="font-mono text-[13px] text-ink">
+              {data.lastLogin ? formatWhen(data.lastLogin) : t('never')}
+            </span>
+          </div>
+
+          <ActivitySection
+            Icon={Globe}
+            label={t('ips')}
+            entries={data.ips}
+            empty={t('empty')}
+            formatWhen={formatWhen}
+            lastSeenLabel={t('lastSeen')}
+          />
+          <ActivitySection
+            Icon={MonitorSmartphone}
+            label={t('devices')}
+            entries={data.userAgents}
+            empty={t('empty')}
+            formatWhen={formatWhen}
+            lastSeenLabel={t('lastSeen')}
+          />
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function ActivitySection({
+  Icon,
+  label,
+  entries,
+  empty,
+  formatWhen,
+  lastSeenLabel,
+}: {
+  Icon: typeof Globe;
+  label: string;
+  entries: SigninActivityResponse['ips'];
+  empty: string;
+  formatWhen: (iso: string) => string;
+  lastSeenLabel: string;
+}) {
+  return (
+    <div className="px-5 py-3.5">
+      <div className="mb-2 flex items-center gap-2">
+        <Icon className="size-3.5 text-ink-faint" />
+        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-ink-faint">
+          {label}
+        </span>
+      </div>
+      {entries.length === 0 ? (
+        <p className="text-[13px] text-ink-dim">{empty}</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {entries.map((entry) => (
+            <li key={entry.value} className="flex items-baseline justify-between gap-4">
+              <span className="truncate font-mono text-[13px] text-ink">{entry.value}</span>
+              <span className="shrink-0 font-mono text-[11px] text-ink-faint">
+                {lastSeenLabel} {formatWhen(entry.lastSeen)} · {entry.seenCount}x
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

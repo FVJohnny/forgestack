@@ -71,26 +71,27 @@ describe('InboxService receiveMessage', () => {
   });
 });
 
-describe('InboxService event-tracker accounting (item 137)', () => {
+describe('InboxService processing outcomes', () => {
   const drive = async (handler: IIntegrationEventHandler) => {
     const repo = new Inbox_InMemoryRepository();
     const service = new InboxService(repo as never);
-    const calls: boolean[] = [];
-    service.setEventTracker((_t, _m, success) => calls.push(success));
     service.registerEventHandler('users', 'user.created', handler);
-    await service.receiveMessage(message(), 'users');
+    const msg = message();
+    await service.receiveMessage(msg, 'users');
     // Invoke the private processing loop directly.
     await (service as unknown as { processInboxEvents: () => Promise<void> }).processInboxEvents();
-    return calls;
+    return repo.findById(new Id(msg.id));
   };
 
-  it('tracks a successful event once as success', async () => {
-    const calls = await drive(new RecordingHandler());
-    expect(calls).toEqual([true]);
+  it('marks a successfully handled event as processed', async () => {
+    const stored = await drive(new RecordingHandler());
+    expect(stored?.status.toValue()).toBe(InboxStatus.PROCESSED);
   });
 
-  it('tracks a failed event once as failure, not also as success', async () => {
-    const calls = await drive(new FailingHandler());
-    expect(calls).toEqual([false]);
+  it('re-queues an event for retry when its handler throws', async () => {
+    // markAsFailed returns the event to PENDING (with a retry counted) until
+    // retries are exhausted, so the first failure leaves it queued again.
+    const stored = await drive(new FailingHandler());
+    expect(stored?.status.toValue()).toBe(InboxStatus.PENDING);
   });
 });

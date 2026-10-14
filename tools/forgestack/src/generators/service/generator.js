@@ -90,35 +90,47 @@ async function serviceGenerator(tree, options) {
   );
 
   // ---------------------------------------------------------------------
-  // 3. Caddy host + caddy depends_on (public services only)
+  // 3. Caddy same-origin path route + caddy depends_on (public services only)
   // ---------------------------------------------------------------------
   const host = name.replace(/-/g, '');
+  // Path prefix the service is reached through on the main origin, e.g.
+  // /svcbilling. handle_path strips it before proxying, so the service still
+  // serves its own /api/v1 internally. Same-origin routing keeps the auth
+  // cookies first-party (see infra/caddy/Caddyfile).
+  const svcPrefix = `/svc${host}`;
   if (options.expose !== false) {
     const caddyPath = 'infra/caddy/Caddyfile';
-    const caddyMarker = '{$PROTOCOL:http}://grafana.';
+    // Anchor: insert the new handle_path block just before the frontend
+    // catch-all inside the main origin block. Match on the catch-all's comment.
+    const caddyMarker = '\t# Everything else is the Next.js frontend.';
     const caddyBlock = [
-      `{$PROTOCOL:http}://${host}.{$DOMAIN:localhost} {`,
-      `    import tls-{$TLS_ENV:dev}`,
-      `    reverse_proxy ${name}:3000`,
-      `}`,
+      `\thandle_path ${svcPrefix}/* {`,
+      `\t\treverse_proxy ${name}:3000`,
+      `\t}`,
       ``,
-      ``,
+      caddyMarker,
     ].join('\n');
     const caddy = tree.read(caddyPath, 'utf-8');
-    if (caddy && caddy.includes(caddyMarker) && !caddy.includes(`reverse_proxy ${name}:3000`)) {
-      tree.write(caddyPath, caddy.replace(caddyMarker, caddyBlock + caddyMarker));
+    if (caddy && caddy.includes(caddyMarker) && !caddy.includes(`handle_path ${svcPrefix}/*`)) {
+      tree.write(caddyPath, caddy.replace(caddyMarker, caddyBlock));
     } else if (!caddy || !caddy.includes(caddyMarker)) {
       warnings.push(
-        `Could not find the grafana block in ${caddyPath} — add the ${name} host manually.`,
+        `Could not find the frontend catch-all in ${caddyPath} — add a handle_path ${svcPrefix}/* route for ${name} manually.`,
       );
     }
 
     const prodPath = 'infra/compose/docker-compose.prod.yml';
-    const dependsMarker = 'depends_on:\n      - public-page\n';
     const prod = tree.read(prodPath, 'utf-8');
-    if (prod && prod.includes(dependsMarker)) {
-      tree.write(prodPath, prod.replace(dependsMarker, dependsMarker + `      - ${name}\n`));
-    } else {
+    // Insert the new service into the caddy service's depends_on. Anchor on the
+    // caddy block (the `caddy:` service key through its `depends_on:` line) and
+    // append the entry right after `depends_on:`, so this keeps working even if
+    // the existing entries are reordered. Matching a hardcoded first entry (e.g.
+    // `- public-page`) would silently fail if that list were reordered.
+    const caddyDependsRe = /(\n {2}caddy:\n(?:[^\n]*\n)*? {4}depends_on:\n)/;
+    const alreadyPresent = new RegExp(`\\n {6}- ${name}\\n`).test(prod || '');
+    if (prod && caddyDependsRe.test(prod) && !alreadyPresent) {
+      tree.write(prodPath, prod.replace(caddyDependsRe, `$1      - ${name}\n`));
+    } else if (!prod || !caddyDependsRe.test(prod)) {
       warnings.push(`Could not find caddy depends_on in ${prodPath} — add "- ${name}" manually.`);
     }
   }
@@ -147,14 +159,16 @@ async function serviceGenerator(tree, options) {
       `  2. npm run dev:restart ${name} caddy      # or npm run dev:start for the full stack`,
     );
     if (options.expose !== false) {
-      console.log(`     → https://${host}.localhost/api/v1/greetings (GET list / POST {message})`);
+      console.log(
+        `     → https://localhost${svcPrefix}/api/v1/greetings (GET list / POST {message})`,
+      );
     }
     console.log(
       `  3. Fill in infra/env/${name}.env.prod for production (secrets are placeholders)`,
     );
     if (options.expose !== false) {
       console.log(
-        `  4. Prod DNS: point ${host}.<your-domain> at the server; rebuild caddy on next deploy`,
+        `  4. Prod: the service is served at <your-domain>${svcPrefix}/*; rebuild caddy on next deploy`,
       );
     }
     console.log('');

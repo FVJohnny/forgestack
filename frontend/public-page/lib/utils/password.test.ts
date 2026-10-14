@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isPasswordValid, PASSWORD_MIN_LENGTH } from './password';
+import { isPasswordValid } from './password';
 
 // The client policy must mirror the backend Password value object: >= 8 chars
 // with at least one letter and one digit.
@@ -10,9 +10,10 @@ describe('isPasswordValid', () => {
     expect(isPasswordValid('MySecurePass1')).toBe(true);
   });
 
-  it('rejects a password shorter than the minimum', () => {
-    expect(PASSWORD_MIN_LENGTH).toBe(8);
-    expect(isPasswordValid('abc1')).toBe(false);
+  it('rejects a password shorter than the minimum of 8 characters', () => {
+    // 7 chars with a letter and a digit is still too short; 8 is the boundary.
+    expect(isPasswordValid('abcdef1')).toBe(false);
+    expect(isPasswordValid('abcdefg1')).toBe(true);
   });
 
   it('rejects a password with no digit', () => {

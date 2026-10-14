@@ -5,29 +5,27 @@ import { CorrelationLogger } from '../logger';
 /**
  * CSRF protection for cookie-authenticated requests.
  *
- * The auth tokens live in `SameSite=None` cookies (required because in dev the
- * frontend at https://localhost and the API at https://service1.localhost are
- * different sites, so `Lax` would not attach the cookie to the app's fetch).
- * `SameSite=None` means the browser attaches those cookies to EVERY cross-site
- * request, including ones a malicious page forges, so `SameSite` alone is no
- * longer a CSRF defense. httpOnly does not help either: a forged request never
- * needs to read the cookie, the browser sends it automatically.
+ * The auth tokens live in `SameSite=Lax` cookies. The frontend and both APIs
+ * are served under path prefixes on the same origin (Caddy routes /svc1/* and
+ * /svc2/* to the services, everything else to the frontend), so the app's own
+ * fetches are same-origin and Lax attaches the cookie on its own. Lax already
+ * blocks most cross-site forgeries, but not all (a top-level GET navigation
+ * still carries the cookie), so this middleware is defense in depth.
  *
- * This middleware closes that hole by rejecting state-changing requests
- * (anything other than GET/HEAD/OPTIONS) that are cross-site. "Cross-site" is
- * decided by:
+ * It rejects state-changing requests (anything other than GET/HEAD/OPTIONS)
+ * that are cross-site. "Cross-site" is decided by:
  *
- *   1. `Sec-Fetch-Site` when present (sent by all current browsers): only
+ *   1. The `Origin` header, when present: it must be in the allowlist
+ *      (CORS_ORIGINS) or match the request's own host. Anything else is a
+ *      cross-site forgery attempt and is rejected.
+ *   2. Otherwise `Sec-Fetch-Site` (sent by all current browsers): only
  *      `same-origin`, `same-site`, and `none` (a user-initiated navigation, no
- *      initiator site) are allowed. `cross-site` is rejected.
- *   2. Otherwise the `Origin` header must be in the allowlist (CORS_ORIGINS)
- *      or match the request's own host. A request with neither header is
- *      allowed, since a browser fetch always sends at least one and a
- *      server-to-server client is not a CSRF vector.
+ *      initiator site) are allowed; `cross-site` is rejected.
+ *   3. A request with neither header is allowed, since a browser fetch always
+ *      sends at least one and a server-to-server client is not a CSRF vector.
  *
- * This preserves the legitimate cross-site frontend (its Origin is in
- * CORS_ORIGINS) while blocking a forged `<form>` post from an attacker page,
- * without needing a CSRF token round-trip in the client.
+ * This allows the same-origin frontend while blocking a forged `<form>` post
+ * from an attacker page, without needing a CSRF token round-trip in the client.
  */
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -58,13 +56,11 @@ export function createCsrfMiddleware() {
       });
     };
 
-    // An allowlisted Origin (the legitimate cross-site frontend, listed in
-    // CORS_ORIGINS) or a same-host request is always trusted, regardless of
-    // Sec-Fetch-Site. This must be checked FIRST: the real frontend calls the
-    // API cross-site (localhost -> service1.localhost), so the browser sends
-    // `Sec-Fetch-Site: cross-site`, and blocking purely on that would reject
-    // every legitimate request. It is the Origin allowlist (not the site
-    // relationship) that separates the trusted frontend from an attacker page.
+    // An allowlisted Origin or a same-host request is trusted. With same-origin
+    // routing the app's own calls carry `Origin: <the app host>`, which matches
+    // the request host, so they pass here. The CORS_ORIGINS allowlist still
+    // covers any additional trusted origin. It is the Origin (not the raw site
+    // relationship) that separates a trusted caller from an attacker page.
     const origin = req.headers.origin;
     if (typeof origin === 'string' && origin.length > 0) {
       const normalized = normalizeOrigin(origin);

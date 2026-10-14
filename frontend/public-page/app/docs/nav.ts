@@ -33,7 +33,7 @@ export const DOCS_NAV: DocSection[] = [
       { title: 'Overview', href: '/docs/frontend' },
       { title: 'Design System', href: '/docs/frontend/design-system' },
       { title: 'Internationalisation', href: '/docs/frontend/i18n' },
-      { title: 'The Console', href: '/docs/frontend/console' },
+      { title: 'The App', href: '/docs/frontend/console' },
       { title: 'Calling Backend Services', href: '/docs/frontend/backend-services' },
       { title: 'Writing Docs', href: '/docs/frontend/writing-docs' },
     ],

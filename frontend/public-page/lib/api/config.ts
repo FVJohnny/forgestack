@@ -3,17 +3,18 @@
  * Centralized configuration for API endpoints and settings
  */
 
-// The backend serves everything under the global `api` prefix plus URI
-// version v1, so the fallbacks must include it: a bare host 404s on every
-// call. The env templates all use `.../api/v1` too.
+// Each service is served under a path prefix on the same origin as the
+// frontend (Caddy strips /svc1 and /svc2, so each service still serves
+// /api/v1 internally). The fallbacks include that prefix plus the global `api`
+// prefix and URI version v1. The env templates use the same shape.
 export const API_CONFIG = {
-  baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}`,
+  baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'https://localhost/svc1/api/v1'}`,
   timeout: 10000,
 } as const;
 
-/** Service-2 — the analytics example service. Separate host, same API shape. */
+/** Service-2 — the tasks example service. Same origin, its own path prefix. */
 export const SERVICE2_API_CONFIG = {
-  baseURL: `${process.env.NEXT_PUBLIC_SERVICE2_API_URL || 'http://localhost:3001/api/v1'}`,
+  baseURL: `${process.env.NEXT_PUBLIC_SERVICE2_API_URL || 'https://localhost/svc2/api/v1'}`,
   timeout: 10000,
 } as const;
 
@@ -25,6 +26,7 @@ export const API_ENDPOINTS = {
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh-token',
     ME: '/auth/me',
+    MY_ACTIVITY: '/auth/me/activity',
     GOOGLE: '/auth/google',
     PASSWORD_RESET: '/auth/password-reset',
     PASSWORD_RESET_EXECUTE: '/auth/password-reset/execute',
@@ -36,9 +38,12 @@ export const API_ENDPOINTS = {
   USERS: {
     REGISTER: '/users',
   },
-  DASHBOARD: {
-    EVENTS: '/dashboard/events',
-    HEALTH: '/dashboard/health',
+  // Served by service-2 (use service2ApiClient, not apiClient).
+  TASKS: {
+    LIST: '/tasks',
+    CREATE: '/tasks',
+    COMPLETE: (taskId: string) => `/tasks/${taskId}/complete`,
+    DELETE: (taskId: string) => `/tasks/${taskId}`,
   },
   ADMIN: {
     LIST_USERS: (options?: {
@@ -62,10 +67,5 @@ export const API_ENDPOINTS = {
   },
   MOTD: {
     GET: '/motd',
-  },
-  // Served by service-2 (use service2ApiClient, not apiClient). The browser hits
-  // the JWT-protected dashboard route; /analytics/summary is internal-key only.
-  ANALYTICS: {
-    SUMMARY: '/analytics/dashboard/summary',
   },
 } as const;

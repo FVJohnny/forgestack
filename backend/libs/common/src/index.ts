@@ -2,7 +2,6 @@ export * from './auth';
 export * from './bootstrap';
 export * from './cqrs';
 export * from './errors';
-export * from './event-tracker';
 export * from './general';
 export * from './heartbeat';
 export * from './integration-events';

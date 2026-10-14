@@ -31,7 +31,12 @@ export class RecordUserLogin_CommandHandler extends Base_CommandHandler(RecordUs
       throw new NotFoundException();
     }
 
+    // Apply both mutations to the same in-memory aggregate before saving, so a
+    // single write persists the last-login time and the identity append
+    // together. Splitting these across two commands previously caused a
+    // lost-update race, since save overwrites the whole document.
     user.recordLogin();
+    user.recordIdentity({ ip: command.ip, userAgent: command.userAgent });
 
     await Transaction.run(async (context) => {
       await this.userRepository.save(user, context);

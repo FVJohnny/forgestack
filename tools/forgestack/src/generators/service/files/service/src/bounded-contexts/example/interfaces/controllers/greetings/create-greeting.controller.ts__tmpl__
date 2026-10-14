@@ -1,7 +1,7 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, Inject } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { type ICommandBus } from '@nestjs/cqrs';
-import { COMMAND_BUS } from '@libs/nestjs-common';
+import { COMMAND_BUS, PublicApi } from '@libs/nestjs-common';
 import { CreateGreeting_Command } from '@bc/example/application/commands';
 import { CreateGreeting_ControllerParams } from './create-greeting.params';
 
@@ -10,6 +10,9 @@ import { CreateGreeting_ControllerParams } from './create-greeting.params';
 export class CreateGreeting_Controller {
   constructor(@Inject(COMMAND_BUS) private readonly commandBus: ICommandBus) {}
 
+  // @PublicApi() so this starter route works without a token. The app.module
+  // registers a global JwtAuthGuard, so remove this decorator to require auth.
+  @PublicApi()
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a greeting (starter write endpoint)' })

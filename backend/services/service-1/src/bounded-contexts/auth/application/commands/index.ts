@@ -12,7 +12,5 @@ export * from './delete-email-verification-by-user-id/delete-email-verification-
 export * from './delete-email-verification-by-user-id/delete-email-verification-by-user-id.command-handler';
 export * from './revoke-all-user-tokens/revoke-all-user-tokens.command';
 export * from './revoke-all-user-tokens/revoke-all-user-tokens.command-handler';
-export * from './record-identity/record-identity.command';
-export * from './record-identity/record-identity.command-handler';
 export * from './register-or-link-google-user/register-or-link-google-user.command';
 export * from './register-or-link-google-user/register-or-link-google-user.command-handler';

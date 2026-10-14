@@ -23,8 +23,7 @@ Reusable infrastructure, safe to depend on as-is:
 - `integration-events/` (the base + listener + decorator, **not** the concrete
   events under `events/*.integration-event.ts` — see below)
 - `errors`, `logger`, `metrics`, `tracing` — cross-cutting concerns
-- `circuit-breaker`, `heartbeat`, `security`, `swagger`, `general`, `utils`,
-  `testing`, `event-tracker`
+- `heartbeat`, `security`, `swagger`, `general`, `utils`, `testing`
 
 ### Example / product (replace)
 

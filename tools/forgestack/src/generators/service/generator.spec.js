@@ -37,11 +37,20 @@ describe('service generator', () => {
 
   const caddyfile = [
     '{$PROTOCOL:http}://{$DOMAIN:localhost} {',
-    '    reverse_proxy public-page:3000',
-    '}',
+    '\timport common',
     '',
-    '{$PROTOCOL:http}://grafana.{$DOMAIN:localhost} {',
-    '    reverse_proxy grafana:3000',
+    '\thandle_path /svc1/* {',
+    '\t\treverse_proxy service-1:3000',
+    '\t}',
+    '',
+    '\thandle_path /svc2/* {',
+    '\t\treverse_proxy service-2:3000',
+    '\t}',
+    '',
+    '\t# Everything else is the Next.js frontend.',
+    '\thandle {',
+    '\t\treverse_proxy public-page:3000',
+    '\t}',
     '}',
     '',
   ].join('\n');
@@ -108,7 +117,13 @@ describe('service generator', () => {
     expect(prod).toContain('      - billing\n');
 
     const caddy = tree.read('infra/caddy/Caddyfile', 'utf-8');
+    // The new service is wired as a same-origin path route (/svcbilling), not a
+    // subdomain host, and it is inserted before the frontend catch-all.
+    expect(caddy).toContain('handle_path /svcbilling/* {');
     expect(caddy).toContain('reverse_proxy billing:3000');
+    expect(caddy.indexOf('/svcbilling')).toBeLessThan(
+      caddy.indexOf('# Everything else is the Next.js frontend.'),
+    );
 
     expect(tree.exists('infra/env/billing.env.prod.example')).toBe(true);
     expect(tree.exists('infra/env/billing.env.prod')).toBe(true);

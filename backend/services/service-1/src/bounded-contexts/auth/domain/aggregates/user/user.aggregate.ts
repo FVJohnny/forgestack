@@ -253,7 +253,7 @@ export class User extends SharedAggregate implements UserAttributes {
   }
 
   delete(): void {
-    this.apply(new UserDeleted_DomainEvent(this.id));
+    this.apply(new UserDeleted_DomainEvent(this.id, this.email.toValue()));
     // Revoke the deleted user's tokens immediately. Without this the JWT guard
     // only checks token validity + presence in the store, so a deleted user's
     // access token stays usable until it expires.

@@ -6,7 +6,7 @@ to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Three audit passes of hardening across the stack (the full item-by-item record
+Several audit passes of hardening across the stack (the full item-by-item record
 is in the git history). The notable user-facing changes:
 
 ### Security
@@ -35,6 +35,16 @@ is in the git history). The notable user-facing changes:
 
 ### Changed
 
+- The signed-in frontend is now a simple user-facing app (home with sign-in
+  activity, a tasks list, account, and admin) instead of a developer console;
+  operational stats moved to Grafana. Service-2's example bounded context is
+  now `tasks` (a per-user todo list that consumes the auth user events); the
+  analytics context, the dashboard stats endpoints, and the in-memory event
+  tracker were removed.
+- Every service is served under a path prefix on the frontend's origin
+  (`/svc1`, `/svc2`) instead of a subdomain, so the auth cookies are
+  first-party (`SameSite=Lax`, no `COOKIE_DOMAIN`) and browser login works in
+  dev.
 - Dev now uses the project's Loki config (retention/compactor), matching prod.
 - CI validates the deploy path: compose config, shell syntax, and the
   Prometheus/Loki/Tempo/Promtail/Caddy configs.

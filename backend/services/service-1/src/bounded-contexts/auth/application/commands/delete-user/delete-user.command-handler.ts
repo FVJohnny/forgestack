@@ -31,14 +31,18 @@ export class DeleteUser_CommandHandler extends Base_CommandHandler(DeleteUser_Co
       throw new NotFoundException('User', command.userIdToDelete);
     }
 
-    // Call the delete method on the aggregate to emit domain event
+    // Call the delete method on the aggregate to emit the domain event. The
+    // event carries the email, so the publish handler does not re-read the user.
     userToDelete.delete();
+
+    // Remove the user first, then publish. If publishing came first and the
+    // remove failed, downstream services would already have been told the user
+    // was deleted while the row still existed. Removing first means the
+    // integration event is only emitted once the row is actually gone.
+    await this.userRepository.remove(userToDelete.id);
 
     // Send domain events (including UserDeleted_DomainEvent) to trigger cascade deletion
     await this.sendDomainEvents(userToDelete);
-
-    // Actually remove the user from the database (FULL deletion, not soft delete)
-    await this.userRepository.remove(userToDelete.id);
 
     this.logger.log(
       `User ${command.userIdToDelete} permanently deleted by ${command.requesterUserId}`,

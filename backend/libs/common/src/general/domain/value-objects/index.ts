@@ -1,5 +1,4 @@
 export * from './base.vo';
-export * from './bool.vo';
 export * from './enum.vo';
 export * from './string.vo';
 export * from './timestamps.vo';

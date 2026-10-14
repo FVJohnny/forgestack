@@ -72,6 +72,22 @@ jobs:
           cp frontend/public-page/.env.local.example frontend/public-page/.env.local
           cp infra/monitoring/prometheus/internal-api-key.example infra/monitoring/prometheus/internal-api-key
 
+      # Prometheus authenticates its scrape with the internal-api-key file, and
+      # the services default to the same value in their .env.example. If the two
+      # drift, scraping 401s and every NestJS dashboard goes empty with no error
+      # surfaced. Assert they stay in sync so an edit to one and not the other
+      # fails CI instead of being discovered by an empty dashboard.
+      - name: Check internal-api-key stays in sync with the service examples
+        run: |
+          key=$(cat infra/monitoring/prometheus/internal-api-key.example)
+          for f in backend/services/*/.env.example; do
+            svc_key=$(grep -E '^INTERNAL_API_KEY=' "$f" | cut -d= -f2-)
+            if [ "$svc_key" != "$key" ]; then
+              echo "INTERNAL_API_KEY in $f ($svc_key) does not match the Prometheus internal-api-key.example ($key)." >&2
+              exit 1
+            fi
+          done
+
       - name: Validate compose files
         run: |
           docker compose -f infra/compose/docker-compose.dev.yml config -q
@@ -111,6 +127,45 @@ jobs:
           -v "$PWD/infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
           -v "$PWD/infra/caddy/dev-only:/etc/caddy/extra:ro"
           caddy:2.8-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+  # Smoke-build the Docker images the deploy path pushes. The multi-stage image
+  # build (npm ci from copied package.jsons, nx build inside the image, npm
+  # prune, the pnpm frontend build) is materially different from the plain
+  # `nx build` the static job runs, so a passing static build does not prove the
+  # image builds. Build one NestJS service and the frontend, no push, so a broken
+  # Dockerfile or COPY path fails CI instead of being found mid-deploy.
+  images:
+    name: Docker image build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build a NestJS service image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/dockerfiles/Dockerfile.nestjs-service
+          build-args: SERVICE_NAME=service-1
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The frontend Dockerfile requires the real prod env file at build time, so
+      # stand one in from the committed example (only NEXT_PUBLIC_* values, all
+      # non-secret and baked into the client bundle by design).
+      - name: Stage the frontend prod env from the example
+        run: cp infra/env/public-page.env.prod.example infra/env/public-page.env.prod
+
+      - name: Build the frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/public-page/Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   # The mongodb/redis lib tests hit real datastores, so stand them up first.
   test:

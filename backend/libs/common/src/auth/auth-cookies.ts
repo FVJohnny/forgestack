@@ -23,34 +23,23 @@ function baseCookieOptions() {
   return {
     httpOnly: true,
     // Both dev and prod serve everything over HTTPS through Caddy, so Secure is
-    // always valid. It is also REQUIRED here: SameSite=None cookies are
-    // rejected by browsers unless Secure is set.
+    // always valid.
     secure: true,
-    // The frontend (e.g. https://localhost, https://app.example.com) and the
-    // API (https://service1.localhost, https://service1.example.com) are on
-    // DIFFERENT hosts, so a fetch from the app to the API is cross-site. With
-    // SameSite=Lax the browser would not attach these cookies to that fetch
-    // (Lax only covers top-level navigations), which made login succeed but
-    // the follow-up /auth/me get a 401. SameSite=None lets the cookies ride
-    // cross-site requests.
+    // The frontend and both APIs are served under path prefixes on the SAME
+    // origin (Caddy routes https://<host>/svc1/* to service-1, /svc2/* to
+    // service-2, everything else to the frontend). A fetch from the app to the
+    // API is therefore same-origin, so SameSite=Lax attaches the cookies on its
+    // own and no shared parent Domain is needed. This also avoids the dev trap
+    // where a cross-site setup needed Domain=.localhost, which every browser
+    // rejects as an invalid cookie domain.
     //
-    // SameSite=None means the browser also attaches these cookies to requests a
-    // malicious page forges, so SameSite is NOT a CSRF defense here (and
-    // httpOnly is irrelevant to CSRF: a forged request never reads the cookie,
-    // the browser sends it automatically). CSRF is instead handled by the
-    // Sec-Fetch-Site / Origin check in csrf.middleware.ts, which rejects
-    // cross-site state-changing requests while allowing the legitimate
-    // cross-site frontend (its Origin is in CORS_ORIGINS).
-    sameSite: 'none' as const,
+    // Lax means the browser will not attach these cookies to a cross-site
+    // request a malicious page forges, so it is a real (if secondary) CSRF
+    // defense on top of the Sec-Fetch-Site / Origin check in csrf.middleware.ts.
+    sameSite: 'lax' as const,
     path: '/',
-    // Scope the cookie to a parent domain so every API subdomain receives it,
-    // not just the one that set it. The dev-console dashboard reads service-1
-    // (service1.localhost) AND service-2 (service2.localhost); without a shared
-    // Domain the cookie is host-only to service-1 and service-2's JWT-protected
-    // routes never see it. Set COOKIE_DOMAIN to the common parent, e.g.
-    // ".localhost" in dev or ".example.com" in prod. Leave it unset to keep the
-    // cookie host-only (single-API deployments do not need it).
-    ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
+    // Host-only cookie: no Domain attribute. Same-origin routing means the one
+    // host that sets the cookie is the same host every API call goes to.
   };
 }
 

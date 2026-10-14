@@ -14,8 +14,5 @@ export * from './listener/base.integration-event-listener';
 // Events
 export * from './events';
 
-// Event Tracking
-export * from '../event-tracker/event-tracker.service';
-
 // Modules
 export * from './in-memory-integration-events.module';

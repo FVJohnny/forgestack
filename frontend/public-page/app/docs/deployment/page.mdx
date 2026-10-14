@@ -39,10 +39,12 @@ provisions Let's Encrypt certificates automatically.
 
 {$PROTOCOL:http}://{$DOMAIN:localhost} {
   import tls-{$TLS_ENV:dev}
-  reverse_proxy public-page:3000
+  import common
+  handle_path /svc1/* { reverse_proxy service-1:3000 }
+  handle_path /svc2/* { reverse_proxy service-2:3000 }
+  handle { reverse_proxy public-page:3000 }
 }
-{$PROTOCOL:http}://service1.{$DOMAIN:localhost} { import tls-{$TLS_ENV:dev}; reverse_proxy service-1:3000 }
-{$PROTOCOL:http}://grafana.{$DOMAIN:localhost}  { import tls-{$TLS_ENV:dev}; reverse_proxy grafana:3000 }
+{$PROTOCOL:http}://grafana.{$DOMAIN:localhost} { import tls-{$TLS_ENV:dev}; reverse_proxy grafana:3000 }
 
 # Dev-only sites (e.g. mongo.<domain> for Mongo Express) load from
 # infra/caddy/dev-only/, mounted at /etc/caddy/extra in the dev compose.
@@ -50,14 +52,15 @@ provisions Let's Encrypt certificates automatically.
 import /etc/caddy/extra/*.caddy
 ```
 
-Subdomains route to each browser-facing service: the app on the root domain, the
-API on `service1.`, dashboards on `grafana.`, and in dev the DB viewer on
-`mongo.`.
+Everything the browser touches is served on one origin: the app at the root, and
+each service under a path prefix (`/svc1`, `/svc2`, ...) that Caddy strips before
+proxying, so each service still serves its own `/api/v1`. This keeps the auth
+cookies first-party. Operator surfaces like Grafana keep their own subdomain.
 
 <Callout type="tip" title="The *.localhost dev domain">
   Browsers resolve any <code>*.localhost</code> name to 127.0.0.1 with no
-  <code>/etc/hosts</code> edits, so <code>grafana.localhost</code> and
-  <code>service1.localhost</code> work out of the box in dev. Trust Caddy's local
+  <code>/etc/hosts</code> edits, so <code>localhost</code> and
+  <code>grafana.localhost</code> work out of the box in dev. Trust Caddy's local
   CA once and everything is HTTPS locally.
 </Callout>
 
@@ -107,7 +110,7 @@ DOCKER_REGISTRY=docker.io/your-username
 # service-1.env.prod (excerpt)
 JWT_SECRET=...                 # required
 JWT_REFRESH_SECRET=...         # required (distinct from JWT_SECRET)
-MONGODB_URI=mongodb://mongodb:27017/app?replicaSet=rs0
+MONGODB_URI=mongodb://admin:your-mongo-password@mongodb:27017/app?replicaSet=rs0&authSource=admin
 KAFKA_BROKERS=kafka:9092
 OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
 ```

@@ -130,8 +130,8 @@
       "backToHome": "Back to home"
     },
     "auth": {
-      "panelKicker": "the developer console",
-      "panelTitle": "Operate your services from one forge-lit cockpit",
+      "panelKicker": "welcome to",
+      "panelTitle": "The starting point for your next product",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Secure session · token refresh · role-based access",
       "backToHome": "Back to home",
@@ -139,47 +139,40 @@
     },
     "nav": {
       "overview": "Overview",
+      "tasks": "Tasks",
       "account": "Account",
       "admin": "Admin",
-      "sectionMain": "Console",
+      "sectionMain": "Menu",
       "logout": "Log out",
       "env": "env"
     },
     "dashboard": {
-      "title": "System Overview",
-      "subtitle": "Live health and event flow across the service.",
-      "live": "live",
-      "refreshedAt": "synced {time}",
-      "health": {
-        "title": "System Health",
-        "ready": "Ready",
-        "notReady": "Not ready",
-        "service": "service",
-        "environment": "env",
-        "noChecks": "No health checks reported.",
-        "loadError": "Could not load health status."
+      "title": "Home",
+      "welcome": "Welcome back, {email}",
+      "subtitle": "Your account at a glance.",
+      "quickLinks": {
+        "tasks": {
+          "title": "Tasks",
+          "description": "Your personal todo list, served by the second service."
+        },
+        "account": {
+          "title": "Account",
+          "description": "Profile details and password."
+        },
+        "admin": {
+          "title": "Admin",
+          "description": "Manage users and the public notice."
+        }
       },
-      "events": {
-        "title": "Event Throughput",
-        "totalProcessed": "Total events processed",
-        "byType": "By event type",
-        "topic": "topic",
-        "success": "ok",
-        "failure": "err",
-        "lastProcessed": "last",
-        "none": "No events processed yet.",
-        "loadError": "Could not load event data.",
-        "never": "never"
-      },
-      "analytics": {
-        "title": "User Activity",
-        "total": "total activities",
-        "byType": "by event type",
-        "lastActivity": "last activity",
+      "activity": {
+        "title": "Recent sign-in activity",
+        "lastLogin": "Last sign-in",
         "never": "never",
-        "none": "No activity yet — register a user and watch the events flow.",
-        "loadError": "Couldn't reach service-2.",
-        "source": "fed by Kafka events"
+        "ips": "Known IP addresses",
+        "devices": "Devices",
+        "lastSeen": "last seen",
+        "empty": "Nothing recorded yet.",
+        "loadError": "Could not load sign-in activity."
       },
       "account": {
         "title": "Your Account",
@@ -189,6 +182,23 @@
       },
       "motd": {
         "label": "Notice"
+      }
+    },
+    "tasks": {
+      "title": "Tasks",
+      "subtitle": "A simple todo list to make your own.",
+      "placeholder": "What needs doing?",
+      "add": "Add",
+      "listTitle": "Your tasks",
+      "remaining": "{count} open",
+      "complete": "Mark as done",
+      "delete": "Delete task",
+      "empty": "No tasks yet. Add your first one above.",
+      "loadError": "Could not load your tasks.",
+      "toast": {
+        "createFailed": "Could not create the task.",
+        "completeFailed": "Could not complete the task.",
+        "deleteFailed": "Could not delete the task."
       }
     },
     "account": {
@@ -263,7 +273,7 @@
       "motd": {
         "title": "Message of the Day",
         "label": "Notice content",
-        "placeholder": "Shown to every user on the console…",
+        "placeholder": "Shown to every signed-in user…",
         "save": "Save notice",
         "saving": "Saving…",
         "clear": "Clear",

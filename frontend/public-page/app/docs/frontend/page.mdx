@@ -3,7 +3,7 @@
 The frontend is a **Next.js 16 / React 19** app (`frontend/public-page`) using
 the App Router, Tailwind CSS v4, next-intl for localisation, and a small
 design-system of shared primitives. It serves the public landing page, the
-authentication flows, the authenticated console, and these docs.
+authentication flows, the signed-in app, and these docs.
 
 ## App Router structure
 
@@ -12,10 +12,10 @@ app/
 ├── layout.tsx          root layout — fonts, i18n provider, auth providers
 ├── page.tsx            landing
 ├── login/  register/  forgot-password/  reset-password/  verify-email/
-├── dashboard/          authenticated console (own layout: sidebar + topbar)
+├── dashboard/          the signed-in app (own layout: sidebar + topbar)
 │   ├── layout.tsx
-│   ├── page.tsx        overview
-│   ├── account/  admin/
+│   ├── page.tsx        home
+│   ├── tasks/  account/  admin/
 ├── docs/               this documentation (MDX)
 └── shared/
     ├── ui/             design-system primitives
@@ -35,8 +35,8 @@ Each page covers one part of the frontend:
    drive all styling, and the shared UI primitives built on them.
 2. **[Internationalisation](/docs/frontend/i18n)**: how the eight locales
    work and how components consume translations.
-3. **[The Console](/docs/frontend/console)**: the authenticated dashboard
-   and how it is protected.
+3. **[The App](/docs/frontend/console)**: the signed-in pages (home, tasks,
+   account, admin) and how they are protected.
 4. **[Calling Backend Services](/docs/frontend/backend-services)**: the API
    client layer and the steps to wire a new service in.
 5. **[Writing Docs](/docs/frontend/writing-docs)**: how these MDX pages are

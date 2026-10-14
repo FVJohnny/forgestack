@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { LayoutDashboard, UserCog, ShieldHalf, LogOut, X } from 'lucide-react';
+import { LayoutDashboard, ListTodo, UserCog, ShieldHalf, LogOut, X } from 'lucide-react';
 import { Wordmark } from '@/app/shared/ui/wordmark';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { useUser } from '@/lib/contexts/user-context';
@@ -18,6 +18,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: '/dashboard', labelKey: 'overview', Icon: LayoutDashboard },
+  { href: '/dashboard/tasks', labelKey: 'tasks', Icon: ListTodo },
   { href: '/dashboard/account', labelKey: 'account', Icon: UserCog },
   { href: '/dashboard/admin', labelKey: 'admin', Icon: ShieldHalf, adminOnly: true },
 ];

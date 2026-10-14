@@ -130,8 +130,8 @@
       "backToHome": "Retour à l'accueil"
     },
     "auth": {
-      "panelKicker": "la console développeur",
-      "panelTitle": "Pilotez vos services depuis un cockpit unique aux reflets de forge",
+      "panelKicker": "bienvenue sur",
+      "panelTitle": "Le point de départ de votre prochain produit",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Session sécurisée · rafraîchissement du token · accès basé sur les rôles",
       "backToHome": "Retour à l'accueil",
@@ -139,47 +139,40 @@
     },
     "nav": {
       "overview": "Vue d'ensemble",
+      "tasks": "Tâches",
       "account": "Compte",
       "admin": "Admin",
-      "sectionMain": "Console",
+      "sectionMain": "Menu",
       "logout": "Se déconnecter",
       "env": "env"
     },
     "dashboard": {
-      "title": "Vue d'ensemble du système",
-      "subtitle": "Santé en direct et flux d'événements à travers le service.",
-      "live": "en direct",
-      "refreshedAt": "synchronisé {time}",
-      "health": {
-        "title": "Santé du système",
-        "ready": "Prêt",
-        "notReady": "Non prêt",
-        "service": "service",
-        "environment": "env",
-        "noChecks": "Aucun contrôle de santé signalé.",
-        "loadError": "Impossible de charger l'état de santé."
+      "title": "Accueil",
+      "welcome": "Bon retour, {email}",
+      "subtitle": "Votre compte en un coup d’œil.",
+      "quickLinks": {
+        "tasks": {
+          "title": "Tâches",
+          "description": "Votre liste de tâches personnelle, servie par le second service."
+        },
+        "account": {
+          "title": "Compte",
+          "description": "Informations du profil et mot de passe."
+        },
+        "admin": {
+          "title": "Administration",
+          "description": "Gérez les utilisateurs et l’avis public."
+        }
       },
-      "events": {
-        "title": "Débit d'événements",
-        "totalProcessed": "Total d'événements traités",
-        "byType": "Par type d'événement",
-        "topic": "topic",
-        "success": "ok",
-        "failure": "err",
-        "lastProcessed": "dernier",
-        "none": "Aucun événement traité pour l'instant.",
-        "loadError": "Impossible de charger les données d'événements.",
-        "never": "jamais"
-      },
-      "analytics": {
-        "title": "Activité utilisateurs",
-        "total": "activités totales",
-        "byType": "par type d'événement",
-        "lastActivity": "dernière activité",
+      "activity": {
+        "title": "Activité de connexion récente",
+        "lastLogin": "Dernière connexion",
         "never": "jamais",
-        "none": "Pas encore d'activité — inscrivez un utilisateur et observez le flux d'événements.",
-        "loadError": "Impossible de joindre service-2.",
-        "source": "alimenté par les événements Kafka"
+        "ips": "Adresses IP connues",
+        "devices": "Appareils",
+        "lastSeen": "vu pour la dernière fois",
+        "empty": "Rien d’enregistré pour l’instant.",
+        "loadError": "Impossible de charger l’activité de connexion."
       },
       "account": {
         "title": "Votre compte",
@@ -189,6 +182,23 @@
       },
       "motd": {
         "label": "Avis"
+      }
+    },
+    "tasks": {
+      "title": "Tâches",
+      "subtitle": "Une liste de tâches simple à personnaliser.",
+      "placeholder": "Que faut-il faire ?",
+      "add": "Ajouter",
+      "listTitle": "Vos tâches",
+      "remaining": "{count} en cours",
+      "complete": "Marquer comme terminée",
+      "delete": "Supprimer la tâche",
+      "empty": "Aucune tâche pour l’instant. Ajoutez la première ci-dessus.",
+      "loadError": "Impossible de charger vos tâches.",
+      "toast": {
+        "createFailed": "Impossible de créer la tâche.",
+        "completeFailed": "Impossible de terminer la tâche.",
+        "deleteFailed": "Impossible de supprimer la tâche."
       }
     },
     "account": {
@@ -263,7 +273,7 @@
       "motd": {
         "title": "Message du jour",
         "label": "Contenu de l'avis",
-        "placeholder": "Affiché à chaque utilisateur sur la console…",
+        "placeholder": "Affiché à tous les utilisateurs connectés…",
         "save": "Enregistrer l'avis",
         "saving": "Enregistrement…",
         "clear": "Effacer",

@@ -21,7 +21,7 @@ describe('UserDeleted_DeleteEmailVerification_DomainEventHandler', () => {
     const { handler, executed } = setup();
     const userId = Id.random();
 
-    await handler.handle(new UserDeleted_DomainEvent(userId));
+    await handler.handle(new UserDeleted_DomainEvent(userId, 'deleted@example.com'));
 
     expect(executed).toHaveLength(1);
     const cmd = executed[0] as DeleteEmailVerificationByUserId_Command;

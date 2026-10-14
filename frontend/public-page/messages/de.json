@@ -130,8 +130,8 @@
       "backToHome": "Zurück zur Startseite"
     },
     "auth": {
-      "panelKicker": "die Entwicklerkonsole",
-      "panelTitle": "Steuere deine Services aus einem schmiedeglühenden Cockpit",
+      "panelKicker": "willkommen bei",
+      "panelTitle": "Der Ausgangspunkt für dein nächstes Produkt",
       "panelStack": ["DDD", "CQRS", "Kafka", "OpenTelemetry", "JWT", "Hexagonal"],
       "panelFootnote": "Sichere Sitzung · Token-Refresh · rollenbasierter Zugriff",
       "backToHome": "Zurück zur Startseite",
@@ -139,47 +139,40 @@
     },
     "nav": {
       "overview": "Übersicht",
+      "tasks": "Aufgaben",
       "account": "Konto",
       "admin": "Admin",
-      "sectionMain": "Konsole",
+      "sectionMain": "Menü",
       "logout": "Abmelden",
       "env": "Umg."
     },
     "dashboard": {
-      "title": "Systemübersicht",
-      "subtitle": "Live-Zustand und Ereignisfluss über den Dienst hinweg.",
-      "live": "live",
-      "refreshedAt": "synchronisiert {time}",
-      "health": {
-        "title": "Systemzustand",
-        "ready": "Bereit",
-        "notReady": "Nicht bereit",
-        "service": "Dienst",
-        "environment": "Umg.",
-        "noChecks": "Keine Health-Checks gemeldet.",
-        "loadError": "Zustandsstatus konnte nicht geladen werden."
+      "title": "Startseite",
+      "welcome": "Willkommen zurück, {email}",
+      "subtitle": "Dein Konto auf einen Blick.",
+      "quickLinks": {
+        "tasks": {
+          "title": "Aufgaben",
+          "description": "Deine persönliche Aufgabenliste, bereitgestellt vom zweiten Service."
+        },
+        "account": {
+          "title": "Konto",
+          "description": "Profildaten und Passwort."
+        },
+        "admin": {
+          "title": "Verwaltung",
+          "description": "Benutzer und den öffentlichen Hinweis verwalten."
+        }
       },
-      "events": {
-        "title": "Ereignisdurchsatz",
-        "totalProcessed": "Verarbeitete Ereignisse insgesamt",
-        "byType": "Nach Ereignistyp",
-        "topic": "Topic",
-        "success": "ok",
-        "failure": "Fehler",
-        "lastProcessed": "zuletzt",
-        "none": "Noch keine Ereignisse verarbeitet.",
-        "loadError": "Ereignisdaten konnten nicht geladen werden.",
-        "never": "nie"
-      },
-      "analytics": {
-        "title": "Nutzeraktivität",
-        "total": "Aktivitäten gesamt",
-        "byType": "nach Ereignistyp",
-        "lastActivity": "letzte Aktivität",
+      "activity": {
+        "title": "Letzte Anmeldeaktivität",
+        "lastLogin": "Letzte Anmeldung",
         "never": "nie",
-        "none": "Noch keine Aktivität – registriere einen Nutzer und beobachte den Ereignisfluss.",
-        "loadError": "service-2 nicht erreichbar.",
-        "source": "gespeist aus Kafka-Events"
+        "ips": "Bekannte IP-Adressen",
+        "devices": "Geräte",
+        "lastSeen": "zuletzt gesehen",
+        "empty": "Noch nichts aufgezeichnet.",
+        "loadError": "Anmeldeaktivität konnte nicht geladen werden."
       },
       "account": {
         "title": "Dein Konto",
@@ -189,6 +182,23 @@
       },
       "motd": {
         "label": "Hinweis"
+      }
+    },
+    "tasks": {
+      "title": "Aufgaben",
+      "subtitle": "Eine einfache Aufgabenliste zum Anpassen.",
+      "placeholder": "Was ist zu tun?",
+      "add": "Hinzufügen",
+      "listTitle": "Deine Aufgaben",
+      "remaining": "{count} offen",
+      "complete": "Als erledigt markieren",
+      "delete": "Aufgabe löschen",
+      "empty": "Noch keine Aufgaben. Füge oben die erste hinzu.",
+      "loadError": "Deine Aufgaben konnten nicht geladen werden.",
+      "toast": {
+        "createFailed": "Aufgabe konnte nicht erstellt werden.",
+        "completeFailed": "Aufgabe konnte nicht abgeschlossen werden.",
+        "deleteFailed": "Aufgabe konnte nicht gelöscht werden."
       }
     },
     "account": {
@@ -263,7 +273,7 @@
       "motd": {
         "title": "Nachricht des Tages",
         "label": "Hinweisinhalt",
-        "placeholder": "Wird jedem Benutzer in der Konsole angezeigt…",
+        "placeholder": "Wird jedem angemeldeten Benutzer angezeigt…",
         "save": "Hinweis speichern",
         "saving": "Wird gespeichert…",
         "clear": "Löschen",

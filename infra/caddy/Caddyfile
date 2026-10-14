@@ -48,27 +48,37 @@
 {$PROTOCOL:http}://{$DOMAIN:localhost} {
 	import tls-{$TLS_ENV:dev}
 	import common
-	reverse_proxy public-page:3000 {
-		transport http {
-			dial_timeout 5s
-			response_header_timeout 30s
-			max_conns_per_host 0
-			keepalive 90s
-			keepalive_idle_conns 32
+
+	# Same-origin API routing. The backend services are served under path
+	# prefixes on the SAME origin as the frontend, so the browser's auth cookies
+	# are first-party (host-only, SameSite=Lax) and just work. A separate
+	# service<N>.$DOMAIN host would be cross-site to the frontend, which forces
+	# SameSite=None cookies; those are rejected outright in dev because
+	# `Domain=.localhost` is an invalid cookie domain in every browser.
+	#
+	# handle_path strips the matched prefix before proxying, so each service
+	# still serves its own /api/v1/* internally. Each service gets its own
+	# prefix (/svc1, /svc2, ...); the generator adds one per new service.
+	handle_path /svc1/* {
+		reverse_proxy service-1:3000
+	}
+
+	handle_path /svc2/* {
+		reverse_proxy service-2:3000
+	}
+
+	# Everything else is the Next.js frontend.
+	handle {
+		reverse_proxy public-page:3000 {
+			transport http {
+				dial_timeout 5s
+				response_header_timeout 30s
+				max_conns_per_host 0
+				keepalive 90s
+				keepalive_idle_conns 32
+			}
 		}
 	}
-}
-
-{$PROTOCOL:http}://service1.{$DOMAIN:localhost} {
-	import tls-{$TLS_ENV:dev}
-	import common
-	reverse_proxy service-1:3000
-}
-
-{$PROTOCOL:http}://service2.{$DOMAIN:localhost} {
-	import tls-{$TLS_ENV:dev}
-	import common
-	reverse_proxy service-2:3000
 }
 
 {$PROTOCOL:http}://grafana.{$DOMAIN:localhost} {

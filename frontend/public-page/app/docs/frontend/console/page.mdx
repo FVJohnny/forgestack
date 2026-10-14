@@ -1,22 +1,27 @@
-# The Console
+# The App
 
 `app/dashboard` is the authenticated area, guarded client-side by
-`ProtectedRoute` and server-validated by the backend's `JwtAuthGuard`. It reads
-live system data (health and event throughput) from the backend's
-JWT-protected `/dashboard` endpoints and renders it with the shared primitives
-(stat tiles, status dots, tables).
+`ProtectedRoute` and server-validated by the backend's `JwtAuthGuard`. It is a
+deliberately simple user-facing app for you to expand into your own product.
+Operational statistics are not shown here: metrics, logs, and traces live in
+Grafana (see [Monitoring](/docs/monitoring)).
 
-The console is composed of panels in `app/dashboard/components/`:
+The app is composed of pages under `app/dashboard/`:
 
-- **`health-panel`**: per-service health, fed by the backend health endpoints.
-- **`events-panel`**: event throughput flowing through Kafka.
-- **`analytics-panel`**: the worked example of calling a second backend
-  service (see [Calling Backend Services](/docs/frontend/backend-services)).
-- **`motd-banner`**: the message of the day, editable by admins.
-- **`sidebar` / `topbar`**: the authenticated chrome added by the dashboard
-  layout.
+- **Home** (`page.tsx`): a welcome header, the message-of-the-day banner, quick
+  links, an account summary, and the user's recent sign-in activity (last
+  login, known IPs, and devices) read from the JWT-protected
+  `/auth/me/activity` endpoint.
+- **Tasks** (`tasks/page.tsx`): a personal todo list, the worked example of
+  calling a second backend service (see
+  [Calling Backend Services](/docs/frontend/backend-services)). Create,
+  complete, and delete tasks; each request carries the auth cookie and the
+  backend enforces ownership.
+- **Account** (`account/page.tsx`): profile details and password change.
+- **Admin** (`admin/page.tsx`, admins only): user management (list, filter,
+  suspend, delete) and the message-of-the-day editor.
 
-Admins additionally get user management (list, search, suspend, delete) and
-the message-of-the-day editor under `app/dashboard/admin/`.
+Shared chrome lives in `app/dashboard/components/` (`sidebar`, `topbar`,
+`page-header`, `motd-banner`, `account-mini-card`).
 
 Next: **[Calling Backend Services](/docs/frontend/backend-services)**.

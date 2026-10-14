@@ -11,7 +11,7 @@ import {
   CorrelationLogger,
 } from '@libs/nestjs-common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { RecordIdentity_Command, RecordUserLogin_Command } from '@bc/auth/application/commands';
+import { RecordUserLogin_Command } from '@bc/auth/application/commands';
 import { GetNewTokensFromUserCredentials_Query } from '@bc/auth/application/queries';
 import { LoginUser_ControllerParams } from './login-user.params';
 import { LoginUser_ResponseDto } from './login-user.controller-response';
@@ -59,22 +59,17 @@ export class LoginUser_Controller {
 
     // Record login without blocking the response (last-login tracking is not
     // critical), but attach a catch so a failure is logged instead of becoming
-    // an unhandled promise rejection.
-    const recordLoginCommand = new RecordUserLogin_Command({ userId });
+    // an unhandled promise rejection. One command records the last-login time
+    // and the login IP/User-Agent together, so the two updates cannot clobber
+    // each other. req.ip honors the app-level 'trust proxy' setting (see
+    // configureApp), so clients cannot spoof it with X-Forwarded-For.
+    const recordLoginCommand = new RecordUserLogin_Command({
+      userId,
+      ip: req.ip ?? 'unknown',
+      userAgent: req.headers['user-agent'],
+    });
     void this.commandBus.execute(recordLoginCommand).catch((error) => {
       this.logger.error(`Failed to record login for user ${userId}`, error as Error);
-    });
-
-    // Record the login IP and User-Agent on the user (fire-and-forget, like
-    // last-login tracking). req.ip honors the app-level 'trust proxy' setting
-    // (see configureApp), so clients cannot spoof it with X-Forwarded-For.
-    const recordIdentityCommand = new RecordIdentity_Command(
-      userId,
-      req.ip ?? 'unknown',
-      req.headers['user-agent'],
-    );
-    void this.commandBus.execute(recordIdentityCommand).catch((error) => {
-      this.logger.error(`Failed to record identity for user ${userId}`, error as Error);
     });
 
     // Deliver tokens as httpOnly cookies; the body carries only the user id.

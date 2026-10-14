@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ExampleBoundedContextModule } from './bounded-contexts/example/example.module';
@@ -6,10 +7,10 @@ import {
   HeartbeatModule,
   TracingModule,
   ErrorHandlingModule,
-  EventTrackerModule,
   SharedCqrsModule,
   InboxModule,
   ApiRateLimitModule,
+  JwtAuthGuard,
 } from '@libs/nestjs-common';
 import { MetricsModule, JwtAuthModule } from '@libs/nestjs-common';
 import { OutboxModule } from '@libs/nestjs-common';
@@ -51,7 +52,6 @@ import { KafkaIntegrationEventsModule } from '@libs/nestjs-kafka';
     ErrorHandlingModule,
     MetricsModule,
     JwtAuthModule,
-    EventTrackerModule,
     // Rate limits are stored in Redis so they hold across all instances.
     ApiRateLimitModule.forRoot(
       { '1minute': { type: 'ip', limit: 100 } },
@@ -60,6 +60,15 @@ import { KafkaIntegrationEventsModule } from '@libs/nestjs-kafka';
 
     // BOUNDED CONTEXTS
     ExampleBoundedContextModule,
+  ],
+  providers: [
+    // Secure by default: every route requires a valid session unless it is
+    // explicitly marked @Public()/@PublicApi(). This closes the gap where a
+    // controller that simply forgot @UseGuards(JwtAuthGuard) would ship as a
+    // public endpoint. The starter greetings routes are marked @PublicApi() on
+    // purpose so the fresh service is runnable; drop that decorator to require
+    // auth, or add an AdminRoleGuard for admin-only routes.
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })
 export class AppModule {}

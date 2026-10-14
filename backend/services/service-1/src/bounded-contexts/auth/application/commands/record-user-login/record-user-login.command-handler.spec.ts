@@ -14,8 +14,12 @@ import {
 } from '@libs/nestjs-common';
 
 describe('RecordUserLoginCommandHandler', () => {
-  const createCommand = (overrides: { userId?: string } = {}) =>
-    new RecordUserLogin_Command({ userId: overrides.userId || Id.random().toValue() });
+  const createCommand = (overrides: { userId?: string; ip?: string; userAgent?: string } = {}) =>
+    new RecordUserLogin_Command({
+      userId: overrides.userId || Id.random().toValue(),
+      ip: overrides.ip,
+      userAgent: overrides.userAgent,
+    });
 
   const setup = async (
     params: {
@@ -59,6 +63,26 @@ describe('RecordUserLoginCommandHandler', () => {
       expect(updatedUser!.lastLogin.isNever()).toBe(false);
       expect(updatedUser!.lastLogin.isAfter(beforeLogin)).toBe(true);
       expect(updatedUser!.lastLogin.isBefore(afterLogin)).toBe(true);
+    });
+
+    it('should record the login IP and User-Agent together with the login time', async () => {
+      // Arrange
+      const { handler, user, repository } = await setup({ withUser: true });
+      const command = createCommand({
+        userId: user!.id.toValue(),
+        ip: '203.0.113.7',
+        userAgent: 'curl/8.7.1',
+      });
+
+      // Act
+      await handler.execute(command);
+
+      // Assert - both the last-login time and the identity append persist from
+      // the single save, so neither clobbers the other.
+      const updatedUser = await repository.findById(user!.id);
+      expect(updatedUser!.lastLogin.isNever()).toBe(false);
+      expect(updatedUser!.ips.map((entry) => entry.value)).toContain('203.0.113.7');
+      expect(updatedUser!.userAgents.map((entry) => entry.value)).toContain('curl/8.7.1');
     });
 
     it('should handle multiple logins for the same user', async () => {

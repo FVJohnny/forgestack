@@ -26,7 +26,6 @@ x-nestjs-service: &nestjs-service
       condition: service_started
 
 services:
-
   # ==========================================================================
   # APP SERVICES
   # ==========================================================================
@@ -97,6 +96,7 @@ services:
       - backend
     depends_on:
       - service-1
+      - service-2
       - public-page
       - grafana
       - mongo-express
@@ -120,7 +120,11 @@ services:
       # expose Mongo (default creds admin/password) to anyone who can reach it.
       - '127.0.0.1:27017:27017'
     healthcheck:
-      test: ['CMD-SHELL', "mongosh -u admin -p password --authenticationDatabase admin --eval 'rs.status().ok' | grep -q 1"]
+      test:
+        [
+          'CMD-SHELL',
+          "mongosh -u admin -p password --authenticationDatabase admin --eval 'rs.status().ok' | grep -q 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 5

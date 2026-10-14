@@ -1,7 +1,7 @@
 # Make It Yours
 
 This template ships as a working demo (the `auth` and `notifications` contexts,
-an `analytics` service, and a `public-page` frontend). Here is how to turn it
+a `tasks` service, and a `public-page` frontend). Here is how to turn it
 into your own product.
 
 ## 1. Rebrand
@@ -22,9 +22,10 @@ Local dev uses `localhost` hostnames behind Caddy with a local CA. For
 production, set your real domain and registry in `infra/env/infra.env.prod`
 (copy it from `infra.env.prod.example`):
 
-- `DOMAIN` is your apex domain. Caddy serves the app at `DOMAIN` and each
-  service at `service1.DOMAIN`, `service2.DOMAIN`, and so on, with automatic
-  Let's Encrypt certificates.
+- `DOMAIN` is your apex domain. Caddy serves everything on that one origin: the
+  app at `DOMAIN` and each service under a path prefix (`DOMAIN/svc1`,
+  `DOMAIN/svc2`, and so on), with automatic Let's Encrypt certificates. Same-origin
+  routing keeps the auth cookies first-party.
 - `DOCKER_REGISTRY` is where built images are pushed and pulled
   (for example `docker.io/your-username`).
 - Fill in the database, Redis, Grafana, and `CADDY_BASIC_AUTH_HASH` secrets in

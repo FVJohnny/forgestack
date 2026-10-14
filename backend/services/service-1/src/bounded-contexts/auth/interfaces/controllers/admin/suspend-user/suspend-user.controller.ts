@@ -5,6 +5,7 @@ import {
   HttpStatus,
   UseGuards,
   Param,
+  ParseUUIDPipe,
   Req,
   Inject,
 } from '@nestjs/common';
@@ -44,7 +45,7 @@ export class SuspendUser_Controller {
     description: 'User not found',
   })
   async suspendUser(
-    @Param('userId') userId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
     @Req() req: AuthenticatedRequest,
   ): Promise<void> {
     const command = new SuspendUser_Command({

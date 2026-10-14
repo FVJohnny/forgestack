@@ -23,7 +23,11 @@ x-nestjs-service: &nestjs-service
     # group join) are actually up, so `up -d --wait` and the deploy gate wait
     # for a service that can really do work. start_period allows for the group
     # rebalance after an ungraceful restart.
-    test: [ 'CMD-SHELL', 'node -e "require(\"http\").get(\"http://localhost:3000/api/v1/ready\", r => process.exit(r.statusCode === 200 ? 0 : 1)).on(\"error\", () => process.exit(1))"' ]
+    test:
+      [
+        'CMD-SHELL',
+        'node -e "require(\"http\").get(\"http://localhost:3000/api/v1/ready\", r => process.exit(r.statusCode === 200 ? 0 : 1)).on(\"error\", () => process.exit(1))"',
+      ]
     interval: 30s
     timeout: 10s
     retries: 3
@@ -37,7 +41,6 @@ x-nestjs-service: &nestjs-service
       condition: service_healthy
 
 services:
-
   # ==========================================================================
   # APP SERVICES
   # ==========================================================================
@@ -49,6 +52,7 @@ services:
       - ../env/service-1.env.prod
     labels:
       - 'service=service-1'
+      - 'environment=production'
       - 'prometheus.scrape=true'
 
   service-2:
@@ -58,6 +62,7 @@ services:
       - ../env/service-2.env.prod
     labels:
       - 'service=service-2'
+      - 'environment=production'
       - 'prometheus.scrape=true'
 
   public-page:
@@ -69,7 +74,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD-SHELL', 'wget -qO- http://127.0.0.1:3000 || exit 1' ]
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000 || exit 1']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -108,7 +113,7 @@ services:
       # `caddy version` only proves the binary runs. Hit the admin API on
       # localhost:2019 instead, which is only up once Caddy has loaded its
       # config and is actually serving.
-      test: [ 'CMD', 'wget', '-q', '-O', '-', 'http://localhost:2019/config/' ]
+      test: ['CMD', 'wget', '-q', '-O', '-', 'http://localhost:2019/config/']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -127,7 +132,7 @@ services:
     image: mongo:7.0
     restart: unless-stopped
     mem_limit: 768m
-    command: [ 'bash', '/scripts/mongo-startup.sh' ]
+    command: ['bash', '/scripts/mongo-startup.sh']
     environment:
       - MONGO_ADMIN_USER=${MONGO_ADMIN_USER:-admin}
       - MONGO_ADMIN_PASS=${MONGO_ADMIN_PASS}
@@ -138,7 +143,11 @@ services:
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD-SHELL', 'mongosh -u $$MONGO_ADMIN_USER -p $$MONGO_ADMIN_PASS --authenticationDatabase admin --eval "rs.status().ok" | grep -q 1' ]
+      test:
+        [
+          'CMD-SHELL',
+          'mongosh -u $$MONGO_ADMIN_USER -p $$MONGO_ADMIN_PASS --authenticationDatabase admin --eval "rs.status().ok" | grep -q 1',
+        ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -157,13 +166,13 @@ services:
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDISCLI_AUTH=${REDIS_PASSWORD}
-    entrypoint: [ 'sh', '-c', 'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"' ]
+    entrypoint: ['sh', '-c', 'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"']
     volumes:
       - redis_data:/data
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD-SHELL', 'redis-cli ping | grep -q PONG' ]
+      test: ['CMD-SHELL', 'redis-cli ping | grep -q PONG']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -193,7 +202,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD-SHELL', 'echo ruok | nc localhost 2181 | grep imok' ]
+      test: ['CMD-SHELL', 'echo ruok | nc localhost 2181 | grep imok']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -220,7 +229,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD-SHELL', 'kafka-topics --bootstrap-server localhost:9092 --list' ]
+      test: ['CMD-SHELL', 'kafka-topics --bootstrap-server localhost:9092 --list']
       interval: 10s
       timeout: 10s
       retries: 10
@@ -261,7 +270,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD', 'wget', '-qO-', 'http://localhost:9090/-/healthy' ]
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:9090/-/healthy']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -288,7 +297,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD-SHELL', 'wget -qO- http://localhost:3000/api/health || exit 1' ]
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000/api/health || exit 1']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -315,7 +324,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD', 'wget', '-qO-', 'http://localhost:8080/healthz' ]
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:8080/healthz']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -331,7 +340,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD', 'wget', '-qO-', 'http://localhost:3200/ready' ]
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3200/ready']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -346,7 +355,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD', 'wget', '-qO-', 'http://localhost:3100/ready' ]
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3100/ready']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -364,7 +373,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: [ 'CMD', 'wget', '-qO-', 'http://localhost:9080/ready' ]
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:9080/ready']
       interval: 30s
       timeout: 5s
       retries: 3

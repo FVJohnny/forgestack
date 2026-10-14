@@ -102,6 +102,24 @@
           "legendFormat": "rss"
         }
       ]
+    },
+    {
+      "type": "table",
+      "title": "Active alerts",
+      "description": "Prometheus alert rules that are currently firing. The stack ships no Alertmanager, so alerts are not routed anywhere; this panel gives them a visible sink out of the box. An empty table means nothing is firing.",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "targets": [
+        {
+          "expr": "ALERTS{alertstate=\"firing\"}",
+          "format": "table",
+          "instant": true
+        }
+      ]
     }
   ],
   "uid": "nestjs-metrics"

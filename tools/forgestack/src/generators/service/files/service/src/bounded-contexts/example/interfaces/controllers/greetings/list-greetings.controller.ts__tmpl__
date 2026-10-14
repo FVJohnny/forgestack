@@ -1,7 +1,7 @@
 import { Controller, Get, HttpCode, HttpStatus, Inject } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { type IQueryBus } from '@nestjs/cqrs';
-import { QUERY_BUS } from '@libs/nestjs-common';
+import { QUERY_BUS, PublicApi } from '@libs/nestjs-common';
 import { ListGreetings_Query } from '@bc/example/application/queries/list-greetings/list-greetings.query';
 import type { ListGreetings_QueryResponse } from '@bc/example/application/queries/list-greetings/list-greetings.query-response';
 
@@ -10,6 +10,9 @@ import type { ListGreetings_QueryResponse } from '@bc/example/application/querie
 export class ListGreetings_Controller {
   constructor(@Inject(QUERY_BUS) private readonly queryBus: IQueryBus) {}
 
+  // @PublicApi() so this starter route works without a token. The app.module
+  // registers a global JwtAuthGuard, so remove this decorator to require auth.
+  @PublicApi()
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Latest greetings (starter read endpoint)' })

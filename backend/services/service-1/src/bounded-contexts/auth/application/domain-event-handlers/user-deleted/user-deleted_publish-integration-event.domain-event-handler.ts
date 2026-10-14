@@ -8,10 +8,6 @@ import {
   OutboxEvent,
 } from '@libs/nestjs-common';
 import { UserDeleted_DomainEvent } from '@bc/auth/domain/aggregates/user/events/user-deleted.domain-event';
-import {
-  USER_REPOSITORY,
-  type User_Repository,
-} from '@bc/auth/domain/aggregates/user/user.repository';
 
 export class UserDeleted_PublishIntegrationEvent_DomainEventHandler extends Base_DomainEventHandler(
   UserDeleted_DomainEvent,
@@ -19,27 +15,19 @@ export class UserDeleted_PublishIntegrationEvent_DomainEventHandler extends Base
   constructor(
     @Inject(OUTBOX_REPOSITORY)
     private readonly outboxRepository: Outbox_Repository,
-    @Inject(USER_REPOSITORY)
-    private readonly userRepository: User_Repository,
   ) {
     super();
   }
 
   async handleEvent(event: UserDeleted_DomainEvent) {
-    // Fetch user to get email for the integration event
-    const user = await this.userRepository.findById(event.aggregateId);
-    if (!user) {
-      this.logger.warn(
-        `User ${event.aggregateId.toValue()} not found when publishing UserDeleted integration event`,
-      );
-      return;
-    }
-
+    // The email travels on the domain event, so we do not re-read the user. The
+    // command handler removes the user row before publishing, so a re-read would
+    // find nothing.
     const integrationEvent = new UserDeleted_IntegrationEvent({
       id: Id.random().toValue(),
       occurredOn: new Date(),
       userId: event.aggregateId.toValue(),
-      email: user.email.toValue(),
+      email: event.email,
     });
 
     const outboxEvent = OutboxEvent.create(integrationEvent);

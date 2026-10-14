@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { apiClient, APIError } from './client';
-import { API_ENDPOINTS } from './config';
+import { apiClient, APIError, service2ApiClient } from './client';
+import { API_CONFIG, API_ENDPOINTS, SERVICE2_API_CONFIG } from './config';
 
 // Item 192: the API client had no tests. These cover the parts a forker relies
 // on and would break by accident: response parsing, error mapping into
@@ -76,6 +76,56 @@ describe('APIClient', () => {
       String(url).includes(API_ENDPOINTS.AUTH.REFRESH),
     );
     expect(refreshCalled).toBe(true);
+  });
+
+  it('refreshes a service-2 401 through service-1 (the auth service)', async () => {
+    fetchMock
+      // 1) service-2 request -> 401
+      .mockResolvedValueOnce(jsonResponse({ message: 'nope' }, { ok: false, status: 401 }))
+      // 2) refresh -> ok
+      .mockResolvedValueOnce(jsonResponse({ ok: true }))
+      // 3) retried service-2 request -> success
+      .mockResolvedValueOnce(jsonResponse({ data: 'tasks' }));
+
+    const result = await service2ApiClient.get<{ data: string }>('/tasks');
+
+    expect(result).toEqual({ data: 'tasks' });
+    const urls = fetchMock.mock.calls.map(([url]) => String(url));
+    // service-2 has no refresh endpoint: refreshing against its base URL 404s
+    // and logs the user out.
+    expect(urls[1]).toBe(`${API_CONFIG.baseURL}${API_ENDPOINTS.AUTH.REFRESH}`);
+    expect(urls[1].startsWith(SERVICE2_API_CONFIG.baseURL)).toBe(false);
+    expect(urls[2]).toBe(`${SERVICE2_API_CONFIG.baseURL}/tasks`);
+  });
+
+  it('shares one in-flight refresh across the service-1 and service-2 clients', async () => {
+    let resolveRefresh: (value: unknown) => void = () => {};
+    const refreshResponse = new Promise((resolve) => {
+      resolveRefresh = resolve;
+    });
+
+    fetchMock.mockImplementation((url: string) => {
+      if (url.endsWith(API_ENDPOINTS.AUTH.REFRESH)) return refreshResponse;
+      // First hit on each endpoint is a 401, the retry succeeds.
+      const seen = fetchMock.mock.calls.filter(([u]) => u === url).length;
+      return Promise.resolve(
+        seen === 1
+          ? jsonResponse({ message: 'nope' }, { ok: false, status: 401 })
+          : jsonResponse({ url }),
+      );
+    });
+
+    const svc1 = apiClient.get('/auth/me');
+    const svc2 = service2ApiClient.get('/tasks');
+    // Let both 401s land and queue on the refresh before it resolves.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    resolveRefresh(jsonResponse({ ok: true }));
+    await Promise.all([svc1, svc2]);
+
+    const refreshCalls = fetchMock.mock.calls.filter(([url]) =>
+      String(url).endsWith(API_ENDPOINTS.AUTH.REFRESH),
+    );
+    expect(refreshCalls).toHaveLength(1);
   });
 
   it('dispatches auth:unauthenticated when the refresh fails', async () => {

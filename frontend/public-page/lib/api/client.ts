@@ -38,36 +38,45 @@ const NO_REFRESH_PATHS = [
   API_ENDPOINTS.AUTH.GOOGLE,
 ];
 
+// Shared in-flight refresh, module-level so concurrent 401s from ANY client
+// (service-1 or service-2) trigger a single refresh call. Two parallel
+// refreshes would race on refresh-token rotation and one would fail.
+let refreshPromise: Promise<boolean> | null = null;
+
+/**
+ * Refreshes the auth cookies. The refresh endpoint only exists on service-1
+ * (the auth service), so this always targets API_CONFIG.baseURL no matter
+ * which client hit the 401: the cookies are first-party and shared by every
+ * service on the origin.
+ */
+function attemptRefresh(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${API_CONFIG.baseURL}${API_ENDPOINTS.AUTH.REFRESH}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+      // Normal requests abort via their own controller; without a timeout
+      // here one hung refresh would pin every queued 401 retry until the
+      // socket dies.
+      signal: AbortSignal.timeout(API_CONFIG.timeout),
+    })
+      .then((res) => res.ok)
+      .catch(() => false)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
 class APIClient {
   private baseURL: string;
   private defaultTimeout: number;
-  // Shared in-flight refresh so concurrent 401s trigger a single refresh call.
-  private refreshPromise: Promise<boolean> | null = null;
 
   constructor(baseURL: string, timeout: number) {
     this.baseURL = baseURL;
     this.defaultTimeout = timeout;
-  }
-
-  private async attemptRefresh(): Promise<boolean> {
-    if (!this.refreshPromise) {
-      this.refreshPromise = fetch(`${this.baseURL}${API_ENDPOINTS.AUTH.REFRESH}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-        // Normal requests abort via their own controller; without a timeout
-        // here one hung refresh would pin every queued 401 retry until the
-        // socket dies.
-        signal: AbortSignal.timeout(this.defaultTimeout),
-      })
-        .then((res) => res.ok)
-        .catch(() => false)
-        .finally(() => {
-          this.refreshPromise = null;
-        });
-    }
-    return this.refreshPromise;
   }
 
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
@@ -95,7 +104,7 @@ class APIClient {
         // the auth endpoints themselves and for an already-retried request.
         const canRefresh = !_isRetry && !NO_REFRESH_PATHS.some((p) => endpoint.startsWith(p));
         if (response.status === 401 && canRefresh) {
-          const refreshed = await this.attemptRefresh();
+          const refreshed = await attemptRefresh();
           if (refreshed) {
             return this.request<T>(endpoint, { ...options, _isRetry: true });
           }
@@ -166,7 +175,11 @@ class APIClient {
 
 export const apiClient = new APIClient(API_CONFIG.baseURL, API_CONFIG.timeout);
 
-/** Client for service-2 (analytics example service) — its own host via Caddy. */
+/**
+ * Client for service-2 (the tasks example service), served on the same origin
+ * under the /svc2 path prefix (Caddy strips it). Its 401s refresh through
+ * service-1, which owns the auth endpoints.
+ */
 export const service2ApiClient = new APIClient(
   SERVICE2_API_CONFIG.baseURL,
   SERVICE2_API_CONFIG.timeout,

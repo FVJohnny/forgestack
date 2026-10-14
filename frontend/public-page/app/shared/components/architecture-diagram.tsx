@@ -20,7 +20,7 @@ import {
  *
  *   Browser ─▶ Caddy ─▶ Frontend
  *                   └──▶ Services ──┬─▶ Redis
- *                     ▲   │         ├─▶ Database (Mongo / Postgres / MySQL)
+ *                     ▲   │         ├─▶ Database (Mongo; Postgres planned)
  *                     └───┘ Kafka   └─▶ Monitoring ─▶ Grafana
  *                   (events loop back between services)
  *
@@ -528,21 +528,39 @@ export function ArchitectureDiagram() {
   );
 }
 
-/** A single service row — a NestJS service (full width, stacked layout). */
-function ServiceChip({ n }: { n: number }) {
+/** A single service row — a NestJS service (full width, stacked layout).
+ *  `placeholder` renders the slot for the user's NEXT service in the same
+ *  dashed/dimmed style as the planned datastores, so it never reads as one
+ *  that ships. */
+function ServiceChip({ n, placeholder = false }: { n?: number; placeholder?: boolean }) {
   return (
-    <div className={`flex items-center gap-1.5 rounded-md border px-1.5 py-1.5 ${TONES.blue.chip}`}>
-      <Box className={`size-3 shrink-0 ${TONES.blue.icon}`} />
-      <span className="whitespace-nowrap font-mono text-[10px] font-semibold leading-tight text-ink">
-        service-{n}
+    <div
+      className={`flex items-center gap-1.5 rounded-md border px-1.5 py-1.5 ${
+        placeholder ? 'border-dashed border-line-strong bg-transparent opacity-60' : TONES.blue.chip
+      }`}
+      title={
+        placeholder ? 'Your next service: generate it with the Nx service generator' : undefined
+      }
+    >
+      <Box className={`size-3 shrink-0 ${placeholder ? 'text-ink-dim' : TONES.blue.icon}`} />
+      <span className="flex min-w-0 flex-col leading-tight">
+        <span className="whitespace-nowrap font-mono text-[10px] font-semibold text-ink">
+          service-{placeholder ? 'N' : n}
+        </span>
+        {placeholder && (
+          <span className="font-mono text-[8px] uppercase tracking-[0.08em] text-ink-faint">
+            yours
+          </span>
+        )}
       </span>
     </div>
   );
 }
 
 /**
- * Compact Backend cluster: service-1/2/3 stacked vertically. The bidirectional
- * event link down to Kafka is drawn by the Connectors overlay.
+ * Compact Backend cluster: the two shipped services (service-1 auth, service-2
+ * tasks) plus a placeholder for the next one you generate, stacked vertically.
+ * The bidirectional event link down to Kafka is drawn by the Connectors overlay.
  */
 function ServicesCluster() {
   return (
@@ -561,7 +579,7 @@ function ServicesCluster() {
         <div className="flex flex-col gap-1.5">
           <ServiceChip n={1} />
           <ServiceChip n={2} />
-          <ServiceChip n={3} />
+          <ServiceChip placeholder />
         </div>
       </div>
     </DocLinkWrapper>
@@ -583,6 +601,10 @@ function KafkaCluster() {
   );
 }
 
+/** A cluster entry: a shipped component by name, or one that is only planned
+ *  (rendered dashed and dimmed with a "soon" tag so it never reads as shipped). */
+type StackItem = string | { name: string; planned: true };
+
 /** A single stacked row inside a cluster (matches the Backend service chips).
  *  Labels wrap to a second line rather than truncate so multi-word names like
  *  "Mongo Express" stay fully readable. */
@@ -590,20 +612,32 @@ function StackChip({
   name,
   icon: Icon,
   tone,
+  planned = false,
 }: {
   name: string;
   icon: React.ComponentType<{ className?: string }>;
   tone?: ClusterTone;
+  planned?: boolean;
 }) {
   return (
     <div
       className={`flex items-center gap-1.5 rounded-md border px-1.5 py-1.5 ${
-        tone ? TONES[tone].chip : 'border-line-strong bg-base-2'
+        planned
+          ? 'border-dashed border-line-strong bg-transparent opacity-60'
+          : tone
+            ? TONES[tone].chip
+            : 'border-line-strong bg-base-2'
       }`}
+      title={planned ? `${name}: planned, not shipped yet` : undefined}
     >
-      <Icon className={`size-3 shrink-0 ${tone ? TONES[tone].icon : 'text-ink-dim'}`} />
-      <span className="min-w-0 font-mono text-[10px] font-semibold leading-tight text-ink">
-        {name}
+      <Icon className={`size-3 shrink-0 ${tone && !planned ? TONES[tone].icon : 'text-ink-dim'}`} />
+      <span className="flex min-w-0 flex-col leading-tight">
+        <span className="font-mono text-[10px] font-semibold text-ink">{name}</span>
+        {planned && (
+          <span className="font-mono text-[8px] uppercase tracking-[0.08em] text-ink-faint">
+            soon
+          </span>
+        )}
       </span>
     </div>
   );
@@ -622,7 +656,7 @@ function StackCluster({
   title: string;
   sub?: string;
   icon: React.ComponentType<{ className?: string }>;
-  items: string[];
+  items: StackItem[];
   href?: string;
   /** A slight color tint tying the cluster to its connector color. */
   tone?: ClusterTone;
@@ -649,23 +683,28 @@ function StackCluster({
           )}
         </span>
         <div className="flex flex-col gap-1.5">
-          {items.map((name) => (
-            <StackChip key={name} name={name} icon={icon} tone={tone} />
-          ))}
+          {items.map((item) =>
+            typeof item === 'string' ? (
+              <StackChip key={item} name={item} icon={icon} tone={tone} />
+            ) : (
+              <StackChip key={item.name} name={item.name} icon={icon} tone={tone} planned />
+            ),
+          )}
         </div>
       </div>
     </DocLinkWrapper>
   );
 }
 
-/** Databases cluster: the swappable datastores behind the services. */
+/** Databases cluster: the swappable datastores behind the services.
+ *  PostgreSQL is planned, not shipped. */
 function DatabasesCluster() {
   return (
     <StackCluster
       title="Databases"
       sub="datastores"
       icon={Database}
-      items={['Redis', 'Mongo', 'PostgreSQL']}
+      items={['Redis', 'Mongo', { name: 'PostgreSQL', planned: true }]}
       href="/docs/databases"
       tone="red"
     />
@@ -686,13 +725,14 @@ function MonitoringCluster() {
   );
 }
 
-/** DB Viewers cluster: the browser-facing DB admin UIs (reached through Caddy). */
+/** DB Viewers cluster: the browser-facing DB admin UIs (reached through Caddy).
+ *  PGAdmin is planned, alongside PostgreSQL. */
 function DbViewerCluster() {
   return (
     <StackCluster
       title="DB Viewers"
       icon={Table}
-      items={['Mongo Express', 'PGAdmin']}
+      items={['Mongo Express', { name: 'PGAdmin', planned: true }]}
       href="/docs/databases"
       tone="red"
     />

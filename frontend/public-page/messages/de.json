@@ -195,10 +195,12 @@
       "delete": "Aufgabe löschen",
       "empty": "Noch keine Aufgaben. Füge oben die erste hinzu.",
       "loadError": "Deine Aufgaben konnten nicht geladen werden.",
+      "truncated": "Die neuesten {shown} von {total} Aufgaben werden angezeigt.",
       "toast": {
         "createFailed": "Aufgabe konnte nicht erstellt werden.",
         "completeFailed": "Aufgabe konnte nicht abgeschlossen werden.",
-        "deleteFailed": "Aufgabe konnte nicht gelöscht werden."
+        "deleteFailed": "Aufgabe konnte nicht gelöscht werden.",
+        "accountNotReady": "Dein Konto ist noch nicht für Aufgaben eingerichtet. Versuche es gleich noch einmal."
       }
     },
     "account": {

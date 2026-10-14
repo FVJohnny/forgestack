@@ -14,7 +14,7 @@ import { type ICommandBus } from '@nestjs/cqrs';
 import {
   COMMAND_BUS,
   JwtAuthGuard,
-  StrictRateLimit,
+  StandardRateLimit,
   type AuthenticatedRequest,
 } from '@libs/nestjs-common';
 import { DeleteTask_Command } from '@bc/tasks/application/commands';
@@ -27,7 +27,7 @@ export class DeleteTask_Controller {
   constructor(@Inject(COMMAND_BUS) private readonly commandBus: ICommandBus) {}
 
   @Delete(':taskId')
-  @StrictRateLimit()
+  @StandardRateLimit()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete one of your tasks' })
   @ApiParam({ name: 'taskId', description: 'ID of the task to delete' })

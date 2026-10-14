@@ -195,10 +195,12 @@
       "delete": "Supprimer la tâche",
       "empty": "Aucune tâche pour l’instant. Ajoutez la première ci-dessus.",
       "loadError": "Impossible de charger vos tâches.",
+      "truncated": "Affichage des {shown} tâches les plus récentes sur {total}.",
       "toast": {
         "createFailed": "Impossible de créer la tâche.",
         "completeFailed": "Impossible de terminer la tâche.",
-        "deleteFailed": "Impossible de supprimer la tâche."
+        "deleteFailed": "Impossible de supprimer la tâche.",
+        "accountNotReady": "Votre compte n’est pas encore prêt pour les tâches. Réessayez dans un instant."
       }
     },
     "account": {

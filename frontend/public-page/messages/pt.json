@@ -195,10 +195,12 @@
       "delete": "Excluir tarefa",
       "empty": "Nenhuma tarefa ainda. Adicione a primeira acima.",
       "loadError": "Não foi possível carregar suas tarefas.",
+      "truncated": "Mostrando as {shown} mais recentes de {total} tarefas.",
       "toast": {
         "createFailed": "Não foi possível criar a tarefa.",
         "completeFailed": "Não foi possível concluir a tarefa.",
-        "deleteFailed": "Não foi possível excluir a tarefa."
+        "deleteFailed": "Não foi possível excluir a tarefa.",
+        "accountNotReady": "Sua conta ainda não está pronta para tarefas. Tente novamente em instantes."
       }
     },
     "account": {

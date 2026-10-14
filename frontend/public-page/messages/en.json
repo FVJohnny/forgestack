@@ -195,10 +195,12 @@
       "delete": "Delete task",
       "empty": "No tasks yet. Add your first one above.",
       "loadError": "Could not load your tasks.",
+      "truncated": "Showing the latest {shown} of {total} tasks.",
       "toast": {
         "createFailed": "Could not create the task.",
         "completeFailed": "Could not complete the task.",
-        "deleteFailed": "Could not delete the task."
+        "deleteFailed": "Could not delete the task.",
+        "accountNotReady": "Your account isn't set up for tasks yet. Try again in a moment."
       }
     },
     "account": {

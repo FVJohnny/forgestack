@@ -195,10 +195,12 @@
       "delete": "Taak verwijderen",
       "empty": "Nog geen taken. Voeg hierboven je eerste toe.",
       "loadError": "Kon je taken niet laden.",
+      "truncated": "De nieuwste {shown} van {total} taken worden getoond.",
       "toast": {
         "createFailed": "Kon de taak niet aanmaken.",
         "completeFailed": "Kon de taak niet afronden.",
-        "deleteFailed": "Kon de taak niet verwijderen."
+        "deleteFailed": "Kon de taak niet verwijderen.",
+        "accountNotReady": "Je account is nog niet klaar voor taken. Probeer het zo opnieuw."
       }
     },
     "account": {

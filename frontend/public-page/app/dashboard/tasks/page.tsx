@@ -8,6 +8,7 @@ import { Card } from '@/app/shared/ui/card';
 import { Button } from '@/app/shared/ui/button';
 import { Input } from '@/app/shared/ui/input';
 import { Skeleton } from '@/app/shared/ui/skeleton';
+import { APIError } from '@/lib/api/client';
 import { tasksService } from '@/lib/api/services/tasks.service';
 import type { TaskItem } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,9 @@ export default function TasksPage() {
   const t = useTranslations('app.tasks');
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
+  // Counted server-side over ALL of the user's tasks: the list itself is capped
+  // (newest first), so counting the returned page would undercount.
+  const [counts, setCounts] = useState({ total: 0, open: 0 });
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -26,6 +30,11 @@ export default function TasksPage() {
     try {
       const data = await tasksService.listTasks();
       setTasks(data.tasks);
+      setCounts({
+        total: data.total,
+        // Fallback for a tasks service that predates the `open` count.
+        open: data.open ?? data.tasks.filter((task) => !task.completed).length,
+      });
       setLoadError(false);
     } catch {
       setLoadError(true);
@@ -49,8 +58,11 @@ export default function TasksPage() {
       await tasksService.createTask(trimmed);
       setTitle('');
       await load();
-    } catch {
-      toast.error(t('toast.createFailed'));
+    } catch (error) {
+      // 404 = the tasks service has no projection of this account yet (it is
+      // built asynchronously from service-1's UserCreated event).
+      const accountNotReady = error instanceof APIError && error.status === 404;
+      toast.error(t(accountNotReady ? 'toast.accountNotReady' : 'toast.createFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -75,7 +87,7 @@ export default function TasksPage() {
     }
   };
 
-  const remaining = tasks.filter((task) => !task.completed).length;
+  const truncated = counts.total > tasks.length;
 
   return (
     <div>
@@ -104,7 +116,7 @@ export default function TasksPage() {
           </h2>
           {!loading && !loadError && (
             <span className="font-mono text-[11px] text-ink-faint">
-              {t('remaining', { count: remaining })}
+              {t('remaining', { count: counts.open })}
             </span>
           )}
         </div>
@@ -144,16 +156,25 @@ export default function TasksPage() {
                 >
                   {task.title}
                 </span>
+                {/* Always visible on touch screens (no hover to reveal it); on
+                    hover-capable devices it appears on row hover, and for
+                    keyboard users whenever focus is inside the row. */}
                 <button
                   onClick={() => deleteTask(task)}
                   aria-label={t('delete')}
-                  className="shrink-0 text-ink-faint opacity-0 transition-opacity hover:text-[var(--red)] focus:opacity-100 group-hover:opacity-100"
+                  className="shrink-0 rounded-sm text-ink-faint transition-opacity outline-none hover:text-[var(--red)] focus-visible:ring-2 focus-visible:ring-primary/60 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100"
                 >
                   <Trash2 className="size-4" />
                 </button>
               </li>
             ))}
           </ul>
+        )}
+
+        {!loading && !loadError && truncated && (
+          <p className="border-t border-line px-5 py-3 font-mono text-[11px] text-ink-faint">
+            {t('truncated', { shown: tasks.length, total: counts.total })}
+          </p>
         )}
       </Card>
     </div>

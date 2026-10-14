@@ -195,10 +195,12 @@
       "delete": "Usuń zadanie",
       "empty": "Brak zadań. Dodaj pierwsze powyżej.",
       "loadError": "Nie udało się wczytać zadań.",
+      "truncated": "Wyświetlono {shown} najnowszych z {total} zadań.",
       "toast": {
         "createFailed": "Nie udało się utworzyć zadania.",
         "completeFailed": "Nie udało się ukończyć zadania.",
-        "deleteFailed": "Nie udało się usunąć zadania."
+        "deleteFailed": "Nie udało się usunąć zadania.",
+        "accountNotReady": "Twoje konto nie jest jeszcze gotowe do zadań. Spróbuj ponownie za chwilę."
       }
     },
     "account": {

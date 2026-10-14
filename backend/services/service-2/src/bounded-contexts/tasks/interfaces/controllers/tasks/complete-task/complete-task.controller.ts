@@ -14,7 +14,7 @@ import { type ICommandBus } from '@nestjs/cqrs';
 import {
   COMMAND_BUS,
   JwtAuthGuard,
-  StrictRateLimit,
+  StandardRateLimit,
   type AuthenticatedRequest,
 } from '@libs/nestjs-common';
 import { CompleteTask_Command } from '@bc/tasks/application/commands';
@@ -27,7 +27,7 @@ export class CompleteTask_Controller {
   constructor(@Inject(COMMAND_BUS) private readonly commandBus: ICommandBus) {}
 
   @Patch(':taskId/complete')
-  @StrictRateLimit()
+  @StandardRateLimit()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Mark one of your tasks as completed' })
   @ApiParam({ name: 'taskId', description: 'ID of the task to complete' })

@@ -1,7 +1,7 @@
 {
   "name": "service-2",
   "version": "0.0.1",
-  "description": "Example event-consumer service: builds activity analytics from service-1's integration events",
+  "description": "Example tasks service: a per-user todo list, with a user projection built from service-1's integration events",
   "author": "",
   "private": true,
   "license": "MIT",

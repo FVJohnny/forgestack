@@ -13,7 +13,7 @@ import { type ICommandBus } from '@nestjs/cqrs';
 import {
   COMMAND_BUS,
   JwtAuthGuard,
-  StrictRateLimit,
+  StandardRateLimit,
   type AuthenticatedRequest,
 } from '@libs/nestjs-common';
 import { CreateTask_Command } from '@bc/tasks/application/commands';
@@ -27,7 +27,7 @@ export class CreateTask_Controller {
   constructor(@Inject(COMMAND_BUS) private readonly commandBus: ICommandBus) {}
 
   @Post()
-  @StrictRateLimit()
+  @StandardRateLimit()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a task for the signed-in user' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Task created' })

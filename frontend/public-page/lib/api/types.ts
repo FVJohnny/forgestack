@@ -72,8 +72,14 @@ export interface TaskItem {
 }
 
 export interface ListTasksResponse {
+  /** The newest tasks, at most `limit` of them. */
   tasks: TaskItem[];
+  /** All of the user's tasks, including any beyond `limit`. */
   total: number;
+  /** All of the user's open tasks, including any beyond `limit`. */
+  open: number;
+  /** The cap on `tasks`; `total > tasks.length` means the list is truncated. */
+  limit: number;
 }
 
 export interface CreateTaskRequest {

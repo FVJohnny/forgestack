@@ -195,10 +195,12 @@
       "delete": "Eliminar tarea",
       "empty": "Aún no hay tareas. Añade la primera arriba.",
       "loadError": "No se pudieron cargar tus tareas.",
+      "truncated": "Mostrando las {shown} más recientes de {total} tareas.",
       "toast": {
         "createFailed": "No se pudo crear la tarea.",
         "completeFailed": "No se pudo completar la tarea.",
-        "deleteFailed": "No se pudo eliminar la tarea."
+        "deleteFailed": "No se pudo eliminar la tarea.",
+        "accountNotReady": "Tu cuenta aún no está lista para las tareas. Inténtalo de nuevo en un momento."
       }
     },
     "account": {
